@@ -14,6 +14,7 @@ const App = () => {
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
   
   const shouldRestartRecognition = useRef(false);
+  const recognition = useRef(null);
   
   let mediaRecorder;
   let audioChunks = [];
@@ -81,62 +82,68 @@ const App = () => {
   }, [stopRecording, silenceTimer]);
   
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.current.continuous = true;
+    recognition.current.interimResults = true;
+    recognition.current.lang = 'de-DE';
     
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'de-DE';
-    
-    console.log('useEffect() speech recognition');
-    recognition.onstart = () => {
-      shouldRestartRecognition.current = true;
+    recognition.current.onstart = () => {
       setListening(true);
+      shouldRestartRecognition.current = true;
     };
     
-    recognition.onresult = (event) => {
-      if (silenceTimer !== null) {
-        clearTimeout(silenceTimer);
-      }
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const currentTranscript = event.results[i][0].transcript.trim();
-        setTranscript(currentTranscript);
-        if (event.results[i].isFinal
-          && !conversationOpen
-          && currentTranscript.toLowerCase().includes('hallo computer')) {
-          startConversation();
-        }
-      }
-      
-      if (conversationOpen) {
-        const newTimer = setTimeout(() => {
-          stopConversation();
-        }, 3000);
-        setSilenceTimer(newTimer);
-      }
-    };
-    
-    recognition.onend = () => {
+    recognition.current.onend = () => {
       setListening(false);
       if (shouldRestartRecognition.current) {
-        console.log('restarting recognition');
-        recognition.start();
+        console.log('restarting speech recognition')
+        recognition.current.start();
       }
     };
     
-    console.log('starting recognition');
-    recognition.start();
+    console.log('starting speech recognition')
+    recognition.current.start();
     
     return () => {
+      console.log('stopping speech recognition')
       shouldRestartRecognition.current = false;
-      console.log('stopping recognition');
-      recognition.stop();
-      if (silenceTimer !== null) {
-        clearTimeout(silenceTimer);
+      recognition.current.stop();
+    };
+  }, []);
+  
+  const handleResult = useCallback((event) => {
+    if (silenceTimer !== null) {
+      clearTimeout(silenceTimer);
+    }
+    
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const currentTranscript = event.results[i][0].transcript.trim();
+      setTranscript(currentTranscript);
+      if (event.results[i].isFinal
+        && !conversationOpen
+        && currentTranscript.toLowerCase().includes('hallo computer')) {
+        startConversation();
+      }
+    }
+    
+    if (conversationOpen) {
+      const newTimer = setTimeout(() => {
+        stopConversation();
+      }, 3000);
+      setSilenceTimer(newTimer);
+    }
+  }, [conversationOpen, startConversation, stopConversation, silenceTimer]);
+  
+  useEffect(() => {
+    if (recognition.current) {
+      recognition.current.onresult = handleResult;
+    }
+    
+    return () => {
+      if (recognition.current) {
+        recognition.current.onresult = null;
       }
     };
-  }, [startConversation, stopConversation, conversationOpen, silenceTimer]);
+  }, [handleResult]);
   
   return (
     <div>
