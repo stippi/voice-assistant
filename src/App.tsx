@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import OpenAI, { toFile } from 'openai';
 import OpenAIConfig from "./OpenAIConfig.ts";
 
@@ -12,6 +12,8 @@ const App = () => {
   const [transcript, setTranscript] = useState('');
   const [message, setMessage] = useState('');
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
+  
+  const shouldRestartRecognition = useRef(false);
   
   let mediaRecorder;
   let audioChunks = [];
@@ -86,7 +88,9 @@ const App = () => {
     recognition.interimResults = true;
     recognition.lang = 'de-DE';
     
+    console.log('useEffect() speech recognition');
     recognition.onstart = () => {
+      shouldRestartRecognition.current = true;
       setListening(true);
     };
     
@@ -98,7 +102,9 @@ const App = () => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const currentTranscript = event.results[i][0].transcript.trim();
         setTranscript(currentTranscript);
-        if (event.results[i].isFinal && currentTranscript.toLowerCase().includes('hallo computer')) {
+        if (event.results[i].isFinal
+          && !conversationOpen
+          && currentTranscript.toLowerCase().includes('hallo computer')) {
           startConversation();
         }
       }
@@ -113,11 +119,18 @@ const App = () => {
     
     recognition.onend = () => {
       setListening(false);
+      if (shouldRestartRecognition.current) {
+        console.log('restarting recognition');
+        recognition.start();
+      }
     };
     
+    console.log('starting recognition');
     recognition.start();
     
     return () => {
+      shouldRestartRecognition.current = false;
+      console.log('stopping recognition');
       recognition.stop();
       if (silenceTimer !== null) {
         clearTimeout(silenceTimer);
