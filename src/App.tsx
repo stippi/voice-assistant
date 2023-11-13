@@ -11,6 +11,7 @@ const App = () => {
   const [conversationOpen, setConversationOpen] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [message, setMessage] = useState('');
+  const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
   
   let mediaRecorder;
   let audioChunks = [];
@@ -72,7 +73,10 @@ const App = () => {
   const stopConversation = useCallback(() => {
     setConversationOpen(false);
     stopRecording();
-  }, [stopRecording]);
+    if (silenceTimer !== null) {
+      clearTimeout(silenceTimer);
+    }
+  }, [stopRecording, silenceTimer]);
   
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -87,12 +91,23 @@ const App = () => {
     };
     
     recognition.onresult = (event) => {
+      if (silenceTimer !== null) {
+        clearTimeout(silenceTimer);
+      }
+      
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const currentTranscript = event.results[i][0].transcript.trim();
         setTranscript(currentTranscript);
         if (event.results[i].isFinal && currentTranscript.toLowerCase().includes('hallo computer')) {
           startConversation();
         }
+      }
+      
+      if (conversationOpen) {
+        const newTimer = setTimeout(() => {
+          stopConversation();
+        }, 3000);
+        setSilenceTimer(newTimer);
       }
     };
     
@@ -104,8 +119,11 @@ const App = () => {
     
     return () => {
       recognition.stop();
+      if (silenceTimer !== null) {
+        clearTimeout(silenceTimer);
+      }
     };
-  }, [startConversation]);
+  }, [startConversation, stopConversation, conversationOpen, silenceTimer]);
   
   return (
     <div>
