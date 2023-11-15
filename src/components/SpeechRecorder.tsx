@@ -11,7 +11,7 @@ const openai = new OpenAI(OpenAIConfig);
 
 const mimeType = 'audio/webm';
 
-const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => {
+const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhrase}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
@@ -63,7 +63,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
         model: 'whisper-1',
         file: await toFile(audioBlob, 'audio.webm', { type: mimeType })
       });
-      sendMessage(transcription.text);
+      sendMessage(transcription.text, true);
     } catch (error) {
       console.error('Failed to send request to Whisper API', error);
     }
@@ -121,7 +121,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
       setTranscript(currentTranscript);
       if (event.results[i].isFinal
         && !conversationOpen
-        && currentTranscript.toLowerCase().includes('hallo computer')) {
+        && currentTranscript.toLowerCase().includes(triggerPhrase.toLowerCase())) {
         startConversation();
       }
     }
@@ -168,9 +168,10 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
 };
 
 interface Props {
-  sendMessage: (message: string) => void;
+  sendMessage: (message: string, audible: boolean) => void;
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
+  triggerPhrase: string;
 }
 
 export default SpeechRecorder;

@@ -6,7 +6,7 @@ import {Message} from "../model/message";
 
 export function Conversation({chat}: Props) {
   return <div className="messages">
-    {chat && chat.map((message, index) => (
+    {chat && chat.filter(message => message.role !== "system").map((message, index) => (
       <MessageCard
         key={index}
         className="message"

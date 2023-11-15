@@ -26,8 +26,8 @@ export function MessageBar({ sendMessage }: Props) {
           className="sendButton"
           aria-label="send message"
           onClick={() => {
-            sendMessage(message)
-            setMessage("")
+            sendMessage(message, false);
+            setMessage("");
           }}
         >
           <SendIcon />
@@ -36,6 +36,7 @@ export function MessageBar({ sendMessage }: Props) {
           sendMessage={sendMessage}
           setTranscript={setPlaceHolder}
           defaultMessage={defaultPlaceHolder}
+          triggerPhrase="computer"
         />
       </div>
     </div>
@@ -43,5 +44,5 @@ export function MessageBar({ sendMessage }: Props) {
 }
 
 interface Props {
-  sendMessage: (message: string) => void;
+  sendMessage: (message: string, audible: boolean) => void;
 }
