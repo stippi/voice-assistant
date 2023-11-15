@@ -16,49 +16,75 @@ const initialMessages: Message[] = [
   }
 ]
 
-const playAudioBySentence = async (text) => {
-  const sentences = text.split(/(?<=[.!?])\s/);
+const streamChatCompletion = async (message, currentMessages, setMessages, stream, audible) => {
   let audioEndedPromise = null;
   
-  for (let i = 0; i < sentences.length; i++) {
-    const sentence = sentences[i];
-    //console.log(`Sentence ${i}: ${sentence}`);
-    
+  const playSentence = async (sentence) => {
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: "nova",
       input: sentence,
     });
-    //console.log(`Sentence ${i}: got response`);
     
     const arrayBuffer = await response.arrayBuffer();
-    //console.log(`Sentence ${i}: got array buffer`);
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
     const url = URL.createObjectURL(blob);
-    //console.log(`Sentence ${i} created blob URL ${url}`);
     
     if (audioEndedPromise) {
       await audioEndedPromise;
     }
-    const audio = new Audio(url);
     
+    const audio = new Audio(url);
     audioEndedPromise = new Promise((resolve) => {
       audio.onended = () => {
-        //console.log(`Sentence ${i} audio ended`)
         URL.revokeObjectURL(url);
         resolve();
-      }
-      //console.log(`Sentence ${i} starting audio`)
-      audio.play().catch(error => {
-        console.error('Failed to play audio', error);
-      });
+      };
     });
-  }
+    
+    audio.play().catch(error => {
+      console.error('Failed to play audio', error);
+    });
+  };
   
-  if (audioEndedPromise) {
-    await audioEndedPromise;
+  const sentenceQueue = [];
+  let isAudioPlaying = false;
+  const playSentencesFromQueue = async () => {
+    while (sentenceQueue.length > 0) {
+      const sentence = sentenceQueue.shift();
+      if (sentence) {
+        await playSentence(sentence);
+      }
+    }
+    isAudioPlaying = false;
+  };
+  
+  let content = "";
+  let lastPlayedOffset = 0;
+  for await (const part of stream) {
+    const newContent = part.choices[0]?.delta?.content || '';
+    content += newContent;
+    const newMessages = [...currentMessages, {role: "user", content: message}, {role: "assistant", content}];
+    setMessages(newMessages);
+    
+    if (audible) {
+      const sentences = content.slice(lastPlayedOffset).split(/(?<=[.!?])\s/);
+      for (let i = 0; i < sentences.length - 1; i++) { // -1, since the last sentence might be incomplete
+        const sentence = sentences[i];
+        if (sentence.trim()) {
+          sentenceQueue.push(sentence);
+          lastPlayedOffset += sentence.length;
+          if (!isAudioPlaying && sentenceQueue.length > 0) {
+            isAudioPlaying = true;
+            playSentencesFromQueue().catch(error => {
+              console.error('Failed to play sentences', error);
+            });
+          }
+        }
+      }
+    }
   }
-};
+}
 
 const App = () => {
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
@@ -70,14 +96,11 @@ const App = () => {
       openai.chat.completions.create({
         messages: newMessages as ChatCompletionAssistantMessageParam[],
         model: "gpt-4-1106-preview",
-      }).then(completion => {
-        newMessages = [...currentMessages, {role: "user", content: message}, completion.choices[0].message as Message];
-        setMessages(newMessages);
-        if (audible) {
-          playAudioBySentence(completion.choices[0].message.content).catch(error => {
-            console.error('Failed to generate audio', error);
-          });
-        }
+        stream: true,
+      }).then(async (stream) => {
+        streamChatCompletion(message, currentMessages, setMessages, stream, audible).catch(error => {
+          console.error('Failed to stream chat completion', error);
+        });
       }).catch(error => {
         console.error('Failed to send request to Completions API', error);
       });
