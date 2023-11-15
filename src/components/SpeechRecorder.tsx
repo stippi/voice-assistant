@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import './SpeechRecorder.css';
 
 import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import ToggleButton from '@mui/material/ToggleButton';
+import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
 import OpenAIConfig from "./../OpenAIConfig.ts";
@@ -11,11 +12,9 @@ const openai = new OpenAI(OpenAIConfig);
 
 const mimeType = 'audio/webm';
 
-const SpeechRecorder = ({sendMessage}: Props) => {
+const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [message, setMessage] = useState('');
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
   
   const shouldRestartRecognition = useRef(false);
@@ -128,13 +127,14 @@ const SpeechRecorder = ({sendMessage}: Props) => {
       }
     }
     
-    if (conversationOpen) {
-      const newTimer = setTimeout(() => {
+    const newTimer = setTimeout(() => {
+      if (conversationOpen) {
         stopConversation();
-      }, 3000);
-      setSilenceTimer(newTimer);
-    }
-  }, [conversationOpen, startConversation, stopConversation, silenceTimer]);
+      }
+      setTranscript(defaultMessage);
+    }, 3000);
+    setSilenceTimer(newTimer);
+  }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript]);
   
   useEffect(() => {
     if (recognition.current) {
@@ -150,30 +150,28 @@ const SpeechRecorder = ({sendMessage}: Props) => {
   
   return (
     <div>
-      <h1>{listening ? (conversationOpen ? 'Recording...' : 'Waiting for trigger word...') : 'Idle...'}</h1>
-      <p>{transcript}</p>
-      
-      {conversationOpen && <ToggleButton
-        value="check"
-        selected={false}
-        onChange={stopConversation}
+      {conversationOpen && <IconButton
+        area-label="stop conversation"
+        color={listening ? "error" : "secondary"}
+        onClick={stopConversation}
       >
         <RecordVoiceOverIcon />
-      </ToggleButton>}
-      {!conversationOpen && <ToggleButton
-        value="check"
-        selected={false}
-        onChange={startConversation}
+      </IconButton>}
+      {!conversationOpen && <IconButton
+        area-label="start conversation"
+        color={listening ? "error" : "secondary"}
+        onClick={startConversation}
       >
         <MicIcon />
-      </ToggleButton>}
-      <p>{message}</p>
+      </IconButton>}
     </div>
   );
 };
 
 interface Props {
   sendMessage: (message: string) => void;
+  setTranscript: (transcript: string) => void;
+  defaultMessage: string;
 }
 
 export default SpeechRecorder;
