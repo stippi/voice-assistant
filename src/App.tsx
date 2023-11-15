@@ -61,29 +61,38 @@ const streamChatCompletion = async (message, currentMessages, setMessages, strea
   
   let content = "";
   let lastPlayedOffset = 0;
+
+  const playNextSentences = (includeLast: boolean) => {
+    if (!audible) {
+      return;
+    }
+    const sentences = content.slice(lastPlayedOffset).split(/(?<=[.!?])\s/);
+    const lastSentence = includeLast ? sentences.length : sentences.length - 1;
+      // -1, since the last sentence might be incomplete
+    for (let i = 0; i < lastSentence; i++) {
+      const sentence = sentences[i];
+      if (sentence.trim()) {
+        sentenceQueue.push(sentence);
+        lastPlayedOffset += sentence.length;
+        if (!isAudioPlaying && sentenceQueue.length > 0) {
+          isAudioPlaying = true;
+          playSentencesFromQueue().catch(error => {
+            console.error('Failed to play sentences', error);
+          });
+        }
+      }
+    }
+  }
+  
   for await (const part of stream) {
     const newContent = part.choices[0]?.delta?.content || '';
     content += newContent;
     const newMessages = [...currentMessages, {role: "user", content: message}, {role: "assistant", content}];
     setMessages(newMessages);
     
-    if (audible) {
-      const sentences = content.slice(lastPlayedOffset).split(/(?<=[.!?])\s/);
-      for (let i = 0; i < sentences.length - 1; i++) { // -1, since the last sentence might be incomplete
-        const sentence = sentences[i];
-        if (sentence.trim()) {
-          sentenceQueue.push(sentence);
-          lastPlayedOffset += sentence.length;
-          if (!isAudioPlaying && sentenceQueue.length > 0) {
-            isAudioPlaying = true;
-            playSentencesFromQueue().catch(error => {
-              console.error('Failed to play sentences', error);
-            });
-          }
-        }
-      }
-    }
+    playNextSentences(false);
   }
+  playNextSentences(true);
 }
 
 const App = () => {
