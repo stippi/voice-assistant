@@ -10,6 +10,7 @@ import OpenAIConfig from "./../OpenAIConfig.ts";
 const openai = new OpenAI(OpenAIConfig);
 
 const mimeType = 'audio/webm';
+const silenceTimeout = 1500;
 
 const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhrase}: Props) => {
   const [listening, setListening] = useState(false);
@@ -119,8 +120,8 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const currentTranscript = event.results[i][0].transcript.trim();
       setTranscript(currentTranscript);
-      if (event.results[i].isFinal
-        && !conversationOpen
+      if (/*event.results[i].isFinal
+        &&*/ !conversationOpen
         && currentTranscript.toLowerCase().includes(triggerPhrase.toLowerCase())) {
         startConversation();
       }
@@ -131,7 +132,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
         stopConversation();
       }
       setTranscript(defaultMessage);
-    }, 3000);
+    }, silenceTimeout);
     setSilenceTimer(newTimer);
   }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript]);
   
