@@ -50,7 +50,7 @@ const playAudioBySentence = async (text) => {
       }
       //console.log(`Sentence ${i} starting audio`)
       audio.play().catch(error => {
-        //console.error('Failed to play audio', error);
+        console.error('Failed to play audio', error);
       });
     });
   }
