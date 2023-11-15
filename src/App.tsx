@@ -23,18 +23,24 @@ const initialMessages: Message[] = [
 const App = () => {
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   
-  const sendMessage = React.useCallback(async (message: string) => {
-    let newMessages: Message[] = [...messages, {role: "user", content: message}];
-    setMessages(newMessages);
-    
-    const completion = await openai.chat.completions.create({
-      messages: newMessages as ChatCompletionAssistantMessageParam[],
-      model: "gpt-4-1106-preview",
+  const sendMessage = React.useCallback((message: string) => {
+    setMessages(currentMessages => {
+      let newMessages: Message[] = [...currentMessages, {role: "user", content: message}, {role: "assistant", content: ""}];
+      
+      openai.chat.completions.create({
+        messages: newMessages as ChatCompletionAssistantMessageParam[],
+        model: "gpt-4-1106-preview",
+      }).then(completion => {
+        newMessages = [...currentMessages, {role: "user", content: message}, completion.choices[0].message as Message];
+        setMessages(newMessages);
+      }).catch(error => {
+        console.error('Failed to send request to Completions API', error);
+      });
+      
+      // Return the intermediate state to update messages
+      return newMessages;
     });
-    
-    newMessages = [...newMessages, completion.choices[0].message as Message];
-    setMessages(newMessages);
-  }, []);
+  }, [setMessages]);
   
   return (
     <div>
