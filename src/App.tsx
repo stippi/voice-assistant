@@ -1,157 +1,46 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import OpenAI, { toFile } from 'openai';
+import React from 'react';
+import SpeechRecorder from "./components/SpeechRecorder";
+import {Conversation} from "./components/Conversation";
+import {Message} from "./model/message";
+import {MessageBar} from "./components/MessageBar.tsx";
+import OpenAI from "openai";
 import OpenAIConfig from "./OpenAIConfig.ts";
+import {ChatCompletionAssistantMessageParam} from "openai/resources";
 
 const openai = new OpenAI(OpenAIConfig);
 
-const mimeType = 'audio/webm';
+const initialMessages: Message[] = [
+  {
+    role: "user",
+    content: "Hello"
+  },
+  {
+    role: "assistant",
+    content: "Hi there, how can I help you today?"
+  }
+]
 
 const App = () => {
-  const [listening, setListening] = useState(false);
-  const [conversationOpen, setConversationOpen] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [message, setMessage] = useState('');
-  const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
+  const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   
-  const shouldRestartRecognition = useRef(false);
-  const recognition = useRef(null);
-  
-  let mediaRecorder;
-  let audioChunks = [];
-  
-  const startRecording = useCallback(() => {
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then(stream => {
-        audioChunks = [];
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
-        
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
-        
-        mediaRecorder.onstop = () => {
-          console.log('stopped MediaRecorder');
-          sendToWhisperAPI(audioChunks);
-        };
-        
-        console.log('started MediaRecorder, MIME type:', mediaRecorder.mimeType);
-        mediaRecorder.start(1000);
-      })
-      .catch(error => {
-        console.log('Failed to start recorder', error);
-      });
+  const sendMessage = React.useCallback(async (message: string) => {
+    let newMessages: Message[] = [...messages, {role: "user", content: message}];
+    setMessages(newMessages);
+    
+    const completion = await openai.chat.completions.create({
+      messages: newMessages as ChatCompletionAssistantMessageParam[],
+      model: "gpt-4-1106-preview",
+    });
+    
+    newMessages = [...newMessages, completion.choices[0].message as Message];
+    setMessages(newMessages);
   }, []);
-  
-  const stopRecording = useCallback(() => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-    } else {
-      console.log('MediaRecorder undefined');
-    }
-  }, []);
-  
-  const sendToWhisperAPI = useCallback(async (audioChunks) => {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    
-    try {
-      const transcription = await openai.audio.transcriptions.create({
-        model: 'whisper-1',
-        file: await toFile(audioBlob, 'audio.webm', { type: mimeType })
-      });
-      
-      console.log(transcription.text);
-      setMessage(transcription.text);
-    } catch (error) {
-      console.error('Failed to send request to Whisper API', error);
-    }
-  }, []);
-  
-  const startConversation = useCallback(() => {
-    setConversationOpen(true);
-    startRecording();
-  }, [startRecording]);
-  
-  const stopConversation = useCallback(() => {
-    setConversationOpen(false);
-    stopRecording();
-    if (silenceTimer !== null) {
-      clearTimeout(silenceTimer);
-    }
-  }, [stopRecording, silenceTimer]);
-  
-  useEffect(() => {
-    recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.current.continuous = true;
-    recognition.current.interimResults = true;
-    recognition.current.lang = 'de-DE';
-    
-    recognition.current.onstart = () => {
-      setListening(true);
-      shouldRestartRecognition.current = true;
-    };
-    
-    recognition.current.onend = () => {
-      setListening(false);
-      if (shouldRestartRecognition.current) {
-        console.log('restarting speech recognition')
-        recognition.current.start();
-      }
-    };
-    
-    console.log('starting speech recognition')
-    recognition.current.start();
-    
-    return () => {
-      console.log('stopping speech recognition')
-      shouldRestartRecognition.current = false;
-      recognition.current.stop();
-    };
-  }, []);
-  
-  const handleResult = useCallback((event) => {
-    if (silenceTimer !== null) {
-      clearTimeout(silenceTimer);
-    }
-    
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const currentTranscript = event.results[i][0].transcript.trim();
-      setTranscript(currentTranscript);
-      if (event.results[i].isFinal
-        && !conversationOpen
-        && currentTranscript.toLowerCase().includes('hallo computer')) {
-        startConversation();
-      }
-    }
-    
-    if (conversationOpen) {
-      const newTimer = setTimeout(() => {
-        stopConversation();
-      }, 3000);
-      setSilenceTimer(newTimer);
-    }
-  }, [conversationOpen, startConversation, stopConversation, silenceTimer]);
-  
-  useEffect(() => {
-    if (recognition.current) {
-      recognition.current.onresult = handleResult;
-    }
-    
-    return () => {
-      if (recognition.current) {
-        recognition.current.onresult = null;
-      }
-    };
-  }, [handleResult]);
   
   return (
     <div>
-      <h1>{listening ? 'Listening...' : 'Ready'}</h1>
-      <p>{transcript}</p>
-      <button onClick={startConversation} disabled={conversationOpen}>Start Conversation</button>
-      <button onClick={stopConversation} disabled={!conversationOpen}>Get Transcript</button>
-      <p>{message}</p>
+      <Conversation chat={messages}/>
+      <MessageBar sendMessage={sendMessage}/>
+      <SpeechRecorder sendMessage={sendMessage}/>
     </div>
   );
 };
