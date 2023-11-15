@@ -5,9 +5,9 @@ import {Rings} from "react-loader-spinner";
 import PersonIcon from '@mui/icons-material/Person';
 import AssistantIcon from '@mui/icons-material/Assistant';
 
-export function MessageCard({role, content, className, key}: Props) {
+export function MessageCard({role, content, className}: Props) {
   return (
-    <div className={className} key={key}>
+    <div className={className}>
       {role == "user" ?
         <PersonIcon className="role" color="disabled"/>
         :
@@ -78,5 +78,4 @@ interface Props {
   role: "user" | "assistant"
   content: string
   className: string
-  key: number
 }
