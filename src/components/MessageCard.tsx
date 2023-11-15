@@ -1,15 +1,19 @@
 import React from "react";
+import './MessageCard.css';
+
 import {Rings} from "react-loader-spinner";
 import PersonIcon from '@mui/icons-material/Person';
 import AssistantIcon from '@mui/icons-material/Assistant';
 
-export function MessageCard({role, content}: Props) {
-  const icon = role == "user" ? "person-placeholder" : "sys-monitor"
-  const bgClass = role == "user" ? "bg-container" : ""
+export function MessageCard({role, content, className, key}: Props) {
   return (
-    <div className={`w-full ${bgClass} flex border-b border-border-header py-4`}>
-      {role == "user" ? <PersonIcon color="disabled"/> : <AssistantIcon color="disabled"/>}
-      <div className="ml-6 pr-28">
+    <div className={className} key={key}>
+      {role == "user" ?
+        <PersonIcon className="role" color="disabled"/>
+        :
+        <AssistantIcon className="role" color="disabled"/>
+      }
+      <div className="content">
         {role == "assistant" && content === "" ?
           <Rings
             height="30"
@@ -73,4 +77,6 @@ function toInnerHtml(content: string) {
 interface Props {
   role: "user" | "assistant"
   content: string
+  className: string
+  key: number
 }
