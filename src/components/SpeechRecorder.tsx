@@ -69,7 +69,7 @@ const SpeechRecorder = ({sendMessage}: Props) => {
     } catch (error) {
       console.error('Failed to send request to Whisper API', error);
     }
-  }, []);
+  }, [sendMessage]);
   
   const startConversation = useCallback(() => {
     setConversationOpen(true);
