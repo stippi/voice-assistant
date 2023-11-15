@@ -43,7 +43,7 @@ const App = () => {
   }, [setMessages]);
   
   return (
-    <div>
+    <div className="conversation">
       <Conversation chat={messages}/>
       <MessageBar sendMessage={sendMessage}/>
     </div>

@@ -1,0 +1,14 @@
+.message {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+.role {
+    margin: 1rem 0;
+}
+
+.content {
+
+}

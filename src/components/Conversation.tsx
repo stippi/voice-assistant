@@ -1,19 +1,18 @@
+import React from "react";
+import './Conversation.css'
+
 import {MessageCard} from "./MessageCard";
 import {Message} from "../model/message";
-import React from "react";
 
 export function Conversation({chat}: Props) {
-  return <div>
+  return <div className="messages">
     {chat && chat.map((message, index) => (
-      <div
-        className=""
+      <MessageCard
         key={index}
-      >
-        <MessageCard
-          role={message.role === "user" ? "user" : "assistant"}
-          content={message.content}
-        />
-      </div>
+        className="message"
+        role={message.role === "user" ? "user" : "assistant"}
+        content={message.content}
+      />
     ))}
   </div>
 }

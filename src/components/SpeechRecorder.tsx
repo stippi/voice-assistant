@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import './SpeechRecorder.css';
 
 import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
