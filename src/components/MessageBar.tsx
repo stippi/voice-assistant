@@ -1,37 +1,42 @@
 import React from "react";
+import './MessageBar.css';
 import { TextareaAutosize } from '@mui/base';
 import {IconButton} from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
+import SpeechRecorder from "./SpeechRecorder.tsx";
 
 export function MessageBar({ sendMessage }: Props) {
   
   const [message, setMessage] = React.useState("");
+  const defaultPlaceHolder = "Type to chat";
+  const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
   
   return (
-    <div className="fixed bottom-0 flex justify-center items-center w-full pb-4">
-      <div className="max-w-[500px] w-full">
-        <div className="relative">
-          <div className="absolute right-2 bottom-3 flex space-x-2">
-            
-            <IconButton
-              aria-label="send message"
-              onClick={() => {
-                sendMessage(message)
-                setMessage("")
-              }}
-            >
-              <SendIcon />
-            </IconButton>
-          </div>
-          <TextareaAutosize
-            className=""
-            placeholder="Type to chat"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            minRows={1}
-            maxRows={10}
-          />
-        </div>
+    <div className="fixedBottom">
+      <div className="textContainer">
+        <TextareaAutosize
+          className="textArea"
+          placeholder={placeHolder}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          minRows={1}
+          maxRows={10}
+        />
+        <IconButton
+          className="sendButton"
+          aria-label="send message"
+          onClick={() => {
+            sendMessage(message)
+            setMessage("")
+          }}
+        >
+          <SendIcon />
+        </IconButton>
+        <SpeechRecorder
+          sendMessage={sendMessage}
+          setTranscript={setPlaceHolder}
+          defaultMessage={defaultPlaceHolder}
+        />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import SpeechRecorder from "./components/SpeechRecorder";
+import './App.css';
 import {Conversation} from "./components/Conversation";
 import {Message} from "./model/message";
 import {MessageBar} from "./components/MessageBar.tsx";
@@ -46,7 +46,6 @@ const App = () => {
     <div>
       <Conversation chat={messages}/>
       <MessageBar sendMessage={sendMessage}/>
-      <SpeechRecorder sendMessage={sendMessage}/>
     </div>
   );
 };
