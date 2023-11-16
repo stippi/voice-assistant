@@ -6,6 +6,7 @@ import {MessageBar} from "./components/MessageBar.tsx";
 import OpenAI from "openai";
 import OpenAIConfig from "./OpenAIConfig.ts";
 import {ChatCompletionAssistantMessageParam} from "openai/resources";
+import splitIntoSentences from "./utils/splitSentences.ts";
 
 const openai = new OpenAI(OpenAIConfig);
 
@@ -66,15 +67,16 @@ const streamChatCompletion = async (message, currentMessages, setMessages, strea
     if (!audible) {
       return;
     }
-    const sentences = content.slice(lastPlayedOffset).split(/(?<=[.!?])\s/);
+    const sentences = splitIntoSentences(content.slice(lastPlayedOffset), ['.', '!', '?', '\n'], 30);
     const lastSentence = includeLast ? sentences.length : sentences.length - 1;
       // -1, since the last sentence might be incomplete
     for (let i = 0; i < lastSentence; i++) {
       const sentence = sentences[i];
       if (sentence.trim()) {
+        //console.log(`playing segment "${sentence}"`);
         sentenceQueue.push(sentence);
         lastPlayedOffset += sentence.length;
-        if (!isAudioPlaying && sentenceQueue.length > 0) {
+        if (!isAudioPlaying) {
           isAudioPlaying = true;
           playSentencesFromQueue().catch(error => {
             console.error('Failed to play sentences', error);
