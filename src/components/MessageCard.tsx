@@ -75,8 +75,33 @@ function removeHTMLTags(str) {
 }
 
 function wrapParagraphs(str) {
-  // Wrap in <p> tags
-  return str.replace(/(.+)(\n|$)/g, "<p>$1</p>");
+  const lines = str.split('\n');
+  let html = '';
+  let inList = false;
+  
+  for (const line of lines) {
+    const listMatch = line.match(/^(\d+)\. (.*)/);
+    
+    if (listMatch) {
+      if (!inList) {
+        html += '<ol style="list-style: none; padding-left: 0;">';
+        inList = true;
+      }
+      html += `<li><span class="list-number">${listMatch[1]}.</span> ${listMatch[2]}</li>`;
+    } else {
+      if (inList) {
+        html += '</ol>';
+        inList = false;
+      }
+      html += line.length > 0 ? `<p>${line}</p>` : '';
+    }
+  }
+  
+  if (inList) {
+    html += '</ol>';
+  }
+  
+  return html;
 }
 
 function toInnerHtml(content: string) {

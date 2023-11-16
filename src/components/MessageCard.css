@@ -12,3 +12,15 @@
 .content {
 
 }
+
+.list-number {
+    float: left;
+    margin-left: -35px;
+    width: 25px;
+    text-align: right;
+    color: #666;
+}
+
+li {
+    clear: both;
+}
