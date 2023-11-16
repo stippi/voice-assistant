@@ -11,6 +11,14 @@ export function MessageBar({ sendMessage }: Props) {
   const defaultPlaceHolder = "Type to chat";
   const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
   
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !message.includes('\n')) {
+      e.preventDefault();
+      sendMessage(message, false);
+      setMessage('');
+    }
+  };
+  
   return (
     <div className="fixedBottom">
       <div className="textContainer">
@@ -19,13 +27,15 @@ export function MessageBar({ sendMessage }: Props) {
           placeholder={placeHolder}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
           minRows={1}
           maxRows={10}
         />
         <IconButton
           className="sendButton"
           aria-label="send message"
-          onClick={() => {
+          onMouseDown={(event) => {
+            event.preventDefault();
             sendMessage(message, false);
             setMessage("");
           }}
