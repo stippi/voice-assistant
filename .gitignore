@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # Secrets
-src/OpenAIConfig.ts
+src/secrets.ts

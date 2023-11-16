@@ -5,9 +5,9 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
-import OpenAIConfig from "./../OpenAIConfig.ts";
+import {OpenAiConfig} from "../secrets.ts";
 
-const openai = new OpenAI(OpenAIConfig);
+const openai = new OpenAI(OpenAiConfig);
 
 const mimeType = 'audio/webm';
 const silenceTimeout = 1500;
