@@ -7,18 +7,32 @@ import OpenAI from "openai";
 import OpenAIConfig from "./OpenAIConfig.ts";
 import {ChatCompletionAssistantMessageParam} from "openai/resources";
 import splitIntoSentences from "./utils/splitSentences.ts";
+import {Location, LocationInfo} from "./model/location";
+import getLocation from "./utils/getLocation.ts";
 
 const openai = new OpenAI(OpenAIConfig);
 
 const initialMessages: Message[] = []
+const location: LocationInfo = {};
+
+const generateLocationSentence = () => {
+  getLocation(location);
+  if (!location.location) {
+    return "";
+  }
+  return `- The user is located in ${location.location.city}, ${location.location.region}, ${location.location.country}.`;
+}
 
 const generateSystemMessage = () => {
   const currentTimeAndDate = new Date().toLocaleString('en-US');
   return {
     role: "system",
-    content: `You are a helpful assistant.\n
+    content: `You are a helpful assistant.
+The user may optionally activate you by voice, which will trigger a recording and subsequent transcription of their speech.
+Understand that this may result in garbled or incomplete messages. If this happens, you may ask the user to repeat themselves.\n
 You have access to some realtime data as provided below:\n
-- The current time and date is ${currentTimeAndDate}.`
+- The current time and date is ${currentTimeAndDate}.
+${generateLocationSentence()}`
   };
 }
 
