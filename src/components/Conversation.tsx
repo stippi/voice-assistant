@@ -5,15 +5,18 @@ import {MessageCard} from "./MessageCard";
 import {Message} from "../model/message";
 
 export function Conversation({chat}: Props) {
+  const visibleRoles = ["user", "assistant"];
   return <div className="messages">
-    {chat && chat.filter(message => message.role !== "system").map((message, index) => (
-      <MessageCard
-        key={index}
-        className="message"
-        role={message.role === "user" ? "user" : "assistant"}
-        content={message.content}
-      />
-    ))}
+    {chat && chat.filter(message => visibleRoles.includes(message.role))
+      .map((message, index) => (
+        <MessageCard
+          key={index}
+          className="message"
+          role={message.role === "user" ? "user" : "assistant"}
+          content={message.content}
+        />
+      ))
+    }
   </div>
 }
 
