@@ -17,10 +17,12 @@ export default function getLocation(info: LocationInfo) {
       info.location = {
         city: data.address.city || data.address.town || data.address.village,
         region: data.address.state || data.address.county || data.address.province,
-        country: data.address.country
+        country: data.address.country,
+        latitude: lat,
+        longitude: lng,
       }
       
-      console.log(`got device location: ${info.location.city}, ${info.location.region}, ${info.location.country}`);
+      console.log("got device location", info.location);
     }, (error) => {
       console.error("Error Code = " + error.code + " - " + error.message);
     });
