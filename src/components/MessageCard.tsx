@@ -57,6 +57,19 @@ function replaceDoubleAsterisks(str) {
   });
 }
 
+function replaceBlocks(str) {
+  let opening = true;
+  return str.replace(/```/g, () => {
+    if (opening) {
+      opening = false;
+      return '<pre><code>';
+    } else {
+      opening = true;
+      return '</code></pre>';
+    }
+  });
+}
+
 function removeHTMLTags(str) {
   return str.replace(/<.*?>/g, "");
 }
@@ -70,6 +83,7 @@ function toInnerHtml(content: string) {
   content = removeHTMLTags(content);
   content = replaceDoubleAsterisks(content);
   content = replaceAsterisks(content);
+  content = replaceBlocks(content);
   content = wrapParagraphs(content);
   return {__html: content}
 }
