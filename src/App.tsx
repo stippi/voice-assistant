@@ -10,12 +10,17 @@ import splitIntoSentences from "./utils/splitSentences.ts";
 
 const openai = new OpenAI(OpenAIConfig);
 
-const initialMessages: Message[] = [
-  {
+const initialMessages: Message[] = []
+
+const generateSystemMessage = () => {
+  const currentTimeAndDate = new Date().toLocaleString('en-US');
+  return {
     role: "system",
-    content: "You are a helpful assistant."
-  }
-]
+    content: `You are a helpful assistant.\n
+You have access to some realtime data as provided below:\n
+- The current time and date is ${currentTimeAndDate}.`
+  };
+}
 
 const streamChatCompletion = async (message, currentMessages, setMessages, stream, audible) => {
   let audioEndedPromise = null;
@@ -105,7 +110,7 @@ const App = () => {
       let newMessages: Message[] = [...currentMessages, {role: "user", content: message}, {role: "assistant", content: ""}];
       
       openai.chat.completions.create({
-        messages: newMessages as ChatCompletionAssistantMessageParam[],
+        messages: [ generateSystemMessage(), ...newMessages ] as ChatCompletionAssistantMessageParam[],
         model: "gpt-4-1106-preview",
         stream: true,
       }).then(async (stream) => {
