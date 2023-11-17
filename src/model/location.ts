@@ -1,4 +1,4 @@
-export type Location = {
+export type GeoLocation = {
   country: string,
   region: string,
   city: string,
@@ -7,6 +7,6 @@ export type Location = {
 }
 
 export type LocationInfo = {
-  location?: Location,
+  location?: GeoLocation,
   lastLoaded?: Date,
 }
