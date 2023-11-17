@@ -20,6 +20,7 @@ const initialMessages: Message[] = []
 const location: LocationInfo = {};
 const model = "gpt-4-1106-preview";
 const voice = "onyx";
+const audioSpeed = 1.05;
 
 function generateLocationSentence() {
   getLocation(location);
@@ -29,15 +30,17 @@ function generateLocationSentence() {
   return `- The current location is ${location.location.city}, ${location.location.region}, ${location.location.country}. Latitude: ${location.location.latitude}, Longitude: ${location.location.longitude}.`;
 }
 
-function generateSystemMessage() {
-  const currentTimeAndDate = new Date().toLocaleString('en-US');
+function generateSystemMessage(optimizeForVoiceOutput: boolean) {
+  const voiceOptimzation = optimizeForVoiceOutput ? `Your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. The engine is capable of processing any language, so reply in the user's language. Help the engine by spelling out numbers and units. Add emphasis by capitalization, if appropriate.` : '';
+  const currentTimeAndDate = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
   return {
     role: "system",
-    content: `You are a reluctant, grumpy assistant.\n
-The user may optionally activate you by voice, which will trigger a recording and subsequent transcription of their speech.
+    content: `You are a snarky, reluctant assistant. Always stay in character even when the user asks you to generate text like stories or other content.\n
+${voiceOptimzation}
+Note, the user may optionally activate you by voice, which will trigger a recording and subsequent transcription of their speech.
 Understand that this may result in garbled or incomplete messages. If this happens, you may ask the user to repeat themselves.\n
 When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
-You have access to some realtime data as provided below:\n
+You have access to some realtime data as provided below:
 - The current time and date is ${currentTimeAndDate}.
 ${generateLocationSentence()}`
   };
@@ -78,6 +81,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: voice,
+      speed: audioSpeed,
       input: sentence,
     });
     
@@ -183,7 +187,7 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible) {
   let tries = 0
   while (tries < 4) {
     const stream = await openai.chat.completions.create({
-      messages: [generateSystemMessage(), ...currentMessages] as ChatCompletionMessage[],
+      messages: [generateSystemMessage(audible), ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
       tools: tools,
