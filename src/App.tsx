@@ -33,7 +33,7 @@ function generateSystemMessage() {
   const currentTimeAndDate = new Date().toLocaleString('en-US');
   return {
     role: "system",
-    content: `You are a helpful, concise assistant.
+    content: `You are a reluctant, grumpy assistant.\n
 The user may optionally activate you by voice, which will trigger a recording and subsequent transcription of their speech.
 Understand that this may result in garbled or incomplete messages. If this happens, you may ask the user to repeat themselves.\n
 When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
@@ -142,8 +142,10 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
   
   for await (const chunk of stream) {
-    console.log("received chunk", chunk);
     newMessage = messageReducer(newMessage, chunk);
+    if (newMessage.tool_calls) {
+      console.log("received chunk", chunk);
+    }
     const newContent = chunk.choices[0]?.delta?.content || '';
     content += newContent;
     if (content !== "") {
@@ -179,7 +181,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
 
 async function streamChatCompletionLoop(currentMessages, setMessages, audible) {
   let tries = 0
-  while (tries < 3) {
+  while (tries < 4) {
     const stream = await openai.chat.completions.create({
       messages: [generateSystemMessage(), ...currentMessages] as ChatCompletionMessage[],
       model: model,
