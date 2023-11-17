@@ -9,7 +9,10 @@ import {OpenAiConfig} from "../secrets.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
+//const mimeType = 'audio/mp4';
+//const audioExt = 'mp4'
 const mimeType = 'audio/webm';
+const audioExt = 'webm'
 const silenceTimeout = 1500;
 
 const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhrase}: Props) => {
@@ -57,12 +60,12 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
   }, []);
   
   const sendToWhisperAPI = useCallback(async (audioChunks) => {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const audioBlob = new Blob(audioChunks, { type: mimeType });
     
     try {
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
-        file: await toFile(audioBlob, 'audio.webm', { type: mimeType })
+        file: await toFile(audioBlob, `audio.${audioExt}`, { type: mimeType })
       });
       sendMessage(transcription.text, true);
     } catch (error) {
@@ -123,6 +126,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
       if (/*event.results[i].isFinal
         &&*/ !conversationOpen
         && currentTranscript.toLowerCase().includes(triggerPhrase.toLowerCase())) {
+        console.log('conversation started by trigger word');
         startConversation();
       }
     }

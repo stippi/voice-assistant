@@ -23,6 +23,7 @@ export function MessageBar({ sendMessage }: Props) {
     <div className="fixedBottom">
       <div className="textContainer">
         <TextareaAutosize
+          name="Message input"
           className="textArea"
           placeholder={placeHolder}
           value={message}
