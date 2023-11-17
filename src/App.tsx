@@ -33,9 +33,10 @@ function generateSystemMessage() {
   const currentTimeAndDate = new Date().toLocaleString('en-US');
   return {
     role: "system",
-    content: `You are a helpful assistant.
+    content: `You are a helpful, concise assistant.
 The user may optionally activate you by voice, which will trigger a recording and subsequent transcription of their speech.
 Understand that this may result in garbled or incomplete messages. If this happens, you may ask the user to repeat themselves.\n
+When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
 You have access to some realtime data as provided below:\n
 - The current time and date is ${currentTimeAndDate}.
 ${generateLocationSentence()}`
@@ -141,6 +142,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
   
   for await (const chunk of stream) {
+    console.log("received chunk", chunk);
     newMessage = messageReducer(newMessage, chunk);
     const newContent = chunk.choices[0]?.delta?.content || '';
     content += newContent;
