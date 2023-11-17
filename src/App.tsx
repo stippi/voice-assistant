@@ -5,10 +5,7 @@ import {Message} from "./model/message";
 import {MessageBar} from "./components/MessageBar.tsx";
 import OpenAI from "openai";
 import {OpenAiConfig} from "./secrets.ts";
-import {
-  ChatCompletionChunk,
-  ChatCompletionMessage
-} from "openai/resources";
+import {ChatCompletionMessage} from "openai/resources";
 import splitIntoSentences from "./utils/splitSentences.ts";
 import {LocationInfo} from "./model/location";
 import getLocation from "./utils/getLocation.ts";
@@ -35,7 +32,7 @@ function generateSystemMessage(optimizeForVoiceOutput: boolean) {
   const currentTimeAndDate = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
   return {
     role: "system",
-    content: `You are a snarky, reluctant assistant. Always stay in character even when the user asks you to generate text like stories or other content.\n
+    content: `You are a snarky, reluctant and sometimes witty assistant. Always stay in character even when the user asks you to generate stories or other content.\n
 ${voiceOptimzation}
 Note, the user may optionally activate you by voice, which will trigger a recording and subsequent transcription of their speech.
 Understand that this may result in garbled or incomplete messages. If this happens, you may ask the user to repeat themselves.\n
@@ -44,34 +41,6 @@ You have access to some realtime data as provided below:
 - The current time and date is ${currentTimeAndDate}.
 ${generateLocationSentence()}`
   };
-}
-
-function messageReducer(previous: ChatCompletionMessage, item: ChatCompletionChunk): ChatCompletionMessage {
-  const reduce = (acc: any, delta: any) => {
-    acc = { ...acc };
-    for (const [key, value] of Object.entries(delta)) {
-      if (acc[key] === undefined || acc[key] === null) {
-        acc[key] = value;
-      } else if (typeof acc[key] === 'string' && typeof value === 'string') {
-        (acc[key] as string) += value;
-      } else if (typeof acc[key] === 'number' && typeof value === 'number') {
-        (acc[key] as number) = value;
-      } else if (Array.isArray(acc[key]) && Array.isArray(value)) {
-        const accArray = acc[key] as any[];
-        if (accArray.length !== value.length) {
-          throw new Error(`Array length mismatch for key ${key}: ${accArray.length} !== ${value.length}`);
-        }
-        for (let i = 0; i < value.length; i++) {
-          accArray[i] = reduce(accArray[i], value[i]);
-        }
-      } else if (typeof acc[key] === 'object' && typeof value === 'object') {
-        acc[key] = reduce(acc[key], value);
-      }
-    }
-    return acc;
-  };
-  
-  return reduce(previous, item.choices[0]!.delta) as ChatCompletionMessage;
 }
 
 async function streamChatCompletion(currentMessages, setMessages, stream, audible) {
@@ -118,7 +87,6 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
     isAudioPlaying = false;
   };
   
-  let newMessage = {} as ChatCompletionMessage;
   let content = "";
   let lastPlayedOffset = 0;
 
@@ -146,10 +114,6 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
   
   for await (const chunk of stream) {
-    newMessage = messageReducer(newMessage, chunk);
-    if (newMessage.tool_calls) {
-      console.log("received chunk", chunk);
-    }
     const newContent = chunk.choices[0]?.delta?.content || '';
     content += newContent;
     if (content !== "") {
@@ -160,15 +124,17 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
   playNextSentences(true);
   
+  const finalMessage = await stream.finalMessage()
+  currentMessages.push(finalMessage);
+
   // If there are no tool calls, we're done and can exit this loop
-  currentMessages.push(newMessage);
-  if (!newMessage.tool_calls) {
+  if (!finalMessage.tool_calls) {
     return;
   }
   
-  console.log('detected function call', newMessage.tool_calls);
+  console.log('detected function call', finalMessage.tool_calls);
   // For each tool call, we generate a new message with the role 'tool'.
-  for (const toolCall of newMessage.tool_calls) {
+  for (const toolCall of finalMessage.tool_calls) {
     if (toolCall.type !== "function") {
       continue;
     }
@@ -186,7 +152,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
 async function streamChatCompletionLoop(currentMessages, setMessages, audible) {
   let tries = 0
   while (tries < 4) {
-    const stream = await openai.chat.completions.create({
+    const stream = await openai.beta.chat.completions.stream({
       messages: [generateSystemMessage(audible), ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
