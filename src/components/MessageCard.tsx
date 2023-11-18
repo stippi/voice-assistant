@@ -6,6 +6,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import AssistantIcon from '@mui/icons-material/Assistant';
 
 export function MessageCard({role, content, className}: Props) {
+  // const user = "😀";
+  // const assistant = "🤖";
   return (
     <div className={className}>
       {role == "user" ?

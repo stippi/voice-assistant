@@ -31,6 +31,56 @@ export const tools: ChatCompletionTool[] = [
         required: ["latitude", "longitude"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "memorize",
+      description: "Store information to have it permanently available in future conversations",
+      parameters: {
+        type: "object",
+        properties: {
+          category: {
+            type: "string",
+            enum: [
+              'About the User',
+              'User Preferences',
+              'User Interests',
+              'Shared Knowledge',
+              'Agreed Facts',
+              'Other'
+            ]
+          },
+          information: { type: "string" }
+        },
+        required: ["category", "information"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_memory_entry",
+      description: "Erase the piece of information from the memory category",
+      parameters: {
+        type: "object",
+        properties: {
+          category: {
+            type: "string",
+            enum: [
+              'About the User',
+              'User Preferences',
+              'User Interests',
+              'Shared Knowledge',
+              'Agreed Facts',
+              'Other'
+            ]
+          },
+          information: { type: "string" }
+        },
+        required: ["category", "information"]
+      }
+    }
   }
 ];
 
@@ -41,6 +91,10 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       return await getCurrentWeather(args.latitude, args.longitude);
     case 'get_weather_forecast':
       return await getWeatherForecast(args.latitude, args.longitude);
+    case 'memorize':
+      return await memorize(args.category, args.information);
+    case 'delete_memory_entry':
+      return await deleteInformation(args.category, args.information);
     
     default:
       throw new Error(`Unknown function ${functionCall.name}`);
@@ -55,4 +109,45 @@ async function getCurrentWeather(lat: number, lon: number) {
 async function getWeatherForecast(lat: number, lon: number) {
   const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
   return await response.json();
+}
+
+function loadMemory() {
+  const memoryString = window.localStorage.getItem('memory');
+  if (memoryString) {
+    return JSON.parse(memoryString);
+  }
+  return {};
+}
+
+function saveMemory(memory: any) {
+  window.localStorage.setItem('memory', JSON.stringify(memory));
+  return { result: "information stored" };
+}
+
+async function memorize(category: string, information: string) {
+  console.log(`Memorizing: # ${category}\n${information.split('\n').map((line: string) => `- ${line}`).join('\n')}`);
+  
+  const memory = loadMemory();
+  
+  if (!Array.isArray(memory[category])) {
+    memory[category] = [];
+  }
+  memory[category].push(...information.split('\n'));
+
+  return saveMemory(memory);
+}
+
+async function deleteInformation(category: string, information: string) {
+  console.log(`Erasing memory: # ${category}: "${information}"`);
+  
+  const memory = loadMemory();
+  
+  for (let i = 0; i < memory[category].length; i++) {
+    if (memory[category][i].startsWith(information)) {
+      memory[category].splice(i, 1);
+      return saveMemory(memory);
+    }
+  }
+
+  return { result: "information not found in category" };
 }
