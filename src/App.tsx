@@ -2,21 +2,22 @@ import React from 'react';
 import './App.css';
 import {Conversation} from "./components/Conversation";
 import {Message} from "./model/message";
-import {MessageBar} from "./components/MessageBar.tsx";
+import {MessageBar} from "./components/MessageBar";
 import OpenAI from "openai";
-import {OpenAiConfig} from "./secrets.ts";
+import {OpenAiConfig} from "./secrets";
 import {ChatCompletionMessage} from "openai/resources";
-import splitIntoSentences from "./utils/splitSentences.ts";
+import splitIntoSentences from "./utils/splitSentences";
 import {LocationInfo} from "./model/location";
-import getLocation from "./utils/getLocation.ts";
-import {tools, callFunction} from "./utils/tools.ts";
+import getLocation from "./utils/getLocation";
+import {tools, callFunction} from "./utils/tools";
+import {Settings} from "./components/Settings";
 
 const openai = new OpenAI(OpenAiConfig);
 
 const initialMessages: Message[] = []
 const location: LocationInfo = {};
 const model = "gpt-4-1106-preview";
-const voice = "onyx";
+type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 const audioSpeed = 1.05;
 
 function generateLocationSentence() {
@@ -59,7 +60,7 @@ ${restoreMemory()}`
   };
 }
 
-async function streamChatCompletion(currentMessages, setMessages, stream, audible) {
+async function streamChatCompletion(currentMessages, setMessages, stream, audible, voice) {
   let audioEndedPromise = null;
   
   const playSentence = async (sentence) => {
@@ -165,7 +166,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
 }
 
-async function streamChatCompletionLoop(currentMessages, setMessages, audible) {
+async function streamChatCompletionLoop(currentMessages, setMessages, audible, voice) {
   let tries = 0
   while (tries < 4) {
     const stream = await openai.beta.chat.completions.stream({
@@ -174,7 +175,7 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible) {
       stream: true,
       tools: tools,
     })
-    await streamChatCompletion(currentMessages, setMessages, stream, audible);
+    await streamChatCompletion(currentMessages, setMessages, stream, audible, voice);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -187,6 +188,8 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible) {
 const App = () => {
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const responding = React.useRef(false);
+  const voice = React.useRef<Voice>("onyx");
+  const [openMic, setOpenMic] = React.useState(true);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
     if (responding.current) {
@@ -197,7 +200,7 @@ const App = () => {
     setMessages(currentMessages => {
       const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
       
-      streamChatCompletionLoop(newMessages, setMessages, audible)
+      streamChatCompletionLoop(newMessages, setMessages, audible, voice.current)
         .then(() => {
           setMessages(newMessages)
         })
@@ -212,12 +215,13 @@ const App = () => {
       // Return the intermediate state to update conversation UI
       return [...newMessages, {role: "assistant", content: ""}];
     });
-  }, [setMessages, responding]);
+  }, [setMessages]);
   
   return (
     <div className="conversation">
       <Conversation chat={messages}/>
-      <MessageBar sendMessage={sendMessage}/>
+      <MessageBar sendMessage={sendMessage} openMic={openMic}/>
+      <Settings voiceRef={voice} openMic={openMic} setOpenMic={setOpenMic}/>
     </div>
   );
 };
