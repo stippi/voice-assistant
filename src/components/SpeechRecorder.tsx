@@ -15,7 +15,7 @@ const mimeType = 'audio/webm';
 const audioExt = 'webm'
 const silenceTimeout = 1500;
 
-const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhrase}: Props) => {
+const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhrase, openMic}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
@@ -94,7 +94,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
     
     recognition.current.onstart = () => {
       setListening(true);
-      shouldRestartRecognition.current = true;
+      shouldRestartRecognition.current = openMic;
     };
     
     recognition.current.onend = () => {
@@ -105,15 +105,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
       }
     };
     
-    console.log('starting speech recognition')
-    recognition.current.start();
+    if (openMic) {
+      console.log('starting speech recognition')
+      recognition.current.start();
+    }
     
     return () => {
       console.log('stopping speech recognition')
       shouldRestartRecognition.current = false;
       recognition.current.stop();
     };
-  }, []);
+  }, [openMic]);
   
   const handleResult = useCallback((event) => {
     if (silenceTimer !== null) {
@@ -156,14 +158,14 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
     <div>
       {conversationOpen && <IconButton
         area-label="stop conversation"
-        color={listening ? "error" : "secondary"}
+        color="error"
         onClick={stopConversation}
       >
         <RecordVoiceOverIcon />
       </IconButton>}
       {!conversationOpen && <IconButton
         area-label="start conversation"
-        color={listening ? "error" : "secondary"}
+        color={listening ? "error" : "default"}
         onClick={startConversation}
       >
         <MicIcon />
@@ -177,6 +179,7 @@ interface Props {
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
   triggerPhrase: string;
+  openMic: boolean;
 }
 
 export default SpeechRecorder;
