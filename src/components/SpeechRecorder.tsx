@@ -10,10 +10,25 @@ import {useSettings} from "../contexts/SettingsContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
-//const mimeType = 'audio/mp4';
-//const audioExt = 'mp4'
-const mimeType = 'audio/webm';
-const audioExt = 'webm'
+let mimeType;
+let audioExt;
+
+if (MediaRecorder.isTypeSupported('audio/webm')) {
+  mimeType = 'audio/webm';
+  audioExt = 'webm';
+} else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+  mimeType = 'audio/mp4';
+  audioExt = 'mp4';
+} else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+  mimeType = 'audio/ogg';
+  audioExt = 'ogg';
+} else if (MediaRecorder.isTypeSupported('audio/wav')) {
+  mimeType = 'audio/wav';
+  audioExt = 'wav';
+} else {
+  console.error('No supported MIME type for MediaRecorder found.');
+}
+
 const silenceTimeout = 1500;
 
 const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingRef}: Props) => {
