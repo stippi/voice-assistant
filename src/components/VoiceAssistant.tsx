@@ -14,7 +14,7 @@ import {useSettings} from "../contexts/SettingsContext.tsx";
 const openai = new OpenAI(OpenAiConfig);
 
 const model = "gpt-4-1106-preview";
-const audioSpeed = 1.05;
+const audioSpeed = 1.0;
 
 async function streamChatCompletion(currentMessages, setMessages, stream, audible, voice) {
   let audioEndedPromise = null;
@@ -68,9 +68,9 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
       return;
     }
     const sentences = splitIntoSentences(content.slice(lastPlayedOffset), ['.', '!', '?', '\n'], 30);
-    const lastSentence = includeLast ? sentences.length : sentences.length - 1;
+    const sentenceCount = includeLast ? sentences.length : sentences.length - 1;
       // -1, since the last sentence might be incomplete
-    for (let i = 0; i < lastSentence; i++) {
+    for (let i = 0; i < sentenceCount; i++) {
       const sentence = sentences[i];
       if (sentence.trim()) {
         //console.log(`playing segment "${sentence}"`);
