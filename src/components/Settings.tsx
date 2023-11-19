@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
 import SpeedIcon from '@mui/icons-material/Speed';
-import {useSettings, Voice} from "../contexts/SettingsContext.tsx";
+import {useSettings, Voice, Personality} from "../contexts/SettingsContext.tsx";
 
 const audioSpeedMarks = [
   {
@@ -38,6 +38,7 @@ export function Settings({}: Props) {
   const [open, setOpen] = React.useState(false);
   
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
+  const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
   
   return (
     <div className="fixedTopRight">
@@ -68,6 +69,18 @@ export function Settings({}: Props) {
             helperText="Use something reliably recognized"
             variant="filled"
           />
+          <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
+            <InputLabel>Personality</InputLabel>
+            <Select
+              value={settings.personality}
+              label="Personality"
+              onChange={(event) => {setSettings({ ...settings, personality: event.target.value as Personality });}}
+            >
+              {personalities.map((personality, index) => (
+                <MenuItem key={index} value={personality.toLowerCase()}>{personality}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
             <InputLabel>Voice</InputLabel>
             <Select

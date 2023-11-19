@@ -2,8 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
+export type Personality = "curious" | "professional" | "friendly" | "peppy" | "snarky" | "silly" | "zen";
+
 export type Settings = {
   voice: Voice;
+  personality: Personality;
   openMic: boolean;
   triggerPhrase: string;
   audioSpeed: number;
@@ -12,6 +15,7 @@ export type Settings = {
 
 const defaultSettings: Settings = {
   voice: "onyx",
+  personality: "snarky",
   openMic: true,
   triggerPhrase: "Computer",
   audioSpeed: 1,
