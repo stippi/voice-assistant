@@ -1,5 +1,6 @@
-import getLocation from "./getLocation.ts";
-import {LocationInfo} from "../model/location.ts";
+import getLocation from "./getLocation";
+import {LocationInfo} from "../model/location";
+import {Personality} from "../contexts/SettingsContext";
 
 const location: LocationInfo = {};
 
@@ -25,15 +26,26 @@ function restoreMemory() {
   return result;
 }
 
-export default function generateSystemMessage(optimizeForVoiceOutput: boolean) {
-  const voiceOptimzation = optimizeForVoiceOutput ? `Note, the user's last message was transcribed from their speech and may be incomplete or garbled.
+const personalities = {
+  professional: "You are a professional, helpful assistant.",
+  friendly: "You are a friendly, helpful assistant.",
+  curious: "You are a curious, eager and helpful assistant.",
+  peppy: "You are a peppy, enthusiastic assistant.",
+  snarky: "You are a snarky, reluctant and sometimes witty assistant.",
+  silly: "You are a silly, but well meaning, often flimsy assistant.",
+  zen: "You are an endlessly patient, helpful and wise assistant."
+}
+
+export default function generateSystemMessage(optimizeForVoiceOutput: boolean, personality: Personality) {
+  const voiceOptimization = optimizeForVoiceOutput ? `Note, the user's last message was transcribed from their speech and may be incomplete or garbled.
 If you think that is the case, just ask the user to clarify.
 Also, your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. The engine is capable of processing any language, so reply in the user's language. Help the engine by spelling out numbers and units.` : '';
   const currentTimeAndDate = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+  const personalityString = personalities[personality];
   return {
     role: "system",
-    content: `You are a snarky, reluctant and sometimes witty assistant. Always stay in character even when the user asks you to generate stories or other content.\n
-${voiceOptimzation}\n
+    content: `${personalityString} Always stay in character even when the user asks you to generate stories or other content.\n
+${voiceOptimization}\n
 Remember to memorize information that seems like it could be relevant in the future, also when only mentioned in passing.\n
 When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
 You have access to some realtime data as provided below:

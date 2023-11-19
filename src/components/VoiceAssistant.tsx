@@ -128,7 +128,7 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible, s
   let tries = 0
   while (tries < 4) {
     const stream = await openai.beta.chat.completions.stream({
-      messages: [generateSystemMessage(audible), ...currentMessages] as ChatCompletionMessage[],
+      messages: [generateSystemMessage(audible, settingsRef.current.personality), ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
       tools: tools,
