@@ -52,6 +52,15 @@ export function Settings({}: Props) {
               onChange={() => setSettings({ ...settings, openMic: !settings.openMic })}
             />
           </FormControl>
+          <FormControl>
+            <FormControlLabel
+              checked={settings.useWhisper}
+              control={<Switch color="primary" />}
+              label="Use Whipser Transcription"
+              labelPlacement="end"
+              onChange={() => setSettings({ ...settings, useWhisper: !settings.useWhisper })}
+            />
+          </FormControl>
           <TextField
             label="Trigger phrase"
             value={settings.triggerPhrase}
