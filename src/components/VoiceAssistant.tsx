@@ -169,15 +169,16 @@ export default function VoiceAssistant() {
         })
         .catch(error => {
           console.error('Failed to stream chat completion', error);
-          setMessages([...currentMessages, {role: "user", content: message}])
+          setMessages([...currentMessages, {role: "user", content: message}]);
         })
         .finally(() => {
-          console.log("response finished")
+          console.log("response finished");
           if (audible) {
             // If "audible" is true, block here until all audio has finished playing,
             // before setting respondingRef.current to false.
             const checkAudioCompletion = () => {
               if (!isAudioPlayingRef.current) {
+                console.log("audio finished");
                 respondingRef.current = false;
               } else {
                 setTimeout(checkAudioCompletion, 100);
