@@ -18,16 +18,16 @@ import {useSettings, Voice} from "../contexts/SettingsContext.tsx";
 
 const audioSpeedMarks = [
   {
-    value: -2,
-    label: '-2',
+    value: 0.25,
+    label: '0.25',
   },
   {
-    value: 1,
-    label: '1',
+    value: 1.0,
+    label: '1.0',
   },
   {
-    value: 2,
-    label: '2',
+    value: 2.0,
+    label: '2.0',
   },
 ];
 
@@ -72,16 +72,17 @@ export function Settings({}: Props) {
             </Select>
           </FormControl>
           <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
+            <SpeedIcon/>
             <Slider
               aria-label="Custom marks"
               value={settings.audioSpeed}
               onChange={(event, newValue) => setSettings({ ...settings, audioSpeed: newValue as number })}
-              min={-2}
-              max={2}
+              min={0.25}
+              max={2.0}
+              step={0.05}
               valueLabelDisplay="auto"
               marks={audioSpeedMarks}
             />
-            <SpeedIcon />
           </Stack>
         </div>)
         }
