@@ -27,6 +27,7 @@
     margin: auto 0;
     border: none;
     resize: none;
+    font-size: 16px;
 }
 
 .textArea:focus {
