@@ -7,7 +7,8 @@
     background-color: #fff;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 
-    transition: width 0.2s ease-out, height 0.2s ease-out;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
 }
 
 .settingsContainer {
@@ -16,6 +17,12 @@
     position: relative;
     display: flex;
     align-items: start;
+
+    overflow: hidden;
+}
+
+.open {
+    opacity: 0;
 }
 
 .settingsMenu {
@@ -23,11 +30,4 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-}
-
-.settingsMenuItem {
-    display: block;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid #ccc;
-    cursor: pointer;
 }
