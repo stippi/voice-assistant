@@ -7,7 +7,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  SelectChangeEvent, Switch
+  SelectChangeEvent, Switch, TextField
 } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
 import {useSettings, Voice} from "../contexts/SettingsContext.tsx";
@@ -36,6 +36,13 @@ export function Settings({}: Props) {
               onChange={() => setSettings({ ...settings, openMic: !settings.openMic })}
             />
           </FormControl>
+          <TextField
+            label="Trigger phrase"
+            value={settings.triggerPhrase}
+            onChange={(event) => setSettings({ ...settings, triggerPhrase: event.target.value })}
+            helperText="Use something reliably recognized"
+            variant="filled"
+          />
           <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
             <InputLabel>Voice</InputLabel>
             <Select
