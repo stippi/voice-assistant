@@ -15,7 +15,7 @@ const openai = new OpenAI(OpenAiConfig);
 
 const model = "gpt-4-1106-preview";
 
-async function streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef) {
+async function streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef, isAudioPlayingRef) {
   let audioEndedPromise = null;
   
   const playSentence = async (sentence) => {
@@ -34,15 +34,18 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
       await audioEndedPromise;
     }
     
+    isAudioPlayingRef.current = true;
     const audio = new Audio(url);
     audioEndedPromise = new Promise((resolve) => {
       audio.onended = () => {
         URL.revokeObjectURL(url);
+        isAudioPlayingRef.current = false;
         resolve();
       };
     });
     
     audio.play().catch(error => {
+      isAudioPlayingRef.current = false;
       console.error('Failed to play audio', error);
     });
   };
@@ -121,7 +124,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
 }
 
-async function streamChatCompletionLoop(currentMessages, setMessages, audible, settingsRef) {
+async function streamChatCompletionLoop(currentMessages, setMessages, audible, settingsRef, isAudioPlayingRef) {
   let tries = 0
   while (tries < 4) {
     const stream = await openai.beta.chat.completions.stream({
@@ -130,7 +133,7 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible, s
       stream: true,
       tools: tools,
     })
-    await streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef);
+    await streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef, isAudioPlayingRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -142,7 +145,8 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible, s
 
 export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
-  const responding = React.useRef(false);
+  const respondingRef = React.useRef(false);
+  const isAudioPlayingRef = React.useRef(false);
   const {settings} = useSettings();
   const settingsRef = React.useRef(settings);
   
@@ -151,15 +155,15 @@ export default function VoiceAssistant() {
   }, [settings]);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
-    if (responding.current) {
+    if (respondingRef.current) {
       console.log("Already responding to a message, ignoring");
       return;
     }
-    responding.current = true;
+    respondingRef.current = true;
     setMessages(currentMessages => {
       const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, isAudioPlayingRef)
         .then(() => {
           setMessages(newMessages)
         })
@@ -168,7 +172,21 @@ export default function VoiceAssistant() {
           setMessages([...currentMessages, {role: "user", content: message}])
         })
         .finally(() => {
-          responding.current = false;
+          console.log("response finished")
+          if (audible) {
+            // If "audible" is true, block here until all audio has finished playing,
+            // before setting respondingRef.current to false.
+            const checkAudioCompletion = () => {
+              if (!isAudioPlayingRef.current) {
+                respondingRef.current = false;
+              } else {
+                setTimeout(checkAudioCompletion, 100);
+              }
+            };
+            checkAudioCompletion();
+          } else {
+            respondingRef.current = false;
+          }
         });
       
       // Return the intermediate state to update conversation UI
@@ -179,7 +197,7 @@ export default function VoiceAssistant() {
   return (
     <>
       <Conversation chat={messages}/>
-      <MessageBar sendMessage={sendMessage}/>
+      <MessageBar sendMessage={sendMessage} respondingRef={respondingRef}/>
       <Settings/>
     </>
   );
