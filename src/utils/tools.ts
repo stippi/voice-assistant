@@ -1,5 +1,8 @@
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
 import {OpenWeatherMapApiKey} from "../secrets.ts";
+import { create, all } from 'mathjs'
+
+const math = create(all, {})
 
 export const tools: ChatCompletionTool[] = [
   {
@@ -29,6 +32,20 @@ export const tools: ChatCompletionTool[] = [
           longitude: { type: "number" }
         },
         required: ["latitude", "longitude"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "evaluate_expression",
+      description: "Evaluate a mathematical expression in the mathjs syntax",
+      parameters: {
+        type: "object",
+        properties: {
+          expression: { type: "string" }
+        },
+        required: ["expression"]
       }
     }
   },
@@ -91,6 +108,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       return await getCurrentWeather(args.latitude, args.longitude);
     case 'get_weather_forecast':
       return await getWeatherForecast(args.latitude, args.longitude);
+    case 'evaluate_expression':
+      return await evaluateExpression(args.expression);
     case 'memorize':
       return await memorize(args.category, args.information);
     case 'delete_memory_entry':
@@ -109,6 +128,14 @@ async function getCurrentWeather(lat: number, lon: number) {
 async function getWeatherForecast(lat: number, lon: number) {
   const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
   return await response.json();
+}
+
+async function evaluateExpression(expression: string) {
+  try {
+    return { result: math.evaluate(expression) }
+  } catch (error) {
+    return { error: error.message }
+  }
 }
 
 function loadMemory() {
