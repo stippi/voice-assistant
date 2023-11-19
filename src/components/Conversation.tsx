@@ -8,9 +8,11 @@ export function Conversation({chat}: Props) {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
   
   React.useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current!.scrollIntoView({ behavior: "smooth" });
-    }
+    requestAnimationFrame(() => {
+      if (messagesEndRef.current) {
+          messagesEndRef.current!.scrollIntoView({ behavior: "smooth" });
+      }
+    });
   }, [chat]);
   const visibleRoles = ["user", "assistant"];
   const filteredChat = chat && chat.filter(message => visibleRoles.includes(message.role) && message.content !== null);
@@ -23,7 +25,7 @@ export function Conversation({chat}: Props) {
           className="message"
           role={message.role === "user" ? "user" : "assistant"}
           content={message.content || ""}
-          ref={index === filteredChat.length - 1 ? messagesEndRef : null}
+          ref={index === filteredChat.length - 1 ? messagesEndRef : undefined}
         />
       ))
     }
