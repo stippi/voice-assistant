@@ -14,16 +14,15 @@ import {useSettings} from "../contexts/SettingsContext.tsx";
 const openai = new OpenAI(OpenAiConfig);
 
 const model = "gpt-4-1106-preview";
-const audioSpeed = 1.0;
 
-async function streamChatCompletion(currentMessages, setMessages, stream, audible, voice) {
+async function streamChatCompletion(currentMessages, setMessages, stream, audible, voice, speed) {
   let audioEndedPromise = null;
   
   const playSentence = async (sentence) => {
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: voice,
-      speed: audioSpeed,
+      speed: speed,
       input: sentence,
     });
     
@@ -122,7 +121,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
   }
 }
 
-async function streamChatCompletionLoop(currentMessages, setMessages, audible, voice) {
+async function streamChatCompletionLoop(currentMessages, setMessages, audible, voice, speed) {
   let tries = 0
   while (tries < 4) {
     const stream = await openai.beta.chat.completions.stream({
@@ -131,7 +130,7 @@ async function streamChatCompletionLoop(currentMessages, setMessages, audible, v
       stream: true,
       tools: tools,
     })
-    await streamChatCompletion(currentMessages, setMessages, stream, audible, voice);
+    await streamChatCompletion(currentMessages, setMessages, stream, audible, voice, speed);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -160,7 +159,7 @@ export default function VoiceAssistant() {
     setMessages(currentMessages => {
       const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef.current.voice)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef.current.voice, settingsRef.current.audioSpeed)
         .then(() => {
           setMessages(newMessages)
         })

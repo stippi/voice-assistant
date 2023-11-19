@@ -6,12 +6,14 @@ export type Settings = {
   voice: Voice;
   openMic: boolean;
   triggerPhrase: string;
+  audioSpeed?: number;
 }
 
 const defaultSettings: Settings = {
   voice: "onyx",
   openMic: true,
   triggerPhrase: "computer",
+  audioSpeed: 1,
 }
 let initialSettings = defaultSettings;
 

@@ -7,10 +7,29 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  SelectChangeEvent, Switch, TextField
+  Slider,
+  Stack,
+  Switch,
+  TextField
 } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
+import SpeedIcon from '@mui/icons-material/Speed';
 import {useSettings, Voice} from "../contexts/SettingsContext.tsx";
+
+const audioSpeedMarks = [
+  {
+    value: -2,
+    label: '-2',
+  },
+  {
+    value: 1,
+    label: '1',
+  },
+  {
+    value: 2,
+    label: '2',
+  },
+];
 
 export function Settings({}: Props) {
   
@@ -19,9 +38,6 @@ export function Settings({}: Props) {
   const [open, setOpen] = React.useState(false);
   
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
-  const handleChange = (event: SelectChangeEvent) => {
-    setSettings({ ...settings, voice: event.target.value as Voice });
-  };
   
   return (
     <div className="fixedTopRight">
@@ -48,13 +64,25 @@ export function Settings({}: Props) {
             <Select
               value={settings.voice}
               label="Voice"
-              onChange={handleChange}
+              onChange={(event) => {setSettings({ ...settings, voice: event.target.value as Voice });}}
             >
               {voices.map((voice, index) => (
                 <MenuItem key={index} value={voice.toLowerCase()}>{voice}</MenuItem>
               ))}
             </Select>
           </FormControl>
+          <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
+            <Slider
+              aria-label="Custom marks"
+              value={settings.audioSpeed}
+              onChange={(event, newValue) => setSettings({ ...settings, audioSpeed: newValue as number })}
+              min={-2}
+              max={2}
+              valueLabelDisplay="auto"
+              marks={audioSpeedMarks}
+            />
+            <SpeedIcon />
+          </Stack>
         </div>)
         }
         <IconButton
