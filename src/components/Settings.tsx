@@ -1,4 +1,4 @@
-import React, {MutableRefObject} from "react";
+import React from "react";
 import './Settings.css';
 import {
   FormControl,
@@ -10,18 +10,17 @@ import {
   SelectChangeEvent, Switch
 } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
+import {useSettings, Voice} from "../contexts/SettingsContext.tsx";
 
-type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-
-export function Settings({ voiceRef, openMic, setOpenMic }: Props) {
+export function Settings({}: Props) {
+  
+  const { settings, setSettings } = useSettings();
   
   const [open, setOpen] = React.useState(false);
-  const [voice, setVoice] = React.useState<Voice>(voiceRef.current);
   
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
   const handleChange = (event: SelectChangeEvent) => {
-    voiceRef.current = event.target.value as Voice;
-    setVoice(voiceRef.current);
+    setSettings({ ...settings, voice: event.target.value as Voice });
   };
   
   return (
@@ -30,17 +29,17 @@ export function Settings({ voiceRef, openMic, setOpenMic }: Props) {
         {open && (<div className="settingsMenu">
           <FormControl>
             <FormControlLabel
-              checked={openMic}
+              checked={settings.openMic}
               control={<Switch color="primary" />}
               label="Open Mic"
               labelPlacement="end"
-              onChange={() => setOpenMic(!openMic)}
+              onChange={() => setSettings({ ...settings, openMic: !settings.openMic })}
             />
           </FormControl>
           <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
             <InputLabel>Voice</InputLabel>
             <Select
-              value={voice}
+              value={settings.voice}
               label="Voice"
               onChange={handleChange}
             >
@@ -67,7 +66,4 @@ export function Settings({ voiceRef, openMic, setOpenMic }: Props) {
 }
 
 interface Props {
-  voiceRef: MutableRefObject<Voice>;
-  openMic: boolean;
-  setOpenMic: (openMic: boolean) => void;
 }

@@ -6,6 +6,7 @@ import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
 import {OpenAiConfig} from "../secrets.ts";
+import {useSettings} from "../contexts/SettingsContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -15,13 +16,15 @@ const mimeType = 'audio/webm';
 const audioExt = 'webm'
 const silenceTimeout = 1500;
 
-const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhrase, openMic}: Props) => {
+const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
   
   const shouldRestartRecognition = useRef(false);
   const recognition = useRef(null);
+  
+  const { settings, setSettings } = useSettings();
   
   let mediaRecorder;
   let audioChunks = [];
@@ -94,7 +97,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
     
     recognition.current.onstart = () => {
       setListening(true);
-      shouldRestartRecognition.current = openMic;
+      shouldRestartRecognition.current = settings.openMic;
     };
     
     recognition.current.onend = () => {
@@ -105,7 +108,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
       }
     };
     
-    if (openMic) {
+    if (settings.openMic) {
       console.log('starting speech recognition')
       recognition.current.start();
     }
@@ -115,7 +118,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
       shouldRestartRecognition.current = false;
       recognition.current.stop();
     };
-  }, [openMic]);
+  }, [settings]);
   
   const handleResult = useCallback((event) => {
     if (silenceTimer !== null) {
@@ -127,7 +130,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
       setTranscript(currentTranscript);
       if (/*event.results[i].isFinal
         &&*/ !conversationOpen
-        && currentTranscript.toLowerCase().includes(triggerPhrase.toLowerCase())) {
+        && currentTranscript.toLowerCase().includes(settings.triggerPhrase.toLowerCase())) {
         console.log('conversation started by trigger word');
         startConversation();
       }
@@ -140,7 +143,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, triggerPhra
       setTranscript(defaultMessage);
     }, silenceTimeout);
     setSilenceTimer(newTimer);
-  }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript]);
+  }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript, settings]);
   
   useEffect(() => {
     if (recognition.current) {
@@ -178,8 +181,6 @@ interface Props {
   sendMessage: (message: string, audible: boolean) => void;
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
-  triggerPhrase: string;
-  openMic: boolean;
 }
 
 export default SpeechRecorder;
