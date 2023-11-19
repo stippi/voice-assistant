@@ -6,20 +6,27 @@ export type Settings = {
   voice: Voice;
   openMic: boolean;
   triggerPhrase: string;
-  audioSpeed?: number;
+  audioSpeed: number;
+  useWhisper: boolean;
 }
 
 const defaultSettings: Settings = {
   voice: "onyx",
   openMic: true,
-  triggerPhrase: "computer",
+  triggerPhrase: "Computer",
   audioSpeed: 1,
+  useWhisper: true,
 }
 let initialSettings = defaultSettings;
 
 const savedSettings = localStorage.getItem('voice-assistant-settings');
 if (savedSettings) {
   initialSettings = JSON.parse(savedSettings);
+  for (const key in defaultSettings) {
+    if (!initialSettings.hasOwnProperty(key)) {
+      initialSettings[key] = defaultSettings[key];
+    }
+  }
 }
 
 type SettingsContextType = {

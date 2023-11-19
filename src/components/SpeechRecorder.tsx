@@ -25,13 +25,21 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
   const recognition = useRef(null);
   
   const { settings, setSettings } = useSettings();
+  const settingsRef = React.useRef(settings);
+  
+  React.useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
   
   let mediaRecorder;
   let audioChunks = [];
   
+  const recordingStartedRef = React.useRef(false);
+  
   const startRecording = useCallback(() => {
     navigator.mediaDevices.getUserMedia({ audio: true, video: false })
       .then(stream => {
+        recordingStartedRef.current = true;
         audioChunks = [];
         mediaRecorder = new MediaRecorder(stream, { mimeType });
         
@@ -56,6 +64,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
   
   const stopRecording = useCallback(() => {
     if (mediaRecorder) {
+      recordingStartedRef.current = false;
       mediaRecorder.stop();
     } else {
       console.log('MediaRecorder undefined');
@@ -78,12 +87,20 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
   
   const startConversation = useCallback(() => {
     setConversationOpen(true);
-    startRecording();
+    if (settingsRef.current.useWhisper) {
+      startRecording();
+    } else {
+      console.log('started conversation without recording')
+    }
   }, [startRecording]);
   
   const stopConversation = useCallback(() => {
     setConversationOpen(false);
-    stopRecording();
+    if (recordingStartedRef.current) {
+      stopRecording();
+    } else {
+      console.log('stopped conversation')
+    }
     if (silenceTimer !== null) {
       clearTimeout(silenceTimer);
     }
@@ -125,8 +142,10 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
       clearTimeout(silenceTimer);
     }
     
+    let currentTranscript = '';
+    
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const currentTranscript = event.results[i][0].transcript.trim();
+      currentTranscript = event.results[i][0].transcript.trim();
       setTranscript(currentTranscript);
       if (/*event.results[i].isFinal
         &&*/ !conversationOpen
@@ -138,12 +157,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
     
     const newTimer = setTimeout(() => {
       if (conversationOpen) {
+        if (currentTranscript.toLowerCase().startsWith(settings.triggerPhrase.toLowerCase())) {
+          currentTranscript = currentTranscript.substring(settings.triggerPhrase.length).trim();
+        }
+        console.log(`transcript after silence: '${currentTranscript}'`);
+        sendMessage(currentTranscript, true);
         stopConversation();
       }
       setTranscript(defaultMessage);
     }, silenceTimeout);
     setSilenceTimer(newTimer);
-  }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript, settings]);
+  }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript, settings, sendMessage]);
   
   useEffect(() => {
     if (recognition.current) {
