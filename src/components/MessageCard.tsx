@@ -8,7 +8,7 @@ import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-export function MessageCard({role, content, className, ref}: Props) {
+export const MessageCard = React.forwardRef(({ className, role, content }, ref) => {
   // const user = "😀";
   // const assistant = "🤖";
   return (
@@ -56,7 +56,7 @@ export function MessageCard({role, content, className, ref}: Props) {
       </div>
     </div>
   );
-}
+});
 
 interface Props {
   role: "user" | "assistant"
