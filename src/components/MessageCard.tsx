@@ -3,13 +3,20 @@ import './MessageCard.css';
 
 import {Rings} from "react-loader-spinner";
 import PersonIcon from '@mui/icons-material/Person';
-import AssistantIcon from '@mui/icons-material/Assistant';
+import AssistantIcon from '@mui/icons-material/Assistant'
+import Markdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { materialLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { nnfx } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
-export function MessageCard({role, content, className}: Props) {
+export function MessageCard({role, content, className, ref}: Props) {
   // const user = "😀";
   // const assistant = "🤖";
   return (
-    <div className={className}>
+    <div className={className} ref={ref}>
       {role == "user" ?
         <PersonIcon className="role" color="disabled"/>
         :
@@ -27,10 +34,39 @@ export function MessageCard({role, content, className}: Props) {
             visible={true}
             ariaLabel="rings-loading"
           />
-          : <div dangerouslySetInnerHTML={toInnerHtml(content)}/>}
+          //: <div dangerouslySetInnerHTML={toInnerHtml(content)}/>
+          : <Markdown
+              children={content}
+              components={{
+                code(props) {
+                  const {children, className, node, ...rest} = props
+                  const match = /language-(\w+)/.exec(className || '')
+                  return match ? (
+                    <SyntaxHighlighter
+                      PreTag="div"
+                      children={String(children).replace(/\n$/, '')}
+                      language={match[1]}
+                      style={oneLight}
+                    />
+                  ) : (
+                    <code {...rest} className={className}>
+                      {children}
+                    </code>
+                  )
+                }
+              }}
+            />
+        }
       </div>
     </div>
   );
+}
+
+interface Props {
+  role: "user" | "assistant"
+  content: string
+  className: string
+  ref?: React.Ref<HTMLDivElement>
 }
 
 function replaceAsterisks(str) {
@@ -113,10 +149,4 @@ function toInnerHtml(content: string) {
   content = replaceBlocks(content);
   content = wrapParagraphs(content);
   return {__html: content}
-}
-
-interface Props {
-  role: "user" | "assistant"
-  content: string
-  className: string
 }
