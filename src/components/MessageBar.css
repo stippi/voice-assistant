@@ -16,6 +16,7 @@
     padding: 10px 16px;
     position: relative;
     display: flex;
+    align-items: start;
 }
 
 .sendButton {
