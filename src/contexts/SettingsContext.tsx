@@ -40,7 +40,6 @@ const SettingsContext = createContext<SettingsContextType>({
 });
 
 export const SettingsProvider = ({ children }) => {
-  console.log("SettingsProvider rendered");
   const [settings, setSettings] = useState(initialSettings);
   
   useEffect(() => {

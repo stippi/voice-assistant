@@ -16,7 +16,7 @@ const mimeType = 'audio/webm';
 const audioExt = 'webm'
 const silenceTimeout = 1500;
 
-const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => {
+const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingRef}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
@@ -146,9 +146,12 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage}: Props) => 
     
     for (let i = event.resultIndex; i < event.results.length; i++) {
       currentTranscript = event.results[i][0].transcript.trim();
-      setTranscript(currentTranscript);
+      if (!respondingRef.current) {
+        setTranscript(currentTranscript);
+      }
       if (/*event.results[i].isFinal
         &&*/ !conversationOpen
+        && !respondingRef.current
         && currentTranscript.toLowerCase().includes(settings.triggerPhrase.toLowerCase())) {
         console.log('conversation started by trigger word');
         startConversation();
@@ -205,6 +208,7 @@ interface Props {
   sendMessage: (message: string, audible: boolean) => void;
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
+  respondingRef: React.MutableRefObject<boolean>;
 }
 
 export default SpeechRecorder;
