@@ -122,25 +122,25 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   }, [stopRecording, silenceTimer]);
   
   useEffect(() => {
-    recognition.current = new SpeechRecognition();
+    recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.current.continuous = true;
     recognition.current.interimResults = true;
     recognition.current.lang = 'de-DE';
     
     recognition.current.onstart = () => {
       setListening(true);
-      shouldRestartRecognition.current = settings.openMic;
+      shouldRestartRecognition.current = settingsRef.current.openMic;
     };
     
     recognition.current.onend = () => {
       setListening(false);
-      if (shouldRestartRecognition.current && recognition.current) {
+      if (shouldRestartRecognition.current && recognition.current && settingsRef.current.openMic) {
         console.log('restarting speech recognition')
         recognition.current.start();
       }
     };
     
-    if (settings.openMic) {
+    if (settingsRef.current.openMic) {
       console.log('starting speech recognition')
       recognition.current.start();
     }
@@ -152,6 +152,21 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         recognition.current.stop();
       }
     };
+  }, []);
+  
+  const openMicRef = React.useRef(settings.openMic);
+  
+  useEffect(() => {
+    if (recognition.current && openMicRef.current !== settings.openMic) {
+      openMicRef.current = settings.openMic;
+      if (settings.openMic) {
+        console.log('open mic changed: starting speech recognition')
+        recognition.current.start();
+      } else {
+        console.log('open mic changed: stopping speech recognition')
+        recognition.current.stop();
+      }
+    }
   }, [settings]);
   
   const handleResult = useCallback((event: SpeechRecognitionEvent) => {
