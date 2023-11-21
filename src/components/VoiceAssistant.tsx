@@ -4,21 +4,23 @@ import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
-import {ChatCompletionMessage} from "openai/resources";
 import splitIntoSentences from "../utils/splitSentences";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
-import {useSettings} from "../contexts/SettingsContext.tsx";
+import {useSettings, Settings as SettingsType} from "../contexts/SettingsContext.tsx";
+import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
+// @ts-expect-error - missing types
+import {ChatCompletionMessage} from "openai/resources";
 
 const openai = new OpenAI(OpenAiConfig);
 
 const model = "gpt-4-1106-preview";
 
-async function streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef, isAudioPlayingRef) {
-  let audioEndedPromise = null;
+async function streamChatCompletion(currentMessages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>>, stream: ChatCompletionStream, audible: boolean, settingsRef: React.MutableRefObject<SettingsType>, isAudioPlayingRef: React.MutableRefObject<boolean>) {
+  let audioEndedPromise: Promise<unknown> | null = null;
   
-  const playSentence = async (sentence) => {
+  const playSentence = async (sentence: string) => {
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: settingsRef.current.voice,
@@ -36,7 +38,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
     
     isAudioPlayingRef.current = true;
     const audio = new Audio(url);
-    audioEndedPromise = new Promise((resolve) => {
+    audioEndedPromise = new Promise<void>((resolve) => {
       audio.onended = () => {
         URL.revokeObjectURL(url);
         isAudioPlayingRef.current = false;
@@ -50,7 +52,7 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
     });
   };
   
-  const sentenceQueue = [];
+  const sentenceQueue: string[] = [];
   let isAudioPlaying = false;
   const playSentencesFromQueue = async () => {
     while (sentenceQueue.length > 0) {
@@ -120,14 +122,14 @@ async function streamChatCompletion(currentMessages, setMessages, stream, audibl
       tool_call_id: toolCall.id,
       content: JSON.stringify(result),
     };
-    currentMessages.push(functionReply);
+    currentMessages.push(functionReply as Message);
   }
 }
 
-async function streamChatCompletionLoop(currentMessages, setMessages, audible, settingsRef, isAudioPlayingRef) {
+async function streamChatCompletionLoop(currentMessages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>>, audible: boolean, settingsRef: React.MutableRefObject<SettingsType>, isAudioPlayingRef: React.MutableRefObject<boolean>) {
   let tries = 0
   while (tries < 4) {
-    const stream = await openai.beta.chat.completions.stream({
+    const stream = openai.beta.chat.completions.stream({
       messages: [generateSystemMessage(audible, settingsRef.current.personality), ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
@@ -202,4 +204,4 @@ export default function VoiceAssistant() {
       <Settings/>
     </>
   );
-};
+}
