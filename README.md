@@ -30,3 +30,13 @@ Then run:
 npm install
 npm run dev
 ```
+
+## Ideas for Next Features
+
+- Temporarily open the microphone for conversation after the assistant finished speaking
+- While responding, the trigger phrase should interrupt the assistant from speaking
+- Add buttons below messages, like play as speech, or edit for user messages
+- Display errors as strips, for example when audio playback is blocked
+- Prevent code blocks from being part of text-to-speech
+- Add a "Clear" button to the chat
+- Allow to preserve chats
