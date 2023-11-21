@@ -10,8 +10,8 @@ import {useSettings} from "../contexts/SettingsContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
-let mimeType;
-let audioExt;
+let mimeType: string;
+let audioExt: string;
 
 if (MediaRecorder.isTypeSupported('audio/webm')) {
   mimeType = 'audio/webm';
@@ -37,17 +37,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
   
   const shouldRestartRecognition = useRef(false);
-  const recognition = useRef(null);
+  const recognition = useRef<SpeechRecognition | null>(null);
   
-  const { settings, setSettings } = useSettings();
+  const { settings } = useSettings();
   const settingsRef = React.useRef(settings);
   
   React.useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
   
-  let mediaRecorder;
-  let audioChunks = [];
+  let mediaRecorder: MediaRecorder;
+  let audioChunks: Blob[] = [];
   
   const recordingStartedRef = React.useRef(false);
   
@@ -86,7 +86,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     }
   }, []);
   
-  const sendToWhisperAPI = useCallback(async (audioChunks) => {
+  const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     const audioBlob = new Blob(audioChunks, { type: mimeType });
     
     try {
@@ -122,7 +122,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   }, [stopRecording, silenceTimer]);
   
   useEffect(() => {
-    recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.current = new SpeechRecognition();
     recognition.current.continuous = true;
     recognition.current.interimResults = true;
     recognition.current.lang = 'de-DE';
@@ -134,7 +134,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     
     recognition.current.onend = () => {
       setListening(false);
-      if (shouldRestartRecognition.current) {
+      if (shouldRestartRecognition.current && recognition.current) {
         console.log('restarting speech recognition')
         recognition.current.start();
       }
@@ -148,11 +148,13 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     return () => {
       console.log('stopping speech recognition')
       shouldRestartRecognition.current = false;
-      recognition.current.stop();
+      if (recognition.current) {
+        recognition.current.stop();
+      }
     };
   }, [settings]);
   
-  const handleResult = useCallback((event) => {
+  const handleResult = useCallback((event: SpeechRecognitionEvent) => {
     if (silenceTimer !== null) {
       clearTimeout(silenceTimer);
     }
@@ -173,10 +175,11 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       }
     }
     
-    const newTimer = setTimeout(() => {
+    const newTimer = window.setTimeout(() => {
       if (conversationOpen) {
-        if (currentTranscript.toLowerCase().startsWith(settings.triggerPhrase.toLowerCase())) {
-          currentTranscript = currentTranscript.substring(settings.triggerPhrase.length).trim();
+        const triggerIndex = currentTranscript.toLowerCase().indexOf(settings.triggerPhrase.toLowerCase());
+        if (triggerIndex >= 0) {
+          currentTranscript = currentTranscript.substring(triggerIndex + settings.triggerPhrase.length).trim();
         }
         console.log(`transcript after silence: '${currentTranscript}'`);
         sendMessage(currentTranscript, true);
