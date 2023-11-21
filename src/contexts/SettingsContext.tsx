@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
 
 export type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
@@ -27,7 +27,8 @@ const savedSettings = localStorage.getItem('voice-assistant-settings');
 if (savedSettings) {
   initialSettings = JSON.parse(savedSettings);
   for (const key in defaultSettings) {
-    if (!initialSettings.hasOwnProperty(key)) {
+    if (!Object.prototype.hasOwnProperty.call(initialSettings, key)) {
+      // @ts-expect-error - I don't want to have multiple sources of truth for what is in the settings object
       initialSettings[key] = defaultSettings[key];
     }
   }
@@ -43,7 +44,7 @@ const SettingsContext = createContext<SettingsContextType>({
   setSettings: () => {},
 });
 
-export const SettingsProvider = ({ children }) => {
+export const SettingsProvider: React.FC<{children: ReactNode}>  = ({ children }) => {
   const [settings, setSettings] = useState(initialSettings);
   
   useEffect(() => {
