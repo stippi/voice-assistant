@@ -1,4 +1,4 @@
-import React from "react";
+import React, {KeyboardEvent} from "react";
 import './MessageBar.css';
 import { TextareaAutosize } from '@mui/base';
 import {IconButton} from "@mui/material";
@@ -11,7 +11,7 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
   const defaultPlaceHolder = "Type to chat";
   const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
   
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !message.includes('\n')) {
       e.preventDefault();
       sendMessage(message, false);
