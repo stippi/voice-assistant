@@ -31,7 +31,7 @@ const audioSpeedMarks = [
   },
 ];
 
-export function Settings({}: Props) {
+export function Settings() {
   
   const { settings, setSettings } = useSettings();
   
@@ -56,6 +56,7 @@ export function Settings({}: Props) {
     <div className={`fixedTopRight ${open ? 'open' : ''}`}>
       <div className="settingsContainer">
         <IconButton
+          size="small"
           aria-label="open settings"
           aria-describedby={id}
           onMouseDown={handleClick}
@@ -91,7 +92,7 @@ export function Settings({}: Props) {
               <FormControlLabel
                 checked={settings.useWhisper}
                 control={<Switch color="primary" />}
-                label="Use Whipser Transcription"
+                label="Use Whisper Transcription"
                 labelPlacement="end"
                 onChange={() => setSettings({ ...settings, useWhisper: !settings.useWhisper })}
               />
@@ -132,7 +133,7 @@ export function Settings({}: Props) {
               <Slider
                 aria-label="Custom marks"
                 value={settings.audioSpeed}
-                onChange={(event, newValue) => setSettings({ ...settings, audioSpeed: newValue as number })}
+                onChange={(_event, newValue) => setSettings({ ...settings, audioSpeed: newValue as number })}
                 min={0.25}
                 max={2.0}
                 step={0.05}
@@ -145,7 +146,4 @@ export function Settings({}: Props) {
       </div>
     </div>
   );
-}
-
-interface Props {
 }
