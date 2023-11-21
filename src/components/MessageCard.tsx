@@ -8,7 +8,7 @@ import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-export const MessageCard = React.forwardRef(({ className, role, content }, ref) => {
+export const MessageCard = React.forwardRef(({ className, role, content }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
   // const user = "😀";
   // const assistant = "🤖";
   return (
@@ -34,7 +34,7 @@ export const MessageCard = React.forwardRef(({ className, role, content }, ref) 
               children={content}
               components={{
                 code(props) {
-                  const {children, className, node, ...rest} = props
+                  const {children, className, ...rest} = props
                   const match = /language-(\w+)/.exec(className || '')
                   return match ? (
                     <SyntaxHighlighter
