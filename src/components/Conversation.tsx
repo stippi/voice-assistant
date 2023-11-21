@@ -6,13 +6,16 @@ import {Message} from "../model/message";
 
 export function Conversation({chat}: Props) {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
-  
+  const messageCountRef = React.useRef(0);
   React.useEffect(() => {
-    requestAnimationFrame(() => {
-      if (messagesEndRef.current) {
+    if (chat && chat.length != messageCountRef.current) {
+      messageCountRef.current = chat.length;
+      requestAnimationFrame(() => {
+        if (messagesEndRef.current) {
           messagesEndRef.current!.scrollIntoView({ behavior: "smooth" });
-      }
-    });
+        }
+      });
+    }
   }, [chat]);
   const visibleRoles = ["user", "assistant"];
   const filteredChat = chat && chat.filter(message => visibleRoles.includes(message.role) && message.content !== null);
