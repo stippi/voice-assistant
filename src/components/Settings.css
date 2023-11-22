@@ -5,7 +5,7 @@
 
     border-radius: 21px;
     background-color: #fff;
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.10);
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.08);
 
     opacity: 1;
     transition: opacity 0.3s ease-in-out;
