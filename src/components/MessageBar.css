@@ -6,8 +6,10 @@
     width: 100%;
     max-width: 700px;
     border-radius: 1rem;
-    background-color: #fff;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
 }
 
 .textContainer {
@@ -28,6 +30,8 @@
     border: none;
     resize: none;
     font-size: 16px;
+
+    background: none;
 }
 
 .textArea:focus {
