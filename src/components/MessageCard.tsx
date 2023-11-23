@@ -24,14 +24,15 @@ function messageContent(message: Message) {
   }
   if (message.role === "assistant" && message.tool_calls) {
     return (<>
-      {message.tool_calls.filter(tool_call => tool_call.function.name === "show_image")
+      {message.tool_calls
+        .filter(tool_call => tool_call.function.name === "show_image")
         .map((tool_call, index) => {
           const args: { image: string } = JSON.parse(tool_call.function.arguments);
-          console.log(args)
           return (
             <div key={index} dangerouslySetInnerHTML={{ __html: args.image }}/>
           )
-        })}
+        })
+      }
     </>)
   }
   return (<Markdown
