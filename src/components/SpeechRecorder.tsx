@@ -5,8 +5,10 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
-import {OpenAiConfig} from "../secrets.ts";
+import {OpenAiConfig, PorcupineAccessKey} from "../secrets.ts";
 import {useSettings} from "../contexts/SettingsContext.tsx";
+import {usePorcupine} from "@picovoice/porcupine-react";
+import {BuiltInKeyword} from "@picovoice/porcupine-web";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -45,6 +47,51 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   React.useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+  
+  const {
+    keywordDetection,
+    isLoaded,
+    isListening,
+//    error,
+    init,
+    start,
+    stop,
+//    release
+  } = usePorcupine();
+  
+  useEffect(() => {
+    if (PorcupineAccessKey.length === 0) {
+      return;
+    }
+    
+    init(
+      PorcupineAccessKey,
+      [BuiltInKeyword.Computer],
+      {
+        publicPath: "models/porcupine_params.pv",
+        customWritePath: "3.0.0_porcupine_params.pv",
+      }
+    ).then(() => {
+      console.log('Porcupine initialized');
+    });
+  }, [init])
+  
+  useEffect(() => {
+    if (isLoaded) {
+      start();
+    }
+    return () => {
+      if (isListening) {
+        stop();
+      }
+    }
+  }, [start, stop, isListening, isLoaded])
+  
+  useEffect(() => {
+    if (keywordDetection !== null) {
+      console.log(keywordDetection.label);
+    }
+  }, [keywordDetection])
   
   let mediaRecorder: MediaRecorder;
   let audioChunks: Blob[] = [];
@@ -228,7 +275,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       </IconButton>}
       {!conversationOpen && <IconButton
         area-label="start conversation"
-        color={listening ? "error" : "default"}
+        color={isListening ? "error" : "default"}
         onClick={startConversation}
       >
         <MicIcon />
