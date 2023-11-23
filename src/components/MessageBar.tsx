@@ -1,4 +1,4 @@
-import React, {KeyboardEvent} from "react";
+import React, {KeyboardEvent, MouseEvent} from "react";
 import './MessageBar.css';
 import { TextareaAutosize } from '@mui/base';
 import {IconButton} from "@mui/material";
@@ -10,7 +10,14 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
   const [message, setMessage] = React.useState("");
   const defaultPlaceHolder = "Type to chat";
   const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
-  
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const focusTextArea = (e: MouseEvent) => {
+    if (textAreaRef.current && e.target !== textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !message.includes('\n')) {
       e.preventDefault();
@@ -21,10 +28,14 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
   
   return (
     <div className="fixedBottom">
-      <div className="textContainer">
+      <div
+        className="textContainer"
+        onClick={focusTextArea}
+      >
         <TextareaAutosize
           name="Message input"
           className="textArea"
+          ref={textAreaRef}
           placeholder={placeHolder}
           value={message}
           onChange={(e) => setMessage(e.target.value)}

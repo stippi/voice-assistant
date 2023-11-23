@@ -19,6 +19,7 @@
     position: relative;
     display: flex;
     align-items: start;
+    cursor: 'text';
 }
 
 .sendButton {
