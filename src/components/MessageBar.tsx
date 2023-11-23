@@ -45,6 +45,7 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
         />
         <div className="buttonContainer">
           <IconButton
+            disabled={message === ""}
             aria-label="send message"
             onMouseDown={(event) => {
               event.preventDefault();
