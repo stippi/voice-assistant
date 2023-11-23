@@ -43,23 +43,24 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
           minRows={1}
           maxRows={10}
         />
-        <IconButton
-          className="sendButton"
-          aria-label="send message"
-          onMouseDown={(event) => {
-            event.preventDefault();
-            sendMessage(message, false);
-            setMessage("");
-          }}
-        >
-          <SendIcon />
-        </IconButton>
-        <SpeechRecorder
-          sendMessage={sendMessage}
-          setTranscript={setPlaceHolder}
-          defaultMessage={defaultPlaceHolder}
-          respondingRef={respondingRef}
-        />
+        <div className="buttonContainer">
+          <IconButton
+            aria-label="send message"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              sendMessage(message, false);
+              setMessage("");
+            }}
+          >
+            <SendIcon />
+          </IconButton>
+          <SpeechRecorder
+            sendMessage={sendMessage}
+            setTranscript={setPlaceHolder}
+            defaultMessage={defaultPlaceHolder}
+            respondingRef={respondingRef}
+          />
+        </div>
       </div>
     </div>
   );

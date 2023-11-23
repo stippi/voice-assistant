@@ -15,19 +15,24 @@
 .textContainer {
     border-radius: 1rem;
     border: 1px solid #ccc;
-    padding: 10px 16px;
+    padding: 0 0 0 16px;
     position: relative;
     display: flex;
     align-items: start;
-    cursor: 'text';
+    cursor: text;
 }
 
-.sendButton {
+.buttonContainer {
+    padding: 8px;
+    display: flex;
+    align-items: start;
+    flex-direction: row;
 }
 
 .textArea {
     width: 100%;
     margin: auto 0;
+    padding: 16px 0;
     border: none;
     resize: none;
     font-size: 16px;
