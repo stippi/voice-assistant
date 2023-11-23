@@ -12,6 +12,7 @@ import {useSettings, Settings as SettingsType} from "../contexts/SettingsContext
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
 import {ChatCompletionMessage} from "openai/resources";
+import {messagesStream} from "../messagesStream";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -145,12 +146,47 @@ async function streamChatCompletionLoop(currentMessages: Message[], setMessages:
   }
 }
 
+const initialMessages: Message[] = [
+  {
+    role: "user",
+    content: "Can you give me a list of 5 nice Science-Fiction movies?"
+  },
+  {
+    role: "assistant",
+    content: "Of course, Stephan, here are five highly regarded science fiction movies that you might enjoy:\n" +
+      "\n" +
+      "1. **Blade Runner (1982)** - Directed by Ridley Scott, this film offers a neo-noir dystopian vision of the future with replicants and a thought-provoking look at what it means to be human.\n" +
+      "\n" +
+      "2. **The Matrix (1999)** - Directed by the Wachowskis, this movie presents a groundbreaking visual style and a compelling story about a simulated reality and the struggle of humans against machine overlords.\n" +
+      "\n" +
+      "3. **Inception (2010)** - Directed by Christopher Nolan, this film explores the complexities of the subconscious mind through a high-stakes form of espionage that involves infiltrating dreams.\n" +
+      "\n" +
+      "4. **Interstellar (2014)** - Also directed by Christopher Nolan, this movie takes you on an epic journey through space and time with a mix of heartfelt drama and scientifically-intriguing concepts like black holes and time dilation.\n" +
+      "\n" +
+      "5. **Arrival (2016)** - Directed by Denis Villeneuve, this film focuses on the arrival of extraterrestrial beings on Earth and delves into themes of language, communication, and perception of time.\n" +
+      "\n" +
+      "These films each offer unique visions of the future and explore various science fiction tropes and concepts. Enjoy your cinematic adventures!"
+  }
+]
+
 export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const respondingRef = React.useRef(false);
   const isAudioPlayingRef = React.useRef(false);
   const {settings} = useSettings();
   const settingsRef = React.useRef(settings);
+  
+  React.useEffect(() => {
+    let index = 0;
+    const streamUpdate = () => {
+      setMessages(messagesStream[index]);
+      if (index < messagesStream.length - 1) {
+        index++;
+        setTimeout(streamUpdate, 1000);
+      }
+    }
+    setTimeout(streamUpdate, 1000);
+  }, []);
   
   React.useEffect(() => {
     settingsRef.current = settings;
