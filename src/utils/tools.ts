@@ -98,6 +98,23 @@ export const tools: ChatCompletionTool[] = [
         required: ["category", "information"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "show_image",
+      description: "Display an SVG image in the chat",
+      parameters: {
+        type: "object",
+        properties: {
+          image: {
+            type: "string",
+            description: "The SVG image's XML code as a string"
+          }
+        },
+        required: ["image"]
+      }
+    }
   }
 ];
 
@@ -114,6 +131,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       return await memorize(args.category, args.information);
     case 'delete_memory_entry':
       return await deleteInformation(args.category, args.information);
+    case 'show_image':
+      return { result: "image displayed" };
     
     default:
       throw new Error(`Unknown function ${functionCall.name}`);

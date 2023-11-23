@@ -3,6 +3,15 @@ import './Conversation.css'
 
 import {MessageCard} from "./MessageCard";
 import {Message} from "../model/message";
+import OpenAI from "openai";
+import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
+
+function hasImage(toolCalls: ChatCompletionMessageToolCall[] | undefined): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+  return toolCalls.some(toolCall => toolCall.function.name === "show_image");
+}
 
 export function Conversation({chat}: Props) {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
@@ -18,7 +27,9 @@ export function Conversation({chat}: Props) {
     }
   }, [chat]);
   const visibleRoles = ["user", "assistant"];
-  const filteredChat = chat && chat.filter(message => visibleRoles.includes(message.role) && message.content !== null);
+  const filteredChat = chat && chat
+    .filter(message => visibleRoles.includes(message.role) &&
+      (message.content !== null || hasImage(message.tool_calls)));
   
   return <div className="messages">
     {filteredChat && filteredChat
@@ -26,8 +37,7 @@ export function Conversation({chat}: Props) {
         <MessageCard
           key={index}
           className="message"
-          role={message.role === "user" ? "user" : "assistant"}
-          content={message.content || ""}
+          message={message}
           ref={index === filteredChat.length - 1 ? messagesEndRef : undefined}
         />
       ))
