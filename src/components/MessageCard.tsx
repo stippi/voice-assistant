@@ -26,7 +26,7 @@ function messageContent(message: Message) {
     return (<>
       {message.tool_calls.filter(tool_call => tool_call.function.name === "show_image")
         .map((tool_call, index) => {
-          const args: any = JSON.parse(tool_call.function.arguments);
+          const args: { image: string } = JSON.parse(tool_call.function.arguments);
           console.log(args)
           return (
             <div key={index} dangerouslySetInnerHTML={{ __html: args.image }}/>
