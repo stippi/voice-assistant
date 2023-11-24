@@ -9,8 +9,9 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {Message} from "../model/message.ts";
 
-function messageContent(message: Message) {
-  if (message.role === "assistant" && message.content === "") {
+const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
+  console.log("render", content);
+  if (content === "") {
     return (<Rings
       height="30"
       width="30"
@@ -22,9 +23,9 @@ function messageContent(message: Message) {
       ariaLabel="rings-loading"
     />)
   }
-  if (message.role === "assistant" && message.tool_calls) {
+  if (role === "assistant" && tool_calls) {
     return (<>
-      {message.tool_calls
+      {tool_calls
         .filter(tool_call => tool_call.function.name === "show_image")
         .map((tool_call, index) => {
           const args: { image: string } = JSON.parse(tool_call.function.arguments);
@@ -36,7 +37,7 @@ function messageContent(message: Message) {
     </>)
   }
   return (<Markdown
-    children={message.content}
+    children={content}
     components={{
       code(props) {
         const {children, className, ...rest} = props
@@ -57,7 +58,7 @@ function messageContent(message: Message) {
       }
     }}
   />)
-}
+});
 
 export const MessageCard = React.forwardRef(({ className, message }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
   // const user = "😀";
@@ -70,7 +71,11 @@ export const MessageCard = React.forwardRef(({ className, message }: Props, ref:
         <AssistantIcon className="role" color="disabled"/>
       }
       <div className="content">
-        {messageContent(message)}
+        <MessageContent
+          role={message.role}
+          content={message.content}
+          tool_calls={message.tool_calls}
+        />
       </div>
     </div>
   );
