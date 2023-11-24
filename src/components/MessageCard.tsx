@@ -10,7 +10,6 @@ import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {Message} from "../model/message.ts";
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
-  console.log("render", content);
   if (content === "") {
     return (<Rings
       height="30"
@@ -23,20 +22,7 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
       ariaLabel="rings-loading"
     />)
   }
-  if (role === "assistant" && tool_calls) {
-    return (<>
-      {tool_calls
-        .filter(tool_call => tool_call.function.name === "show_image")
-        .map((tool_call, index) => {
-          const args: { image: string } = JSON.parse(tool_call.function.arguments);
-          return (
-            <div key={index} dangerouslySetInnerHTML={{ __html: args.image }}/>
-          )
-        })
-      }
-    </>)
-  }
-  return (<Markdown
+  const markdown = (content && <Markdown
     children={content}
     components={{
       code(props) {
@@ -58,6 +44,21 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
       }
     }}
   />)
+  if (role === "assistant" && tool_calls) {
+    return (<>
+      {markdown}
+      {tool_calls
+        .filter(tool_call => tool_call.function.name === "show_image")
+        .map((tool_call, index) => {
+          const args: { image: string } = JSON.parse(tool_call.function.arguments);
+          return (
+            <div key={index} dangerouslySetInnerHTML={{ __html: args.image }}/>
+          )
+        })
+      }
+    </>)
+  }
+  return markdown;
 });
 
 export const MessageCard = React.forwardRef(({ className, message }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
