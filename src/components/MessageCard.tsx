@@ -22,6 +22,11 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
       ariaLabel="rings-loading"
     />)
   }
+  if (role === "user") {
+    return (
+      <div dangerouslySetInnerHTML={{ __html: toHtml(content || "") }}/>
+    )
+  }
   const markdown = (content && <Markdown
     children={content}
     components={{
@@ -86,4 +91,11 @@ interface Props {
   message: Message
   className: string
   ref?: React.Ref<HTMLDivElement>
+}
+
+function toHtml(text: string) {
+  text = text.replace(/</g, "&lt;");
+  text = text.replace(/>/g, "&gt;");
+  text = text.split('\n').map(line => `<p>${line}</p>`).join('');
+  return text;
 }
