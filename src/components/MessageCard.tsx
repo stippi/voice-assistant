@@ -95,6 +95,16 @@ interface Props {
 function toHtml(text: string) {
   text = text.replace(/</g, "&lt;");
   text = text.replace(/>/g, "&gt;");
-  text = text.split('\n').map(line => `<p>${line}</p>`).join('');
+  const sections = text.split('\n\n');
+  
+  text = sections.map(section => {
+    // If the section has leading whitespace anywhere, wrap it in <pre>.
+    if (section.match(/(^|\n)[ \t]+/)) {
+      return `<pre>${section}</pre>`;
+    } else {
+      // Just regular newlines, wrap in <p>.
+      return section.split('\n').map(line => `<p>${line}</p>`).join('');
+    }
+  }).join('');
   return text;
 }
