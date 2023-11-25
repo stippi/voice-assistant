@@ -39,7 +39,6 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
             children={String(children).replace(/\n$/, '')}
             language={match[1]}
             style={oneLight}
-            customStyle={{fontSize: "15px"}}
           />
         ) : (
           <code {...rest} className={className}>
