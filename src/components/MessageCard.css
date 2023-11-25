@@ -18,6 +18,16 @@
     margin-block-end: 0.5em;
 }
 
+.content code {
+    font-size: 0.90em;
+    font-weight: bold;
+}
+
+.content pre code {
+    font-size: 0.90em;
+    font-weight: normal;
+}
+
 .list-number {
     float: left;
     margin-left: -35px;
