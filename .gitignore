@@ -25,3 +25,6 @@ dist-ssr
 
 # Secrets
 src/secrets.ts
+
+# Porcupine Wake Word Model
+porcupine_params.pv
