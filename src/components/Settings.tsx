@@ -14,7 +14,8 @@ import {
 } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
 import SpeedIcon from '@mui/icons-material/Speed';
-import {useSettings, Voice, Personality} from "../contexts/SettingsContext.tsx";
+import {Voice, Personality} from "../contexts/SettingsContext";
+import useSettings from "../hooks/useSettings";
 
 const audioSpeedMarks = [
   {

@@ -5,8 +5,8 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
-import {OpenAiConfig} from "../secrets.ts";
-import {useSettings} from "../contexts/SettingsContext.tsx";
+import {OpenAiConfig} from "../secrets";
+import useSettings from "../hooks/useSettings";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -66,7 +66,9 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         
         mediaRecorder.onstop = () => {
           console.log('stopped MediaRecorder');
-          sendToWhisperAPI(audioChunks);
+          sendToWhisperAPI(audioChunks).catch(error => {
+            console.error('Failed to send audio to Whisper API', error);
+          });
         };
         
         console.log('started MediaRecorder, MIME type:', mediaRecorder.mimeType);

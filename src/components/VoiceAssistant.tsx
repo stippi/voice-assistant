@@ -2,22 +2,34 @@ import React from 'react';
 import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
+import {Timers} from "./Timers";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
 import splitIntoSentences from "../utils/splitSentences";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
-import {useSettings, Settings as SettingsType} from "../contexts/SettingsContext.tsx";
+import {Settings as SettingsType} from "../contexts/SettingsContext.tsx";
+import useSettings from "../hooks/useSettings";
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
 import {ChatCompletionMessage} from "openai/resources";
+import useTimers from "../hooks/useTimers.tsx";
+import {TimersContextType} from "../contexts/TimersContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
 const model = "gpt-4-1106-preview";
 
-async function streamChatCompletion(currentMessages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>>, stream: ChatCompletionStream, audible: boolean, settingsRef: React.MutableRefObject<SettingsType>, isAudioPlayingRef: React.MutableRefObject<boolean>) {
+async function streamChatCompletion(
+  currentMessages: Message[],
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  stream: ChatCompletionStream,
+  audible: boolean,
+  settingsRef: React.MutableRefObject<SettingsType>,
+  timersContextRef: React.MutableRefObject<TimersContextType>,
+  isAudioPlayingRef: React.MutableRefObject<boolean>
+) {
   let audioEndedPromise: Promise<unknown> | null = null;
   
   const playSentence = async (sentence: string) => {
@@ -115,7 +127,7 @@ async function streamChatCompletion(currentMessages: Message[], setMessages: Rea
     if (toolCall.type !== "function") {
       continue;
     }
-    const result = await callFunction(toolCall.function);
+    const result = await callFunction(toolCall.function, timersContextRef.current);
     const functionReply = {
       role: "tool",
       name: toolCall.function.name,
@@ -126,16 +138,26 @@ async function streamChatCompletion(currentMessages: Message[], setMessages: Rea
   }
 }
 
-async function streamChatCompletionLoop(currentMessages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>>, audible: boolean, settingsRef: React.MutableRefObject<SettingsType>, isAudioPlayingRef: React.MutableRefObject<boolean>) {
+async function streamChatCompletionLoop(
+  currentMessages: Message[],
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  audible: boolean,
+  settingsRef: React.MutableRefObject<SettingsType>,
+  timersContextRef: React.MutableRefObject<TimersContextType>,
+  isAudioPlayingRef: React.MutableRefObject<boolean>
+) {
   let tries = 0
   while (tries < 4) {
+    const systemMessage = generateSystemMessage(
+      audible, settingsRef.current.personality, timersContextRef.current.timers);
     const stream = openai.beta.chat.completions.stream({
-      messages: [generateSystemMessage(audible, settingsRef.current.personality), ...currentMessages] as ChatCompletionMessage[],
+      messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
       tools: tools,
     })
-    await streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef, isAudioPlayingRef);
+    await streamChatCompletion(
+      currentMessages, setMessages, stream, audible, settingsRef, timersContextRef, isAudioPlayingRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -149,12 +171,18 @@ export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const respondingRef = React.useRef(false);
   const isAudioPlayingRef = React.useRef(false);
+
   const {settings} = useSettings();
   const settingsRef = React.useRef(settings);
-  
   React.useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+  
+  const timersContext = useTimers();
+  const timersContextRef = React.useRef(timersContext);
+  React.useEffect(() => {
+    timersContextRef.current = timersContext;
+  }, [timersContext]);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
     if (respondingRef.current) {
@@ -165,7 +193,7 @@ export default function VoiceAssistant() {
     setMessages(currentMessages => {
       const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, isAudioPlayingRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, timersContextRef, isAudioPlayingRef)
         .then(() => {
           setMessages(newMessages)
         })
@@ -202,6 +230,7 @@ export default function VoiceAssistant() {
       <Conversation chat={messages}/>
       <MessageBar sendMessage={sendMessage} respondingRef={respondingRef}/>
       <Settings/>
+      <Timers/>
     </>
   );
 }
