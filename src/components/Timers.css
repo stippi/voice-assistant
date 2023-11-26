@@ -1,0 +1,7 @@
+.timers {
+    position: fixed;
+    bottom: 4rem;
+    right: 4rem;
+
+    max-width: 15vw;
+}
