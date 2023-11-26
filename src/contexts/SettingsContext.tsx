@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import React, {createContext, useState, useEffect, ReactNode} from 'react';
 
 export type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
@@ -39,7 +39,7 @@ type SettingsContextType = {
   setSettings: React.Dispatch<React.SetStateAction<Settings>>;
 };
 
-const SettingsContext = createContext<SettingsContextType>({
+export const SettingsContext = createContext<SettingsContextType>({
   settings: defaultSettings,
   setSettings: () => {},
 });
@@ -56,8 +56,4 @@ export const SettingsProvider: React.FC<{children: ReactNode}>  = ({ children })
       {children}
     </SettingsContext.Provider>
   );
-};
-
-export const useSettings = () => {
-  return useContext(SettingsContext);
 };

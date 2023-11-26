@@ -1,9 +1,10 @@
-import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import React, {createContext, useState, useEffect, ReactNode} from 'react';
 
 export type Timer = {
-  name: string;
-  type: "CountDown" | "Time";
-  time: Date;
+  id: string;
+  title: string;
+  type: "countdown" | "alarm";
+  time: string;
 }
 
 let initialTimers: Timer[] = [];
@@ -13,12 +14,12 @@ if (savedTimers) {
   initialTimers = JSON.parse(savedTimers);
 }
 
-type TimersContextType = {
+export type TimersContextType = {
   timers: Timer[];
   setTimers: React.Dispatch<React.SetStateAction<Timer[]>>;
 };
 
-const TimersContext = createContext<TimersContextType>({
+export const TimersContext = createContext<TimersContextType>({
   timers: [],
   setTimers: () => {},
 });
@@ -35,8 +36,4 @@ export const TimersProvider: React.FC<{children: ReactNode}>  = ({ children }) =
       {children}
     </TimersContext.Provider>
   );
-};
-
-export const useTimers = () => {
-  return useContext(TimersContext);
 };
