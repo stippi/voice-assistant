@@ -2,7 +2,8 @@
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
 import {OpenWeatherMapApiKey} from "../secrets";
 import { create, all } from "mathjs";
-import {Timer, TimersContextType} from "../contexts/TimersContext";
+import {Timer} from "../model/timer";
+import {getTimers, setTimers} from "./timers.ts";
 
 const math = create(all, {})
 
@@ -178,7 +179,7 @@ export const tools: ChatCompletionTool[] = [
   }
 ];
 
-export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall, timersContext: TimersContextType): Promise<any> {
+export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<any> {
   const args = JSON.parse(functionCall.arguments || "{}");
   switch (functionCall.name) {
     case 'get_current_weather':
@@ -186,11 +187,11 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
     case 'get_weather_forecast':
       return await getWeatherForecast(args.latitude, args.longitude);
     case 'add_alarm':
-      return await addTimer("alarm", args.time, args.title || "", timersContext);
+      return await addTimer("alarm", args.time, args.title || "");
     case 'add_countdown':
-      return await addTimer("countdown", args.time, args.title || "", timersContext);
+      return await addTimer("countdown", args.time, args.title || "");
     case 'remove_timer':
-      return await removeTimer(args.id, timersContext);
+      return await removeTimer(args.id);
     case 'evaluate_expression':
       return await evaluateExpression(args.expression);
     case 'memorize':
@@ -215,7 +216,7 @@ async function getWeatherForecast(lat: number, lon: number) {
   return await response.json();
 }
 
-async function addTimer(type: "countdown" | "alarm", time: string, title: string, timersContext: TimersContextType) {
+async function addTimer(type: "countdown" | "alarm", time: string, title: string) {
   console.log(`Adding timer: ${type} at ${time} with title '${title}'`);
   const timer: Timer = {
     id: Math.random().toString(36).substring(7),
@@ -223,13 +224,13 @@ async function addTimer(type: "countdown" | "alarm", time: string, title: string
     time,
     title
   }
-  timersContext.setTimers([...timersContext.timers, timer]);
+  setTimers([...getTimers(), timer]);
   return { result: `timer created with ID ${timer.id}` };
 }
 
-async function removeTimer(id: string, timersContext: TimersContextType) {
+async function removeTimer(id: string) {
   console.log(`Removing timer: ${id}`);
-  timersContext.setTimers(timersContext.timers.filter(timer => timer.id !== id));
+  setTimers(getTimers().filter(timer => timer.id !== id))
   return { result: "timer removed" };
 }
 
@@ -241,7 +242,7 @@ async function evaluateExpression(expression: string) {
   }
 }
 
-function loadMemory() {
+function loadMemory(): Record<string, string[]> {
   const memoryString = window.localStorage.getItem('memory');
   if (memoryString) {
     return JSON.parse(memoryString);
@@ -249,7 +250,7 @@ function loadMemory() {
   return {};
 }
 
-function saveMemory(memory: any) {
+function saveMemory(memory: Record<string, string[]>) {
   window.localStorage.setItem('memory', JSON.stringify(memory));
   return { result: "information stored" };
 }

@@ -1,12 +1,10 @@
-import { TimersContext } from "../contexts/TimersContext";
-import React from "react";
+import {getTimers, setTimers} from "../utils/timers.ts";
 
 export default function useTimers() {
-  const context = React.useContext(TimersContext);
+  const timers = getTimers();
 
-  if (context === undefined) {
-    throw new Error("useTimers must be used within a TimersProvider");
-  }
-
-  return context;
+  return {
+    timers,
+    setTimers
+  };
 }

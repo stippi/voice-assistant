@@ -1,7 +1,7 @@
 import getLocation from "./getLocation";
 import {LocationInfo} from "../model/location";
 import {Personality} from "../contexts/SettingsContext";
-import {Timer} from "../contexts/TimersContext.tsx";
+import {Timer} from "../model/timer";
 
 const location: LocationInfo = {};
 
