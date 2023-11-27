@@ -1,0 +1,21 @@
+
+const sounds = {
+  activation: {
+    file: "activation-beep-01.wav",
+    audio: null as HTMLAudioElement | null
+  }
+};
+
+export function playSound(sound: keyof typeof sounds) {
+  if (sounds[sound] === undefined) {
+    throw new Error(`Unknown sound ${sound}`);
+  }
+  const entry = sounds[sound];
+  if (entry.audio === null) {
+    entry.audio = new Audio(`public/sounds/${entry.file}`);
+  }
+  entry.audio.currentTime = 0;
+  entry.audio.play().catch(() => {
+    console.log(`Failed to play sound ${sound}`);
+  });
+}

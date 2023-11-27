@@ -7,6 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import OpenAI, { toFile } from 'openai';
 import {OpenAiConfig} from "../secrets";
 import useSettings from "../hooks/useSettings";
+import {playSound} from "../utils/audio.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -104,6 +105,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   const startConversation = useCallback(() => {
     setConversationOpen(true);
+    playSound('activation');
     if (settingsRef.current.useWhisper) {
       startRecording();
     } else {

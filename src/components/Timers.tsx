@@ -4,7 +4,7 @@ import useTimers from "../hooks/useTimers";
 import {TimerPopup} from "./TimerPopup";
 
 export function Timers() {
-  const {timers, setTimers} = useTimers();
+  const { timers, setTimers } = useTimers();
   
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -18,14 +18,14 @@ export function Timers() {
     return () => clearInterval(interval);
   }, [timers, setTimers]);
   
-  return <div className="timers">
-    {timers && timers
-      .map((timer, index) => (
+  return (
+    <div className="timers">
+      {timers.map((timer, index) => (
         <TimerPopup
           key={index}
           timer={timer}
         />
-      ))
-    }
-  </div>
+      ))}
+    </div>
+  );
 }
