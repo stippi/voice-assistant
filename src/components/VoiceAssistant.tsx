@@ -14,8 +14,7 @@ import useSettings from "../hooks/useSettings";
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
 import {ChatCompletionMessage} from "openai/resources";
-import useTimers from "../hooks/useTimers.tsx";
-import {TimersContextType} from "../contexts/TimersContext.tsx";
+import {getTimers} from "../utils/timers.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -27,7 +26,6 @@ async function streamChatCompletion(
   stream: ChatCompletionStream,
   audible: boolean,
   settingsRef: React.MutableRefObject<SettingsType>,
-  timersContextRef: React.MutableRefObject<TimersContextType>,
   isAudioPlayingRef: React.MutableRefObject<boolean>
 ) {
   let audioEndedPromise: Promise<unknown> | null = null;
@@ -127,7 +125,7 @@ async function streamChatCompletion(
     if (toolCall.type !== "function") {
       continue;
     }
-    const result = await callFunction(toolCall.function, timersContextRef.current);
+    const result = await callFunction(toolCall.function);
     const functionReply = {
       role: "tool",
       name: toolCall.function.name,
@@ -143,13 +141,12 @@ async function streamChatCompletionLoop(
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   audible: boolean,
   settingsRef: React.MutableRefObject<SettingsType>,
-  timersContextRef: React.MutableRefObject<TimersContextType>,
   isAudioPlayingRef: React.MutableRefObject<boolean>
 ) {
   let tries = 0
   while (tries < 4) {
     const systemMessage = generateSystemMessage(
-      audible, settingsRef.current.personality, timersContextRef.current.timers);
+      audible, settingsRef.current.personality, getTimers());
     const stream = openai.beta.chat.completions.stream({
       messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: model,
@@ -157,7 +154,7 @@ async function streamChatCompletionLoop(
       tools: tools,
     })
     await streamChatCompletion(
-      currentMessages, setMessages, stream, audible, settingsRef, timersContextRef, isAudioPlayingRef);
+      currentMessages, setMessages, stream, audible, settingsRef, isAudioPlayingRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -178,12 +175,6 @@ export default function VoiceAssistant() {
     settingsRef.current = settings;
   }, [settings]);
   
-  const timersContext = useTimers();
-  const timersContextRef = React.useRef(timersContext);
-  React.useEffect(() => {
-    timersContextRef.current = timersContext;
-  }, [timersContext]);
-  
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
     if (respondingRef.current) {
       console.log("Already responding to a message, ignoring");
@@ -193,7 +184,7 @@ export default function VoiceAssistant() {
     setMessages(currentMessages => {
       const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, timersContextRef, isAudioPlayingRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, isAudioPlayingRef)
         .then(() => {
           setMessages(newMessages)
         })
