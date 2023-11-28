@@ -71,3 +71,22 @@ export function getRelativeTimeString(date: Date | number, lang = navigator.lang
   const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
   return rtf.format(Math.floor(deltaSeconds / divisor), units[unitIndex]);
 }
+
+export function addIsoDurationToDate(date: Date, isoDuration: string) {
+  const matches = isoDuration.match(/P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (matches === null) {
+    return date;
+  }
+  const parts = matches.slice(1);
+  
+  const [years, months, days, hours, minutes, seconds] = parts.map(part => parseInt(part, 10) || 0);
+  
+  date.setFullYear(date.getFullYear() + years);
+  date.setMonth(date.getMonth() + months);
+  date.setDate(date.getDate() + days);
+  date.setHours(date.getHours() + hours);
+  date.setMinutes(date.getMinutes() + minutes);
+  date.setSeconds(date.getSeconds() + seconds);
+  
+  return new Date(date);
+}
