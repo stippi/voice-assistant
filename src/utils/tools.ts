@@ -1,9 +1,10 @@
 // @ts-expect-error - The import works, no idea why the IDE complains
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
 import {OpenWeatherMapApiKey} from "../secrets";
-import { create, all } from "mathjs";
+import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
-import {getTimers, setTimers} from "./timers.ts";
+import {getTimers, setTimers} from "./timers";
+import {addIsoDurationToDate} from "./timeFormat";
 
 const math = create(all, {})
 
@@ -67,16 +68,16 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: "object",
         properties: {
-          time: {
+          duration: {
             type: "string",
-            description: "The exact time when the timer should go off, in the format 'YYYY-MM-DD HH:MM:SS'."
+            description: "A duration in ISO 8601 format."
           },
           title: {
             type: "string",
             description: "Optional title of the timer."
           }
         },
-        required: ["time"]
+        required: ["duration"]
       }
     }
   },
@@ -189,7 +190,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
     case 'add_alarm':
       return await addTimer("alarm", args.time, args.title || "");
     case 'add_countdown':
-      return await addTimer("countdown", args.time, args.title || "");
+      return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "");
     case 'remove_timer':
       return await removeTimer(args.id);
     case 'evaluate_expression':
