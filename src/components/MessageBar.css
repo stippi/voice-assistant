@@ -42,9 +42,15 @@
 
 .textArea:focus {
     outline: none;
+    caret-color: transparent;
 }
 
-.textContainer:focus-within {
+.window-focused .textArea:focus {
+    outline: none;
+    caret-color: auto;
+}
+
+.window-focused .textContainer:focus-within {
     border-color: #007bff;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
