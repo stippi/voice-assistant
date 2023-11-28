@@ -180,30 +180,34 @@ export const tools: ChatCompletionTool[] = [
   }
 ];
 
-export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<any> {
-  const args = JSON.parse(functionCall.arguments || "{}");
-  switch (functionCall.name) {
-    case 'get_current_weather':
-      return await getCurrentWeather(args.latitude, args.longitude);
-    case 'get_weather_forecast':
-      return await getWeatherForecast(args.latitude, args.longitude);
-    case 'add_alarm':
-      return await addTimer("alarm", args.time, args.title || "");
-    case 'add_countdown':
-      return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "");
-    case 'remove_timer':
-      return await removeTimer(args.id);
-    case 'evaluate_expression':
-      return await evaluateExpression(args.expression);
-    case 'memorize':
-      return await memorize(args.category, args.information);
-    case 'delete_memory_entry':
-      return await deleteInformation(args.category, args.information);
-    case 'show_image':
-      return { result: "image displayed" };
-    
-    default:
-      throw new Error(`Unknown function ${functionCall.name}`);
+export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<object> {
+  try {
+    const args = JSON.parse(functionCall.arguments || "{}");
+    switch (functionCall.name) {
+      case 'get_current_weather':
+        return await getCurrentWeather(args.latitude, args.longitude);
+      case 'get_weather_forecast':
+        return await getWeatherForecast(args.latitude, args.longitude);
+      case 'add_alarm':
+        return await addTimer("alarm", args.time, args.title || "");
+      case 'add_countdown':
+        return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "");
+      case 'remove_timer':
+        return await removeTimer(args.id);
+      case 'evaluate_expression':
+        return await evaluateExpression(args.expression);
+      case 'memorize':
+        return await memorize(args.category, args.information);
+      case 'delete_memory_entry':
+        return await deleteInformation(args.category, args.information);
+      case 'show_image':
+        return { result: "image displayed" };
+      
+      default:
+        return { error: `unknown function '${functionCall.name}'`};
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
   }
 }
 
@@ -239,7 +243,7 @@ async function evaluateExpression(expression: string) {
   try {
     return { result: math.evaluate(expression) }
   } catch (error) {
-    return { error: error.message }
+    return { error: error instanceof Error ? error.message : "unknown error" }
   }
 }
 
