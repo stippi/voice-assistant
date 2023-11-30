@@ -3,4 +3,5 @@ export type Timer = {
   title: string;
   type: "countdown" | "alarm";
   time: string;
+  ringing?: boolean;
 }

@@ -1,7 +1,7 @@
 .timer {
     display: flex;
     flex-direction: row;
-    align-items: flex-end;
+    align-items: center;
 
     background: rgba(30, 30, 30, 0.8);
     color: #fff;
@@ -33,4 +33,9 @@
     font-weight: bold;
     letter-spacing: 0.05em;
     font-family: 'Courier New', Courier, monospace;
+}
+
+.timer-remove {
+    margin-left: auto;
+    cursor: pointer;
 }

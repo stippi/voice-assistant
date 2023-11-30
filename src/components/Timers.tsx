@@ -24,6 +24,11 @@ export function Timers() {
         <TimerPopup
           key={index}
           timer={timer}
+          removeTimer={() => {
+            const newTimers = [...timers];
+            newTimers.splice(index, 1);
+            setTimers(newTimers);
+          }}
         />
       ))}
     </div>
