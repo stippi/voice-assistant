@@ -8,6 +8,9 @@ export function Timers() {
   
   React.useEffect(() => {
     const interval = setInterval(() => {
+      if (timers.length === 0) {
+        return;
+      }
       const now = new Date();
       const updatedTimers = timers.filter(timer => new Date(timer.time) > now);
       if (updatedTimers.length !== timers.length) {

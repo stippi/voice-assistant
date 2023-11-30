@@ -8,4 +8,5 @@
     flex-direction: column;
 
     max-width: 15vw;
+    min-width: 14rem;
 }

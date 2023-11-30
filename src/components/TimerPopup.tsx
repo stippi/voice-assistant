@@ -30,6 +30,7 @@ export const TimerPopup = ({ timer, removeTimer }: Props) => {
   
   return (
     <div className="timer">
+      {timer.ringing === true && <SoundWaves />}
       <div className="timer-icon">
         {timer.type === "countdown" ? <AvTimerIcon /> : <AlarmIcon />}
       </div>
@@ -41,9 +42,11 @@ export const TimerPopup = ({ timer, removeTimer }: Props) => {
             : formatDateRelativeToToday(timer.time)}
         </div>
       </div>
-      <IconButton className="timer-remove" aria-label="delete" size="small" onClick={removeTimer}>
-        <DeleteIcon fontSize="inherit" sx={{color: "#fff"}}/>
-      </IconButton>
+      <div className="timer-remove">
+        <IconButton aria-label="delete" size="small" onClick={removeTimer}>
+          <DeleteIcon fontSize="inherit" sx={{color: "#fff"}}/>
+        </IconButton>
+      </div>
     </div>
   );
 };
