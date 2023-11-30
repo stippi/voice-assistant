@@ -14,7 +14,11 @@
 }
 
 .sound-wave-container {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: -1;
+    transform: translate(-50%, -50%);
     width: 50px;
     height: 50px;
 }
@@ -22,7 +26,7 @@
 .sound-wave {
     position: absolute;
     border-radius: 50%;
-    border: 2px solid #000;
+    border: 2px solid #252525;
     width: 100%;
     height: 100%;
     transform: scale(0.5);
