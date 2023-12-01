@@ -31,8 +31,8 @@ export function formatDateRelativeToToday(date: string | number | Date) {
   const now = new Date();
   const target = new Date(date);
   
-  const dateFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-  const timeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+  const dateFormatOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+  const timeFormatOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
   
   if (now.toDateString() === target.toDateString()) {
     return `${target.toLocaleTimeString([], timeFormatOptions)}`;
