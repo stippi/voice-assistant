@@ -87,7 +87,7 @@ async function streamChatCompletion(
     for (let i = 0; i < sentenceCount; i++) {
       const sentence = sentences[i];
       if (sentence.content.trim()) {
-        console.log(`playing segment "${sentence}"`);
+        console.log(`playing segment "${sentence.content}"`);
         sentenceQueue.push(sentence.content);
         lastPlayedOffset += sentence.offset + sentence.content.length;
         if (!isAudioPlaying) {
