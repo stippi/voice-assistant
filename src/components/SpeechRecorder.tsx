@@ -202,8 +202,10 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         if (triggerIndex >= 0) {
           currentTranscript = currentTranscript.substring(triggerIndex + settings.triggerPhrase.length).trim();
         }
-        console.log(`transcript after silence: '${currentTranscript}'`);
-        sendMessage(currentTranscript, true);
+        if (!settingsRef.current.useWhisper) {
+          console.log(`transcript after silence: '${currentTranscript}'`);
+          sendMessage(currentTranscript, true);
+        }
         stopConversation();
       }
       setTranscript(defaultMessage);
