@@ -12,7 +12,7 @@ export function playSound(sound: keyof typeof sounds) {
   }
   const entry = sounds[sound];
   if (entry.audio === null) {
-    entry.audio = new Audio(`public/sounds/${entry.file}`);
+    entry.audio = new Audio(`/sounds/${entry.file}`);
   }
   entry.audio.currentTime = 0;
   entry.audio.play().catch(() => {
