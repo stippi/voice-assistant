@@ -40,58 +40,9 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const shouldRestartRecognition = useRef(false);
   const recognition = useRef<SpeechRecognition | null>(null);
   
-  const { settings } = useSettings();
-  const settingsRef = React.useRef(settings);
-  
-  React.useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-  
-  let mediaRecorder: MediaRecorder;
-  let audioChunks: Blob[] = [];
-  
-  const recordingStartedRef = React.useRef(false);
-  
-  const startRecording = useCallback(() => {
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then(stream => {
-        recordingStartedRef.current = true;
-        audioChunks = [];
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
-        
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
-        
-        mediaRecorder.onstop = () => {
-          console.log('stopped MediaRecorder');
-          sendToWhisperAPI(audioChunks).catch(error => {
-            console.error('Failed to send audio to Whisper API', error);
-          });
-        };
-        
-        console.log('started MediaRecorder, MIME type:', mediaRecorder.mimeType);
-        mediaRecorder.start(1000);
-      })
-      .catch(error => {
-        console.log('Failed to start recorder', error);
-      });
-  }, []);
-  
-  const stopRecording = useCallback(() => {
-    if (mediaRecorder) {
-      recordingStartedRef.current = false;
-      mediaRecorder.stop();
-    } else {
-      console.log('MediaRecorder undefined');
-    }
-  }, []);
-  
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     const audioBlob = new Blob(audioChunks, { type: mimeType });
-    
+
     try {
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
@@ -102,6 +53,57 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       console.error('Failed to send request to Whisper API', error);
     }
   }, [sendMessage]);
+
+  const { settings } = useSettings();
+  const settingsRef = React.useRef(settings);
+  const sendToWhisperRef = React.useRef(sendToWhisperAPI);
+  
+  React.useEffect(() => {
+    settingsRef.current = settings;
+    sendToWhisperRef.current = sendToWhisperAPI;
+  }, [settings, sendToWhisperAPI]);
+
+  const mediaRecorder = React.useRef<MediaRecorder | null>(null);
+  const audioChunks  = React.useRef<Blob[]>([]);
+  
+  const recordingStartedRef = React.useRef(false);
+  
+  const startRecording = useCallback(() => {
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(stream => {
+        recordingStartedRef.current = true;
+        audioChunks.current = [];
+        mediaRecorder.current = new MediaRecorder(stream, { mimeType });
+        
+        mediaRecorder.current.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.current.onstop = () => {
+          console.log('stopped MediaRecorder');
+          sendToWhisperRef.current(audioChunks.current).catch(error => {
+            console.error('Failed to send audio to Whisper API', error);
+          });
+        };
+        
+        console.log('started MediaRecorder, MIME type:', mediaRecorder.current.mimeType);
+        mediaRecorder.current.start(1000);
+      })
+      .catch(error => {
+        console.log('Failed to start recorder', error);
+      });
+  }, []);
+  
+  const stopRecording = useCallback(() => {
+    if (mediaRecorder.current) {
+      recordingStartedRef.current = false;
+      mediaRecorder.current.stop();
+    } else {
+      console.log('MediaRecorder undefined');
+    }
+  }, []);
   
   const startConversation = useCallback(() => {
     setConversationOpen(true);
@@ -207,7 +209,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       setTranscript(defaultMessage);
     }, silenceTimeout);
     setSilenceTimer(newTimer);
-  }, [conversationOpen, startConversation, stopConversation, silenceTimer, setTranscript, settings, sendMessage]);
+  }, [
+    conversationOpen,
+    startConversation,
+    stopConversation,
+    silenceTimer,
+    setTranscript,
+    settings,
+    sendMessage,
+    defaultMessage,
+    respondingRef
+  ]);
   
   useEffect(() => {
     if (recognition.current) {
