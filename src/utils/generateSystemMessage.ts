@@ -44,7 +44,13 @@ const personalities = {
 export default function generateSystemMessage(optimizeForVoiceOutput: boolean, personality: Personality, timers: Timer[]) {
   const voiceOptimization = optimizeForVoiceOutput ? `Note, the user's last message was transcribed from their speech and may be incomplete or garbled.
 If you think that is the case, just ask the user to clarify.
-Also, your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. The engine is capable of processing any language, so reply in the user's language. Help the engine by spelling out numbers and units.` : '';
+Your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. It is capable of processing any language, so reply in the user's language.
+Do not abbreviate numbers or units of measure.
+For example, write 'fifty one' instead of 51, or 'second' instead of '2.'.
+Write 'degree Celsius' instead of '°C'.
+Write 'kilometers per hour' instead of 'km/h'.
+Write 'second of December' instead of '2nd of Dec.' or similar abbreviations.
+Please no digits or abbreviations whatsoever.` : '';
   const currentTimeAndDate = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
   const personalityString = personalities[personality];
   return {
