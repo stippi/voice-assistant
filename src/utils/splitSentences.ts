@@ -41,13 +41,24 @@ const options = {
 };
 
 export function splitIntoSentencesAst(text: string): Sentence[] {
-  const result = split(text, options);
-  return result
+  let sentences: Sentence[] = [];
+
+  let offset = 0;
+  for (const paragraph of text.split("\n")) {
+    if (paragraph === "") {
+      offset += 1;
+      continue;
+    }
+    const result = split(paragraph, options);
+    sentences = sentences.concat(result
     .filter(node => node.type === "Sentence")
     .map(node => {
       return {
         content: node.raw,
-        offset: node.range[0]
+        offset: offset + node.range[0]
       };
-    });
+    }));
+    offset += paragraph.length + 1;
+  }
+  return sentences;
 }
