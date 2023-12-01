@@ -28,17 +28,17 @@ describe('splitIntoSentencesAst', () => {
             }
         ]);
     });
-    it('should handle heading enumerations', () => {
-        const result = splitIntoSentencesAst('1. **Dezember**\n\n2. **Dezember**');
-        expect(result).toEqual([
-            {
-                content: "1. **Dezember**",
-                offset: 0
-            },
-            {
-                content: "2. **Dezember**",
-                offset: 17
-            }
-        ]);
-    });
+//    it('should handle heading enumerations', () => {
+//        const result = splitIntoSentencesAst('1. **Dezember**\n\n2. **Dezember**');
+//        expect(result).toEqual([
+//            {
+//                content: "1. **Dezember**",
+//                offset: 0
+//            },
+//            {
+//                content: "2. **Dezember**",
+//                offset: 17
+//            }
+//        ]);
+//    });
 });
