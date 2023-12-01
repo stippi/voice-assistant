@@ -5,7 +5,7 @@ import {MessageBar} from "./MessageBar";
 import {Timers} from "./Timers";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
-import splitIntoSentences from "../utils/splitSentences";
+import {splitIntoSentencesAst} from "../utils/splitSentences";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
@@ -81,15 +81,15 @@ async function streamChatCompletion(
     if (!audible || content === "") {
       return;
     }
-    const sentences = splitIntoSentences(content.slice(lastPlayedOffset), ['.', '!', '?', '\n'], 30);
+    const sentences = splitIntoSentencesAst(content.slice(lastPlayedOffset));
     const sentenceCount = includeLast ? sentences.length : sentences.length - 1;
       // -1, since the last sentence might be incomplete
     for (let i = 0; i < sentenceCount; i++) {
       const sentence = sentences[i];
-      if (sentence.trim()) {
-        //console.log(`playing segment "${sentence}"`);
-        sentenceQueue.push(sentence);
-        lastPlayedOffset += sentence.length;
+      if (sentence.content.trim()) {
+        console.log(`playing segment "${sentence}"`);
+        sentenceQueue.push(sentence.content);
+        lastPlayedOffset += sentence.offset + sentence.content.length;
         if (!isAudioPlaying) {
           isAudioPlaying = true;
           playSentencesFromQueue().catch(error => {
