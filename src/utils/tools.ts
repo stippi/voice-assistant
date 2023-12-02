@@ -1,12 +1,40 @@
 // @ts-expect-error - The import works, no idea why the IDE complains
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
-import {OpenWeatherMapApiKey} from "../secrets";
+import {OpenWeatherMapApiKey, NewsApiOrgKey} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {getTimers, setTimers} from "./timers";
 import {addIsoDurationToDate} from "./timeFormat";
 
 const math = create(all, {})
+
+const newsApiLanguageParam = {
+  type: "string",
+  enum: [ "ar", "de", "en", "es", "fr", "he", "it", "nl", "no", "pt", "ru", "sv", "ud", "zh" ]
+};
+
+const newsApiCountryParam = {
+  type: "string",
+  enum: [
+    "ae", "ar", "at", "au", "be", "bg", "br", "ca", "ch", "cn", "co", "cu", "cz", "de", "eg",
+    "fr", "gb", "gr", "hk", "hu", "id", "ie", "il", "in", "it", "jp", "kr", "lt", "lv", "ma",
+    "mx", "my", "ng", "nl", "no", "nz", "ph", "pl", "pt", "ro", "rs", "ru", "sa", "se", "sg",
+    "si", "sk", "th", "tr", "tw", "ua", "us", "ve", "za"
+  ]
+}
+
+const newsApiCategoryParam = {
+  type: "string",
+  enum: [
+    "business",
+    "entertainment",
+    "general",
+    "health",
+    "science",
+    "sports",
+    "technology"
+  ]
+};
 
 export const tools: ChatCompletionTool[] = [
   {
@@ -36,6 +64,45 @@ export const tools: ChatCompletionTool[] = [
           longitude: { type: "number" }
         },
         required: ["latitude", "longitude"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_top_headlines",
+      description: "Get the latest news (top headlines) according to parameters",
+      parameters: {
+        type: "object",
+        properties: {
+          language: newsApiLanguageParam,
+          country: newsApiCountryParam,
+          category: newsApiCategoryParam,
+          query: { type: "string", description: "Keywords or phrases to search for" },
+          sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
+        },
+        required: ["language", "category"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_news",
+      description: "Get the latest news (everything) according to parameters",
+      parameters: {
+        type: "object",
+        properties: {
+          language: newsApiLanguageParam,
+          country: newsApiCountryParam,
+          query: { type: "string", description: "Keywords or phrases to search for" },
+          sources: { type: "string", description: "A comma-seperated list of news sources to retrieve news from" },
+          searchIn: { type: "string", enum: [ "title", "description", "content" ] },
+          from: { type: "string", description: "The earliest date to retrieve news from in ISO 8601 format" },
+          to: { type: "string", description: "The latest date to retrieve news from in ISO 8601 format" },
+          sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
+        },
+        required: ["language"]
       }
     }
   },
@@ -188,6 +255,10 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await getCurrentWeather(args.latitude, args.longitude);
       case 'get_weather_forecast':
         return await getWeatherForecast(args.latitude, args.longitude);
+      case 'get_top_headlines':
+        return await getTopNews(args.language, args.country, args.category, args.query, args.sortBy);
+      case 'get_news':
+         return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
       case 'add_alarm':
         return await addTimer("alarm", args.time, args.title || "");
       case 'add_countdown':
@@ -218,6 +289,65 @@ async function getCurrentWeather(lat: number, lon: number) {
 
 async function getWeatherForecast(lat: number, lon: number) {
   const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
+  return await response.json();
+}
+
+async function getTopNews(language: string, country: string, category: string, query: string, sortBy: string) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("apiKey", NewsApiOrgKey);
+  queryParams.append("pageSize", "10");
+  if (language) {
+    queryParams.append("language", language);
+  }
+  if (country) {
+    queryParams.append("country", country);
+  }
+  if (category) {
+    queryParams.append("category", category);
+  }
+  if (query) {
+    queryParams.append("q", query);
+  }
+  if (sortBy) {
+    queryParams.append("sortBy", sortBy);
+  }
+  const url = `https://newsapi.org/v2/top-headlines?${queryParams.toString()}`;
+  console.log(`Fetching news from ${url}`);
+  const response = await fetch(url);
+  return await response.json();
+}
+
+async function getNews(language: string, country: string, query: string, sources: string, searchIn: string, from: string, to: string, sortBy: string) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("apiKey", NewsApiOrgKey);
+  queryParams.append("pageSize", "10");
+  if (language) {
+    queryParams.append("language", language);
+  }
+  if (country) {
+    queryParams.append("country", country);
+  }
+  if (query) {
+    queryParams.append("q", query);
+  }
+  if (sources) {
+    queryParams.append("sources", sources);
+  }
+  if (searchIn) {
+    queryParams.append("searchIn", searchIn);
+  }
+  if (from) {
+    queryParams.append("from", from);
+  }
+  if (to) {
+    queryParams.append("to", to);
+  }
+  if (sortBy) {
+    queryParams.append("sortBy", sortBy);
+  }
+  const url = `https://newsapi.org/v2/everything?${queryParams.toString()}`;
+  console.log(`Fetching news (everything) from ${url}`);
+  const response = await fetch(url);
   return await response.json();
 }
 
