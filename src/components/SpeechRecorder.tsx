@@ -32,7 +32,7 @@ if (MediaRecorder.isTypeSupported('audio/webm')) {
 
 const silenceTimeout = 1500;
 
-const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingRef}: Props) => {
+const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingRef, awaitSpokenResponse}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
@@ -219,8 +219,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     setTranscript,
     settings,
     sendMessage,
-    defaultMessage,
-    respondingRef
+    defaultMessage
   ]);
   
   useEffect(() => {
@@ -234,6 +233,10 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       }
     };
   }, [handleResult]);
+  
+  if (awaitSpokenResponse && !conversationOpen) {
+    startConversation();
+  }
   
   return (
     <div>
@@ -260,6 +263,7 @@ interface Props {
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
   respondingRef: React.MutableRefObject<boolean>;
+  awaitSpokenResponse: boolean;
 }
 
 export default SpeechRecorder;
