@@ -202,14 +202,13 @@ export default function VoiceAssistant() {
             // If "audible" is true, block here until all audio has finished playing,
             // before setting respondingRef.current to false.
             const checkAudioCompletion = () => {
-              console.log("response level", responseLevelRef.current);
               if (responseLevelRef.current === 0) {
                 console.log("audio finished");
                 respondingRef.current = false;
                 setAwaitSpokenResponse(true);
                 setTimeout(() => setAwaitSpokenResponse(false), 1000);
               } else {
-                setTimeout(checkAudioCompletion, 100);
+                setTimeout(checkAudioCompletion, 500);
               }
             };
             checkAudioCompletion();
