@@ -24,3 +24,43 @@ export function playSound(sound: keyof typeof sounds): HTMLAudioElement {
   });
   return entry.audio;
 }
+
+let audioContext: AudioContext | null = null;
+
+export function getAudioContext() {
+  if (!audioContext || audioContext.state === 'closed') {
+    audioContext = new AudioContext();
+  }
+  return audioContext;
+}
+
+export async function measureVolume(audioBlob: Blob) {
+  const audioContext = getAudioContext();
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  
+  const rawData = audioBuffer.getChannelData(0);
+  
+  let sum = 0;
+  let chunkSum = 0;
+  let count = 0;
+  const chunkSize = 44100;
+  
+  for (let i = 0; i < rawData.length; i++) {
+    chunkSum += Math.abs(rawData[i]);
+    count++;
+    
+    if (count >= chunkSize) {
+      sum += Math.sqrt(chunkSum / count);
+      chunkSum = 0;
+      count = 0;
+    }
+  }
+  
+  if (count > 0) {
+    sum += Math.sqrt(chunkSum / count);
+  }
+  
+  // Return the RMS. This is an "average" of the amplitude of the waveform.
+  return Math.sqrt(sum / Math.ceil(rawData.length / chunkSize));
+}

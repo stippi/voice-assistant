@@ -5,9 +5,9 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
-import {OpenAiConfig} from "../secrets";
+import { OpenAiConfig } from "../secrets";
 import useSettings from "../hooks/useSettings";
-import {playSound} from "../utils/audio.ts";
+import {playSound, getAudioContext} from "../utils/audio.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -41,11 +41,27 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const recognition = useRef<SpeechRecognition | null>(null);
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
+    // console.log(`received ${audioChunks.length} audio chunks`);
+    // if (audioChunks.length > 4) {
+    //   const partialBlob = new Blob(audioChunks.slice(2, 2 + (audioChunks.length + 1) / 2), { type: mimeType })
+    //   const avgVolumePartial = await measureVolume(partialBlob);
+    //   console.log(`average volume of partial blob: ${avgVolumePartial}`);
+    // }
+
     const audioBlob = new Blob(audioChunks, { type: mimeType });
+    
+    // const avgVolume = await measureVolume(audioBlob);
+    // if (avgVolume < 0.2) {
+    //   console.log(`silence threshold not reached (${avgVolume}), not sending to Whisper API`);
+    //   return;
+    // } else {
+    //   console.log(`silence threshold reached (${avgVolume}), sending to Whisper API`);
+    // }
 
     try {
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
+        language: 'de', // TODO: make configurable
         file: await toFile(audioBlob, `audio.${audioExt}`, { type: mimeType })
       });
       sendMessage(transcription.text, true);
@@ -69,7 +85,13 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const recordingStartedRef = React.useRef(false);
   
   const startRecording = useCallback(() => {
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    const audioConstraints = {
+      echoCancellation: true,
+      noiseSuppression: true,
+      channelCount: 1,
+      autoGainControl: false
+    };
+    navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false })
       .then(stream => {
         recordingStartedRef.current = true;
         audioChunks.current = [];
@@ -81,11 +103,58 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
           }
         };
         
+        // Setup analysis
+        const audioContext = getAudioContext();
+        const audioStreamSource = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.minDecibels = -40;
+        audioStreamSource.connect(analyser);
+        const bufferLength = analyser.frequencyBinCount;
+        const domainData = new Uint8Array(bufferLength);
+        
+        // Silence detection loop
+        const time = new Date();
+        let lastDetectedTime = time.getTime();
+        let anySoundDetected = false;
+        const detectSound = () => {
+          if (!recordingStartedRef.current) {
+            return;
+          }
+          
+          const currentTime = new Date().getTime();
+          if (currentTime > lastDetectedTime + 2500) {
+            console.log("silence detected");
+            stopConversation();
+            return;
+          }
+          
+          // Sound detection:
+          analyser.getByteFrequencyData(domainData);
+          for (let i = 0; i < bufferLength; i++) {
+            if (domainData[i] > 0) {
+              anySoundDetected = true;
+              lastDetectedTime = new Date().getTime();
+            }
+          }
+          
+          // Continue the loop
+          window.requestAnimationFrame(detectSound);
+        };
+
+        window.requestAnimationFrame(detectSound);
+        
         mediaRecorder.current.onstop = () => {
-          console.log('stopped MediaRecorder');
-          sendToWhisperRef.current(audioChunks.current).catch(error => {
-            console.error('Failed to send audio to Whisper API', error);
-          });
+          analyser.disconnect();
+          // audioContext.close().then(() => {
+          //   console.log("audio context closed");
+          // });
+          stream.getTracks().forEach(track => track.stop());
+          console.log(`stopped MediaRecorder, sound detected: ${anySoundDetected}`);
+          if (anySoundDetected) {
+            sendToWhisperRef.current(audioChunks.current).catch(error => {
+              console.error('Failed to send audio to Whisper API', error);
+            });
+          }
         };
         
         console.log('started MediaRecorder, MIME type:', mediaRecorder.current.mimeType);
