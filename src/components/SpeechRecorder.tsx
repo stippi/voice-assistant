@@ -10,6 +10,7 @@ import useSettings from "../hooks/useSettings";
 import {playSound, getAudioContext} from "../utils/audio";
 import {usePorcupine} from "@picovoice/porcupine-react";
 import {BuiltInKeyword} from "@picovoice/porcupine-web";
+//import {hark} from "../utils/harker.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -71,23 +72,18 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   }, [init])
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
-    // console.log(`received ${audioChunks.length} audio chunks`);
-    // if (audioChunks.length > 4) {
-    //   const partialBlob = new Blob(audioChunks.slice(2, 2 + (audioChunks.length + 1) / 2), { type: mimeType })
-    //   const avgVolumePartial = await measureVolume(partialBlob);
-    //   console.log(`average volume of partial blob: ${avgVolumePartial}`);
-    // }
-
+    console.log(`received ${audioChunks.length} audio chunks`);
     const audioBlob = new Blob(audioChunks, { type: mimeType });
     
-    // const avgVolume = await measureVolume(audioBlob);
-    // if (avgVolume < 0.2) {
-    //   console.log(`silence threshold not reached (${avgVolume}), not sending to Whisper API`);
-    //   return;
-    // } else {
-    //   console.log(`silence threshold reached (${avgVolume}), sending to Whisper API`);
-    // }
+    const blobUrl = URL.createObjectURL(audioBlob);
 
+    const downloadLink = document.createElement('a');
+    downloadLink.href = blobUrl;
+    downloadLink.download = `audio.${audioExt}`; // Dateiname und Erweiterung anpassen
+    downloadLink.textContent = 'Lade die Audio-Datei herunter';
+
+    document.body.appendChild(downloadLink);
+    
     try {
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
@@ -138,7 +134,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const startRecording = useCallback(() => {
     const audioConstraints = {
       echoCancellation: true,
-      noiseSuppression: true,
+//      noiseSuppression: true,
       channelCount: 1,
       autoGainControl: false
     };
@@ -158,7 +154,8 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         const audioContext = getAudioContext();
         const audioStreamSource = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
-        analyser.minDecibels = -40;
+        analyser.fftSize = 256;
+        analyser.minDecibels = -71;
         audioStreamSource.connect(analyser);
         const bufferLength = analyser.frequencyBinCount;
         const domainData = new Uint8Array(bufferLength);
@@ -180,25 +177,46 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
           }
           
           // Sound detection:
+          // const dataArray = new Float32Array(analyser.fftSize);
+          // analyser.getFloatFrequencyData(dataArray);
+          // const averageAmplitude = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+          // console.log(`average amplitude: ${averageAmplitude}`);
+          // if (averageAmplitude > -60) {
+          //   lastDetectedTime = new Date().getTime();
+          //   anySoundDetected = true;
+          // }
           analyser.getByteFrequencyData(domainData);
           for (let i = 0; i < bufferLength; i++) {
             if (domainData[i] > 0) {
               anySoundDetected = true;
               lastDetectedTime = new Date().getTime();
+              break;
             }
           }
-          
+
           // Continue the loop
-          window.requestAnimationFrame(detectSound);
+          window.setTimeout(detectSound, 250);
         };
 
-        window.requestAnimationFrame(detectSound);
+        window.setTimeout(detectSound, 0);
+        
+        // let anySoundDetected = 0;
+        // const detection = hark(stream, {});
+        // detection.on('speaking', () => {
+        //   console.log('sound detected');
+        // });
+        // detection.on('stopped_speaking', () => {
+        //   console.log('silence detected');
+        //   stopConversation();
+        // });
+        // detection.on('volume_change', (volume: number, threshold: number) => {
+        //   if (volume > threshold) {
+        //     console.log(`volume threshold exceeded: ${volume}, threshold: ${threshold}`);
+        //     anySoundDetected++;
+        //   }
+        // });
         
         mediaRecorder.current.onstop = () => {
-          // analyser.disconnect();
-          // audioContext.close().then(() => {
-          //   console.log("audio context closed");
-          // });
           stream.getTracks().forEach(track => track.stop());
           console.log(`stopped MediaRecorder, sound detected: ${anySoundDetected}`);
           if (anySoundDetected) {
@@ -249,11 +267,16 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   useEffect(() => {
     if (keywordDetection !== null) {
+      console.log('keyword detection changed:', keywordDetection);
       startConversation();
     }
   }, [keywordDetection, startConversation])
   
   useEffect(() => {
+    if (PorcupineAccessKey.length !== 0) {
+      return;
+    }
+    
     recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.current.continuous = true;
     recognition.current.interimResults = true;
@@ -272,7 +295,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       }
     };
     
-    if (settingsRef.current.openMic && !isPorcupineLoadedRef.current) {
+    if (settingsRef.current.openMic) {
       console.log('starting speech recognition');
       recognition.current.start();
     }
