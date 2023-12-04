@@ -2,25 +2,36 @@ import React from 'react';
 import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
+import {Timers} from "./Timers";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
-import splitIntoSentences from "../utils/splitSentences";
+import {splitIntoSentencesAst} from "../utils/splitSentences";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
-import {useSettings, Settings as SettingsType} from "../contexts/SettingsContext.tsx";
+import {Settings as SettingsType} from "../contexts/SettingsContext.tsx";
+import useSettings from "../hooks/useSettings";
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
 import {ChatCompletionMessage} from "openai/resources";
+import {getTimers} from "../utils/timers.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
 const model = "gpt-4-1106-preview";
 
-async function streamChatCompletion(currentMessages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>>, stream: ChatCompletionStream, audible: boolean, settingsRef: React.MutableRefObject<SettingsType>, isAudioPlayingRef: React.MutableRefObject<boolean>) {
+async function streamChatCompletion(
+  currentMessages: Message[],
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  stream: ChatCompletionStream,
+  audible: boolean,
+  settingsRef: React.MutableRefObject<SettingsType>,
+  responseLevelRef: React.MutableRefObject<number>
+) {
   let audioEndedPromise: Promise<unknown> | null = null;
   
   const playSentence = async (sentence: string) => {
+    responseLevelRef.current++;
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: settingsRef.current.voice,
@@ -36,18 +47,17 @@ async function streamChatCompletion(currentMessages: Message[], setMessages: Rea
       await audioEndedPromise;
     }
     
-    isAudioPlayingRef.current = true;
     const audio = new Audio(url);
     audioEndedPromise = new Promise<void>((resolve) => {
       audio.onended = () => {
         URL.revokeObjectURL(url);
-        isAudioPlayingRef.current = false;
+        responseLevelRef.current--;
         resolve();
       };
     });
     
     audio.play().catch(error => {
-      isAudioPlayingRef.current = false;
+      responseLevelRef.current--;
       console.error('Failed to play audio', error);
     });
   };
@@ -66,20 +76,20 @@ async function streamChatCompletion(currentMessages: Message[], setMessages: Rea
   
   let content = "";
   let lastPlayedOffset = 0;
-
+  
   const playNextSentences = (includeLast: boolean) => {
     if (!audible || content === "") {
       return;
     }
-    const sentences = splitIntoSentences(content.slice(lastPlayedOffset), ['.', '!', '?', '\n'], 30);
+    const sentences = splitIntoSentencesAst(content.slice(lastPlayedOffset));
     const sentenceCount = includeLast ? sentences.length : sentences.length - 1;
       // -1, since the last sentence might be incomplete
     for (let i = 0; i < sentenceCount; i++) {
       const sentence = sentences[i];
-      if (sentence.trim()) {
-        //console.log(`playing segment "${sentence}"`);
-        sentenceQueue.push(sentence);
-        lastPlayedOffset += sentence.length;
+      if (sentence.content.trim()) {
+        console.log(`playing segment "${sentence.content}"`);
+        sentenceQueue.push(sentence.content);
+        lastPlayedOffset += sentence.offset + sentence.content.length;
         if (!isAudioPlaying) {
           isAudioPlaying = true;
           playSentencesFromQueue().catch(error => {
@@ -126,16 +136,26 @@ async function streamChatCompletion(currentMessages: Message[], setMessages: Rea
   }
 }
 
-async function streamChatCompletionLoop(currentMessages: Message[], setMessages: React.Dispatch<React.SetStateAction<Message[]>>, audible: boolean, settingsRef: React.MutableRefObject<SettingsType>, isAudioPlayingRef: React.MutableRefObject<boolean>) {
+async function streamChatCompletionLoop(
+  currentMessages: Message[],
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  audible: boolean,
+  settingsRef: React.MutableRefObject<SettingsType>,
+  responseLevelRef: React.MutableRefObject<number>
+) {
   let tries = 0
+  responseLevelRef.current++;
   while (tries < 4) {
+    const systemMessage = generateSystemMessage(
+      audible, settingsRef.current.personality, getTimers());
     const stream = openai.beta.chat.completions.stream({
-      messages: [generateSystemMessage(audible, settingsRef.current.personality), ...currentMessages] as ChatCompletionMessage[],
+      messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
       tools: tools,
     })
-    await streamChatCompletion(currentMessages, setMessages, stream, audible, settingsRef, isAudioPlayingRef);
+    await streamChatCompletion(
+      currentMessages, setMessages, stream, audible, settingsRef, responseLevelRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -143,15 +163,17 @@ async function streamChatCompletionLoop(currentMessages: Message[], setMessages:
     console.log("Restarting chat completion loop");
     tries++;
   }
+  responseLevelRef.current--;
 }
 
 export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
+  const [awaitSpokenResponse, setAwaitSpokenResponse] = React.useState(false);
   const respondingRef = React.useRef(false);
-  const isAudioPlayingRef = React.useRef(false);
+  const responseLevelRef = React.useRef(0);
+
   const {settings} = useSettings();
   const settingsRef = React.useRef(settings);
-  
   React.useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
@@ -161,11 +183,12 @@ export default function VoiceAssistant() {
       console.log("Already responding to a message, ignoring");
       return;
     }
+    console.log("started responding");
     respondingRef.current = true;
     setMessages(currentMessages => {
       const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, isAudioPlayingRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef)
         .then(() => {
           setMessages(newMessages)
         })
@@ -179,11 +202,13 @@ export default function VoiceAssistant() {
             // If "audible" is true, block here until all audio has finished playing,
             // before setting respondingRef.current to false.
             const checkAudioCompletion = () => {
-              if (!isAudioPlayingRef.current) {
+              if (responseLevelRef.current === 0) {
                 console.log("audio finished");
                 respondingRef.current = false;
+                setAwaitSpokenResponse(true);
+                setTimeout(() => setAwaitSpokenResponse(false), 1000);
               } else {
-                setTimeout(checkAudioCompletion, 100);
+                setTimeout(checkAudioCompletion, 500);
               }
             };
             checkAudioCompletion();
@@ -195,13 +220,14 @@ export default function VoiceAssistant() {
       // Return the intermediate state to update conversation UI
       return [...newMessages, {role: "assistant", content: ""}];
     });
-  }, [setMessages]);
+  }, [setMessages, setAwaitSpokenResponse]);
   
   return (
     <>
       <Conversation chat={messages}/>
-      <MessageBar sendMessage={sendMessage} respondingRef={respondingRef}/>
+      <MessageBar sendMessage={sendMessage} respondingRef={respondingRef} awaitSpokenResponse={awaitSpokenResponse}/>
       <Settings/>
+      <Timers/>
     </>
   );
 }

@@ -5,7 +5,7 @@ import {IconButton} from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 import SpeechRecorder from "./SpeechRecorder.tsx";
 
-export function MessageBar({ sendMessage, respondingRef }: Props) {
+export function MessageBar({ sendMessage, respondingRef, awaitSpokenResponse }: Props) {
   
   const [message, setMessage] = React.useState("");
   const defaultPlaceHolder = "Type to chat";
@@ -60,6 +60,7 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
             setTranscript={setPlaceHolder}
             defaultMessage={defaultPlaceHolder}
             respondingRef={respondingRef}
+            awaitSpokenResponse={awaitSpokenResponse}
           />
         </div>
       </div>
@@ -70,4 +71,5 @@ export function MessageBar({ sendMessage, respondingRef }: Props) {
 interface Props {
   sendMessage: (message: string, audible: boolean) => void;
   respondingRef: React.MutableRefObject<boolean>;
+  awaitSpokenResponse: boolean;
 }

@@ -1,8 +1,40 @@
+// @ts-expect-error - The import works, no idea why the IDE complains
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
-import {OpenWeatherMapApiKey} from "../secrets.ts";
-import { create, all } from 'mathjs'
+import {OpenWeatherMapApiKey, NewsApiOrgKey} from "../secrets";
+import {create, all} from "mathjs";
+import {Timer} from "../model/timer";
+import {getTimers, setTimers} from "./timers";
+import {addIsoDurationToDate} from "./timeFormat";
 
 const math = create(all, {})
+
+const newsApiLanguageParam = {
+  type: "string",
+  enum: [ "ar", "de", "en", "es", "fr", "he", "it", "nl", "no", "pt", "ru", "sv", "ud", "zh" ]
+};
+
+const newsApiCountryParam = {
+  type: "string",
+  enum: [
+    "ae", "ar", "at", "au", "be", "bg", "br", "ca", "ch", "cn", "co", "cu", "cz", "de", "eg",
+    "fr", "gb", "gr", "hk", "hu", "id", "ie", "il", "in", "it", "jp", "kr", "lt", "lv", "ma",
+    "mx", "my", "ng", "nl", "no", "nz", "ph", "pl", "pt", "ro", "rs", "ru", "sa", "se", "sg",
+    "si", "sk", "th", "tr", "tw", "ua", "us", "ve", "za"
+  ]
+}
+
+const newsApiCategoryParam = {
+  type: "string",
+  enum: [
+    "business",
+    "entertainment",
+    "general",
+    "health",
+    "science",
+    "sports",
+    "technology"
+  ]
+};
 
 export const tools: ChatCompletionTool[] = [
   {
@@ -32,6 +64,103 @@ export const tools: ChatCompletionTool[] = [
           longitude: { type: "number" }
         },
         required: ["latitude", "longitude"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_top_headlines",
+      description: "Get the latest news (top headlines) according to parameters",
+      parameters: {
+        type: "object",
+        properties: {
+          language: newsApiLanguageParam,
+          country: newsApiCountryParam,
+          category: newsApiCategoryParam,
+          query: { type: "string", description: "Keywords or phrases to search for" },
+          sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
+        },
+        required: ["language", "category"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_news",
+      description: "Get the latest news (everything) according to parameters",
+      parameters: {
+        type: "object",
+        properties: {
+          language: newsApiLanguageParam,
+          country: newsApiCountryParam,
+          query: { type: "string", description: "Keywords or phrases to search for" },
+          sources: { type: "string", description: "A comma-seperated list of news sources to retrieve news from" },
+          searchIn: { type: "string", enum: [ "title", "description", "content" ] },
+          from: { type: "string", description: "The earliest date to retrieve news from in ISO 8601 format" },
+          to: { type: "string", description: "The latest date to retrieve news from in ISO 8601 format" },
+          sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
+        },
+        required: ["language"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_alarm",
+      description: "Add an alarm to the active timers. Displayed as an alarm for the given time.",
+      parameters: {
+        type: "object",
+        properties: {
+          time: {
+            type: "string",
+            description: "The exact time when the timer should go off, in the format 'YYYY-MM-DD HH:MM:SS'."
+          },
+          title: {
+            type: "string",
+            description: "Optional title of the timer."
+          }
+        },
+        required: ["time"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_countdown",
+      description: "Add a countdown timer to the active timers. Displayed as counting down to zero.",
+      parameters: {
+        type: "object",
+        properties: {
+          duration: {
+            type: "string",
+            description: "A duration in ISO 8601 format."
+          },
+          title: {
+            type: "string",
+            description: "Optional title of the timer."
+          }
+        },
+        required: ["duration"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_timer",
+      description: "Cancel one of the active timers",
+      parameters: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string"
+          }
+        },
+        required: ["id"]
       }
     }
   },
@@ -118,24 +247,38 @@ export const tools: ChatCompletionTool[] = [
   }
 ];
 
-export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<any> {
-  const args = JSON.parse(functionCall.arguments || "{}");
-  switch (functionCall.name) {
-    case 'get_current_weather':
-      return await getCurrentWeather(args.latitude, args.longitude);
-    case 'get_weather_forecast':
-      return await getWeatherForecast(args.latitude, args.longitude);
-    case 'evaluate_expression':
-      return await evaluateExpression(args.expression);
-    case 'memorize':
-      return await memorize(args.category, args.information);
-    case 'delete_memory_entry':
-      return await deleteInformation(args.category, args.information);
-    case 'show_image':
-      return { result: "image displayed" };
-    
-    default:
-      throw new Error(`Unknown function ${functionCall.name}`);
+export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<object> {
+  try {
+    const args = JSON.parse(functionCall.arguments || "{}");
+    switch (functionCall.name) {
+      case 'get_current_weather':
+        return await getCurrentWeather(args.latitude, args.longitude);
+      case 'get_weather_forecast':
+        return await getWeatherForecast(args.latitude, args.longitude);
+      case 'get_top_headlines':
+        return await getTopNews(args.language, args.country, args.category, args.query, args.sortBy);
+      case 'get_news':
+         return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
+      case 'add_alarm':
+        return await addTimer("alarm", args.time, args.title || "");
+      case 'add_countdown':
+        return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "");
+      case 'remove_timer':
+        return await removeTimer(args.id);
+      case 'evaluate_expression':
+        return await evaluateExpression(args.expression);
+      case 'memorize':
+        return await memorize(args.category, args.information);
+      case 'delete_memory_entry':
+        return await deleteInformation(args.category, args.information);
+      case 'show_image':
+        return { result: "image displayed" };
+      
+      default:
+        return { error: `unknown function '${functionCall.name}'`};
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
   }
 }
 
@@ -149,15 +292,92 @@ async function getWeatherForecast(lat: number, lon: number) {
   return await response.json();
 }
 
+async function getTopNews(language: string, country: string, category: string, query: string, sortBy: string) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("apiKey", NewsApiOrgKey);
+  queryParams.append("pageSize", "10");
+  if (language) {
+    queryParams.append("language", language);
+  }
+  if (country) {
+    queryParams.append("country", country);
+  }
+  if (category) {
+    queryParams.append("category", category);
+  }
+  if (query) {
+    queryParams.append("q", query);
+  }
+  if (sortBy) {
+    queryParams.append("sortBy", sortBy);
+  }
+  const url = `https://newsapi.org/v2/top-headlines?${queryParams.toString()}`;
+  console.log(`Fetching news from ${url}`);
+  const response = await fetch(url);
+  return await response.json();
+}
+
+async function getNews(language: string, country: string, query: string, sources: string, searchIn: string, from: string, to: string, sortBy: string) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("apiKey", NewsApiOrgKey);
+  queryParams.append("pageSize", "10");
+  if (language) {
+    queryParams.append("language", language);
+  }
+  if (country) {
+    queryParams.append("country", country);
+  }
+  if (query) {
+    queryParams.append("q", query);
+  }
+  if (sources) {
+    queryParams.append("sources", sources);
+  }
+  if (searchIn) {
+    queryParams.append("searchIn", searchIn);
+  }
+  if (from) {
+    queryParams.append("from", from);
+  }
+  if (to) {
+    queryParams.append("to", to);
+  }
+  if (sortBy) {
+    queryParams.append("sortBy", sortBy);
+  }
+  const url = `https://newsapi.org/v2/everything?${queryParams.toString()}`;
+  console.log(`Fetching news (everything) from ${url}`);
+  const response = await fetch(url);
+  return await response.json();
+}
+
+async function addTimer(type: "countdown" | "alarm", time: string, title: string) {
+  console.log(`Adding timer: ${type} at ${time} with title '${title}'`);
+  const timer: Timer = {
+    id: Math.random().toString(36).substring(7),
+    type,
+    time,
+    title
+  }
+  setTimers([...getTimers(), timer]);
+  return { result: `timer created with ID ${timer.id}` };
+}
+
+async function removeTimer(id: string) {
+  console.log(`Removing timer: ${id}`);
+  setTimers(getTimers().filter(timer => timer.id !== id))
+  return { result: "timer removed" };
+}
+
 async function evaluateExpression(expression: string) {
   try {
     return { result: math.evaluate(expression) }
   } catch (error) {
-    return { error: error.message }
+    return { error: error instanceof Error ? error.message : "unknown error" }
   }
 }
 
-function loadMemory() {
+function loadMemory(): Record<string, string[]> {
   const memoryString = window.localStorage.getItem('memory');
   if (memoryString) {
     return JSON.parse(memoryString);
@@ -165,7 +385,7 @@ function loadMemory() {
   return {};
 }
 
-function saveMemory(memory: any) {
+function saveMemory(memory: Record<string, string[]>) {
   window.localStorage.setItem('memory', JSON.stringify(memory));
   return { result: "information stored" };
 }
