@@ -144,7 +144,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         window.requestAnimationFrame(detectSound);
         
         mediaRecorder.current.onstop = () => {
-          analyser.disconnect();
+          // analyser.disconnect();
           // audioContext.close().then(() => {
           //   console.log("audio context closed");
           // });
