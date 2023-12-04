@@ -10,7 +10,25 @@
 }
 
 .content {
+    margin-top: 0.6em;
+}
 
+.content p {
+    margin-block-start: 0.5em;
+    margin-block-end: 0.5em;
+}
+
+.content pre {
+    font-size: 0.90em;
+}
+
+.content code {
+    font-size: 0.90em;
+    font-weight: bold;
+}
+
+.content pre code {
+    font-weight: normal;
 }
 
 .list-number {

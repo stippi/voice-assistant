@@ -15,6 +15,8 @@ export const OpenAiConfig = {
 };
 
 export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
+
+export const NewsApiOrgKey = "<Your newsapi.org API key>";
 ```
 
 This file is ignored by git.

@@ -1,0 +1,12 @@
+.timers {
+    position: fixed;
+    bottom: 4rem;
+    right: 4rem;
+
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column;
+
+    max-width: 15vw;
+    min-width: 14rem;
+}
