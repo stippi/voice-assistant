@@ -70,22 +70,6 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     });
   }, [init])
   
-  useEffect(() => {
-    if (isLoaded && settingsRef.current.openMic) {
-      console.log('starting wake-word detection');
-      start().catch((error) => {
-        console.log("failed to start Porcupine wake-word detection", error);
-      });
-    }
-    return () => {
-      if (isListening) {
-        stop().catch((error) => {
-          console.log("failed to stop Porcupine wake-word detection", error);
-        });
-      }
-    }
-  }, [start, stop, isListening, isLoaded])
-  
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     // console.log(`received ${audioChunks.length} audio chunks`);
     // if (audioChunks.length > 4) {
@@ -127,6 +111,24 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     sendToWhisperRef.current = sendToWhisperAPI;
     isPorcupineLoadedRef.current = isLoaded;
   }, [settings, sendToWhisperAPI, isLoaded]);
+  
+  // Start Porcupine wake word detection depending on settings and whether it is loaded
+  useEffect(() => {
+    if (isLoaded && settings.openMic && !isListening) {
+      console.log('starting wake-word detection');
+      start().catch((error) => {
+        console.log("failed to start Porcupine wake-word detection", error);
+      });
+    }
+    return () => {
+      if (isListening) {
+        console.log('stopping wake-word detection');
+        stop().catch((error) => {
+          console.log("failed to stop Porcupine wake-word detection", error);
+        });
+      }
+    }
+  }, [start, stop, isListening, isLoaded, settings])
 
   const mediaRecorder = React.useRef<MediaRecorder | null>(null);
   const audioChunks  = React.useRef<Blob[]>([]);
@@ -287,7 +289,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const openMicRef = React.useRef(settings.openMic);
   
   useEffect(() => {
-    if (recognition.current && openMicRef.current !== settings.openMic) {
+    if (!isLoaded && recognition.current && openMicRef.current !== settings.openMic) {
       openMicRef.current = settings.openMic;
       if (settings.openMic) {
         console.log('open mic changed: starting speech recognition')
@@ -297,7 +299,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         recognition.current.stop();
       }
     }
-  }, [settings]);
+  }, [settings, isLoaded]);
   
   const handleResult = useCallback((event: SpeechRecognitionEvent) => {
     if (silenceTimer !== null) {
