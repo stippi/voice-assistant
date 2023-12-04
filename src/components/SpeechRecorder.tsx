@@ -75,14 +75,14 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     console.log(`received ${audioChunks.length} audio chunks`);
     const audioBlob = new Blob(audioChunks, { type: mimeType });
     
-    const blobUrl = URL.createObjectURL(audioBlob);
-
-    const downloadLink = document.createElement('a');
-    downloadLink.href = blobUrl;
-    downloadLink.download = `audio.${audioExt}`; // Dateiname und Erweiterung anpassen
-    downloadLink.textContent = 'Lade die Audio-Datei herunter';
-
-    document.body.appendChild(downloadLink);
+    // const blobUrl = URL.createObjectURL(audioBlob);
+    //
+    // const downloadLink = document.createElement('a');
+    // downloadLink.href = blobUrl;
+    // downloadLink.download = `audio.${audioExt}`; // Dateiname und Erweiterung anpassen
+    // downloadLink.textContent = 'Lade die Audio-Datei herunter';
+    //
+    // document.body.appendChild(downloadLink);
     
     try {
       const transcription = await openai.audio.transcriptions.create({
@@ -154,7 +154,6 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         const audioContext = getAudioContext();
         const audioStreamSource = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
         analyser.minDecibels = -71;
         audioStreamSource.connect(analyser);
         const bufferLength = analyser.frequencyBinCount;
@@ -170,7 +169,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
           }
           
           const currentTime = new Date().getTime();
-          if (currentTime > lastDetectedTime + 2500) {
+          if (currentTime > lastDetectedTime + (anySoundDetected ? 1000 : 2500)) {
             console.log("silence detected");
             stopConversation();
             return;
