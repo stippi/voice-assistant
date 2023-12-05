@@ -12,6 +12,10 @@
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
 }
 
+.window-focused .fixedBottom:focus-within {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
 .textContainer {
     border-radius: 1rem;
     border: 1px solid #ccc;
