@@ -50,7 +50,8 @@ For example, write 'fifty one' instead of 51, or 'second' instead of '2.'.
 Write 'degree Celsius' instead of '°C'.
 Write 'kilometers per hour' instead of 'km/h'.
 Write 'second of December' instead of '2nd of Dec.' or similar abbreviations.
-Please no digits or abbreviations whatsoever.` : '';
+Please no digits or abbreviations whatsoever.
+Be very concise, otherwise it will take a long time to read your reply to the user.` : '';
   const currentTimeAndDate = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
   const personalityString = personalities[personality];
   return {
