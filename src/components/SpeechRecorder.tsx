@@ -7,10 +7,11 @@ import IconButton from '@mui/material/IconButton';
 import OpenAI, { toFile } from 'openai';
 import {OpenAiConfig, PorcupineAccessKey} from "../secrets";
 import useSettings from "../hooks/useSettings";
-import {playSound, getAudioContext} from "../utils/audio";
+import {playSound} from "../utils/audio";
 import {usePorcupine} from "@picovoice/porcupine-react";
 import {BuiltInKeyword} from "@picovoice/porcupine-web";
-//import {hark} from "../utils/harker.ts";
+import { CobraWorker } from "@picovoice/cobra-web";
+import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -42,6 +43,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   const shouldRestartRecognition = useRef(false);
   const recognition = useRef<SpeechRecognition | null>(null);
+  const cobra = useRef<CobraWorker | null>(null);
   
   const {
     keywordDetection,
@@ -53,23 +55,6 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     stop,
 //    release
   } = usePorcupine();
-  
-  useEffect(() => {
-    if (PorcupineAccessKey.length === 0) {
-      return;
-    }
-    
-    init(
-      PorcupineAccessKey,
-      [BuiltInKeyword.Computer],
-      {
-        publicPath: "models/porcupine_params.pv",
-        customWritePath: "3.0.0_porcupine_params.pv",
-      }
-    ).then(() => {
-      console.log('Porcupine initialized');
-    });
-  }, [init])
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     console.log(`received ${audioChunks.length} audio chunks`);
@@ -130,17 +115,18 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const audioChunks  = React.useRef<Blob[]>([]);
   
   const recordingStartedRef = React.useRef(false);
+  const voiceDetectedRef = React.useRef(false);
   
   const startRecording = useCallback(() => {
     const audioConstraints = {
       echoCancellation: true,
-//      noiseSuppression: true,
       channelCount: 1,
       autoGainControl: false
     };
     navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false })
       .then(stream => {
         recordingStartedRef.current = true;
+        voiceDetectedRef.current = false;
         audioChunks.current = [];
         mediaRecorder.current = new MediaRecorder(stream, { mimeType });
         
@@ -150,75 +136,21 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
           }
         };
         
-        // Setup analysis
-        const audioContext = getAudioContext();
-        const audioStreamSource = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.minDecibels = -71;
-        audioStreamSource.connect(analyser);
-        const bufferLength = analyser.frequencyBinCount;
-        const domainData = new Uint8Array(bufferLength);
-        
-        // Silence detection loop
-        const time = new Date();
-        let lastDetectedTime = time.getTime();
-        let anySoundDetected = false;
-        const detectSound = () => {
-          if (!recordingStartedRef.current) {
-            return;
-          }
-          
-          const currentTime = new Date().getTime();
-          if (currentTime > lastDetectedTime + (anySoundDetected ? 1000 : 2500)) {
-            console.log("silence detected");
-            stopConversation();
-            return;
-          }
-          
-          // Sound detection:
-          // const dataArray = new Float32Array(analyser.fftSize);
-          // analyser.getFloatFrequencyData(dataArray);
-          // const averageAmplitude = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-          // console.log(`average amplitude: ${averageAmplitude}`);
-          // if (averageAmplitude > -60) {
-          //   lastDetectedTime = new Date().getTime();
-          //   anySoundDetected = true;
-          // }
-          analyser.getByteFrequencyData(domainData);
-          for (let i = 0; i < bufferLength; i++) {
-            if (domainData[i] > 0) {
-              anySoundDetected = true;
-              lastDetectedTime = new Date().getTime();
-              break;
-            }
-          }
-
-          // Continue the loop
-          window.setTimeout(detectSound, 250);
-        };
-
-        window.setTimeout(detectSound, 0);
-        
-        // let anySoundDetected = 0;
-        // const detection = hark(stream, {});
-        // detection.on('speaking', () => {
-        //   console.log('sound detected');
-        // });
-        // detection.on('stopped_speaking', () => {
-        //   console.log('silence detected');
-        //   stopConversation();
-        // });
-        // detection.on('volume_change', (volume: number, threshold: number) => {
-        //   if (volume > threshold) {
-        //     console.log(`volume threshold exceeded: ${volume}, threshold: ${threshold}`);
-        //     anySoundDetected++;
-        //   }
-        // });
+        if (cobra.current) {
+          WebVoiceProcessor.subscribe(cobra.current).catch((error) => {
+            console.error('failed to subscribe to Cobra', error);
+          });
+        }
         
         mediaRecorder.current.onstop = () => {
+          if (cobra.current) {
+            WebVoiceProcessor.unsubscribe(cobra.current).catch((error) => {
+              console.error('failed to unsubscribe from Cobra', error);
+            });
+          }
           stream.getTracks().forEach(track => track.stop());
-          console.log(`stopped MediaRecorder, sound detected: ${anySoundDetected}`);
-          if (anySoundDetected) {
+          console.log(`stopped MediaRecorder, voice detected: ${voiceDetectedRef.current}`);
+          if (voiceDetectedRef.current) {
             sendToWhisperRef.current(audioChunks.current).catch(error => {
               console.error('Failed to send audio to Whisper API', error);
             });
@@ -226,7 +158,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         };
         
         console.log('started MediaRecorder, MIME type:', mediaRecorder.current.mimeType);
-        mediaRecorder.current.start(1000);
+        mediaRecorder.current.start();
       })
       .catch(error => {
         console.log('Failed to start recorder', error);
@@ -264,12 +196,21 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     }
   }, [stopRecording, silenceTimer]);
   
+  const conversationOpenRef = React.useRef(conversationOpen);
+  const startConversationRef = React.useRef(startConversation);
+  React.useEffect(() => {
+    conversationOpenRef.current = conversationOpen;
+    startConversationRef.current = startConversation;
+  }, [conversationOpen, startConversation]);
+  
   useEffect(() => {
     if (keywordDetection !== null) {
       console.log('keyword detection changed:', keywordDetection);
-      startConversation();
+      if (!conversationOpenRef.current && keywordDetection.label === BuiltInKeyword.Computer) {
+        startConversationRef.current();
+      }
     }
-  }, [keywordDetection, startConversation])
+  }, [keywordDetection])
   
   useEffect(() => {
     if (PorcupineAccessKey.length !== 0) {
@@ -359,16 +300,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       setTranscript(defaultMessage);
     }, silenceTimeout);
     setSilenceTimer(newTimer);
-  }, [
-    conversationOpen,
-    startConversation,
-    stopConversation,
-    silenceTimer,
-    setTranscript,
-    settings,
-    sendMessage,
-    defaultMessage
-  ]);
+  }, [silenceTimer, respondingRef, conversationOpen, settings.triggerPhrase, setTranscript, startConversation, defaultMessage, stopConversation, sendMessage]);
   
   useEffect(() => {
     if (recognition.current) {
@@ -381,6 +313,63 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       }
     };
   }, [handleResult]);
+  
+  const mutableVoiceProbabilityCallback = React.useCallback((probability: number) => {
+    if (probability > 0.7) {
+      if (silenceTimer !== null) {
+        clearTimeout(silenceTimer);
+        setSilenceTimer(null);
+      }
+      if (!voiceDetectedRef.current) {
+        console.log('voice detected');
+        voiceDetectedRef.current = true;
+      }
+    } else {
+      if (silenceTimer === null) {
+        const newTimer = window.setTimeout(() => {
+          if (conversationOpen) {
+            stopConversation();
+          }
+          setSilenceTimer(null);
+        }, silenceTimeout);
+        setSilenceTimer(newTimer);
+      }
+    }
+  }, [silenceTimer, conversationOpen, stopConversation]);
+  
+  const voiceProbabilityCallbackRef = React.useRef(mutableVoiceProbabilityCallback);
+  React.useEffect(() => {
+    voiceProbabilityCallbackRef.current = mutableVoiceProbabilityCallback;
+  }, [mutableVoiceProbabilityCallback]);
+  
+  const voiceProbabilityCallback = React.useCallback((probability: number) => {
+    voiceProbabilityCallbackRef.current(probability);
+  }, []);
+  
+  useEffect(() => {
+    if (PorcupineAccessKey.length === 0) {
+      return;
+    }
+    
+    init(
+      PorcupineAccessKey,
+      [BuiltInKeyword.Computer],
+      {
+        publicPath: "models/porcupine_params.pv",
+        customWritePath: "3.0.0_porcupine_params.pv",
+      }
+    ).then(() => {
+      console.log('Porcupine initialized');
+    });
+    
+    CobraWorker.create(
+      PorcupineAccessKey,
+      voiceProbabilityCallback
+    ).then((cobraWorker) => {
+      console.log('Cobra initialized');
+      cobra.current = cobraWorker;
+    });
+  }, [init])
   
   if (awaitSpokenResponse && !conversationOpen) {
     startConversation();
