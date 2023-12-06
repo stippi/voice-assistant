@@ -34,7 +34,7 @@ if (MediaRecorder.isTypeSupported('audio/webm')) {
   console.error('No supported MIME type for MediaRecorder found.');
 }
 
-const silenceTimeout = 1500;
+const silenceTimeout = 2500;
 
 const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingRef, awaitSpokenResponse}: Props) => {
   const [listening, setListening] = useState(false);
@@ -118,14 +118,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const voiceDetectedRef = React.useRef(false);
   
   const startRecording = useCallback(() => {
+    if (recordingStartedRef.current) {
+      return;
+    }
     const audioConstraints = {
       echoCancellation: true,
       channelCount: 1,
       autoGainControl: false
     };
+    recordingStartedRef.current = true;
     navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false })
       .then(stream => {
-        recordingStartedRef.current = true;
         voiceDetectedRef.current = false;
         audioChunks.current = [];
         mediaRecorder.current = new MediaRecorder(stream, { mimeType });
@@ -169,6 +172,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     if (mediaRecorder.current) {
       recordingStartedRef.current = false;
       mediaRecorder.current.stop();
+      mediaRecorder.current = null;
     } else {
       console.log('MediaRecorder undefined');
     }
@@ -205,7 +209,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   useEffect(() => {
     if (keywordDetection !== null) {
-      console.log('keyword detection changed:', keywordDetection);
+      console.log('wake word detected:', keywordDetection.label);
       if (!conversationOpenRef.current && keywordDetection.label === BuiltInKeyword.Computer) {
         startConversationRef.current();
       }
@@ -346,10 +350,14 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     voiceProbabilityCallbackRef.current(probability);
   }, []);
   
+  const picoVoiceInitializedRef = React.useRef(false);
+  
   useEffect(() => {
-    if (PorcupineAccessKey.length === 0) {
+    if (PorcupineAccessKey.length === 0 || picoVoiceInitializedRef.current) {
       return;
     }
+    
+    picoVoiceInitializedRef.current = true;
     
     init(
       PorcupineAccessKey,
