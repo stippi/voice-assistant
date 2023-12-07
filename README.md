@@ -38,6 +38,8 @@ npm install
 npm run dev
 ```
 
+:warning: **Do not build this project and host it somewhere publicly, since it would expose all keys from `secrets.ts`!.**
+
 ## Ideas for Next Features
 
 - [x] Temporarily open the microphone for conversation after the assistant finished speaking
