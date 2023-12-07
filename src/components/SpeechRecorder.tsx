@@ -5,7 +5,7 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
-import {OpenAiConfig, PorcupineAccessKey} from "../secrets";
+import {OpenAiConfig, PicoVoiceAccessKey} from "../secrets";
 import useSettings from "../hooks/useSettings";
 import {playSound} from "../utils/audio";
 import {usePorcupine} from "@picovoice/porcupine-react";
@@ -217,7 +217,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   }, [keywordDetection])
   
   useEffect(() => {
-    if (PorcupineAccessKey.length !== 0) {
+    if (PicoVoiceAccessKey.length !== 0) {
       return;
     }
     
@@ -353,14 +353,14 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   const picoVoiceInitializedRef = React.useRef(false);
   
   useEffect(() => {
-    if (PorcupineAccessKey.length === 0 || picoVoiceInitializedRef.current) {
+    if (PicoVoiceAccessKey.length === 0 || picoVoiceInitializedRef.current) {
       return;
     }
     
     picoVoiceInitializedRef.current = true;
     
     init(
-      PorcupineAccessKey,
+      PicoVoiceAccessKey,
       [BuiltInKeyword.Computer],
       {
         publicPath: "models/porcupine_params.pv",
@@ -371,7 +371,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     });
     
     CobraWorker.create(
-      PorcupineAccessKey,
+      PicoVoiceAccessKey,
       voiceProbabilityCallback
     ).then((cobraWorker) => {
       console.log('Cobra initialized');
