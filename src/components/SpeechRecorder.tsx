@@ -70,6 +70,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     // document.body.appendChild(downloadLink);
     
     try {
+      playSound('sending');
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
         language: 'de', // TODO: make configurable
@@ -95,6 +96,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   // Start Porcupine wake word detection depending on settings and whether it is loaded
   useEffect(() => {
+    console.log(`Porcupine loaded: ${isLoaded}, listeing: ${isListening}`);
     if (isLoaded && settings.openMic && !isListening) {
       console.log('starting wake-word detection');
       start().catch((error) => {
@@ -330,12 +332,13 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       }
     } else {
       if (silenceTimer === null) {
+        const timeout = voiceDetectedRef.current ? silenceTimeout / 2 : silenceTimeout;
         const newTimer = window.setTimeout(() => {
           if (conversationOpen) {
             stopConversation();
           }
           setSilenceTimer(null);
-        }, silenceTimeout);
+        }, timeout);
         setSilenceTimer(newTimer);
       }
     }

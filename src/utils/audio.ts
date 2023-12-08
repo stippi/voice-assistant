@@ -7,7 +7,11 @@ const sounds = {
   alarm: {
     file: "alarm-beep-01.wav",
     audio: null as HTMLAudioElement | null
-  }
+  },
+  sending: {
+    file: "sending-beep-01.wav",
+    audio: null as HTMLAudioElement | null
+  },
 };
 
 export function playSound(sound: keyof typeof sounds): HTMLAudioElement {
