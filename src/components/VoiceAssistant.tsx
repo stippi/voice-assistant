@@ -197,7 +197,7 @@ export default function VoiceAssistant() {
     respondingRef.current = true;
     if (message === "") {
       console.log("inserted pending user message");
-      setMessages(appendMessage(messages, {role: "user", content: ""}));
+      setMessages(currentMessages => appendMessage(currentMessages, {role: "user", content: ""}));
       respondingRef.current = false;
       return;
     }
