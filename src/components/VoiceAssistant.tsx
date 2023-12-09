@@ -6,6 +6,7 @@ import {Timers} from "./Timers";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
 import {splitIntoSentencesAst} from "../utils/splitSentences";
+import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
@@ -100,9 +101,11 @@ async function streamChatCompletion(
     }
   }
   
+  let rawContent = "";
   for await (const chunk of stream) {
     const newContent = chunk.choices[0]?.delta?.content || '';
-    content += newContent;
+    rawContent += newContent;
+    content = removeCodeBlocks(rawContent);
     if (content !== "") {
       setMessages([...currentMessages, {role: "assistant", content}]);
     }
