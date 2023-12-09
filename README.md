@@ -45,10 +45,10 @@ npm run dev
 - [x] Temporarily open the microphone for conversation after the assistant finished speaking
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add a "Stop" button while the response is streaming in
-- [ ] More visual feedback during phases of assembling the user message
+- [x] More visual feedback during phases of assembling the user message
 - [ ] While responding, the trigger phrase should interrupt the assistant from speaking
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
 - [ ] Display errors as strips, for example when audio playback is blocked
-- [ ] Prevent code blocks from being part of text-to-speech
+- [x] Prevent code blocks from being part of text-to-speech
 - [ ] Add a "Clear" button to the chat
 - [ ] Allow to preserve chats
