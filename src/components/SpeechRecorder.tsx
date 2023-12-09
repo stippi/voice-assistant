@@ -53,7 +53,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     init,
     start,
     stop,
-//    release
+    release
   } = usePorcupine();
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
@@ -71,6 +71,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     
     try {
       playSound('sending');
+      sendMessage("", true);
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
         language: 'de', // TODO: make configurable
@@ -96,7 +97,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   // Start Porcupine wake word detection depending on settings and whether it is loaded
   useEffect(() => {
-    console.log(`Porcupine loaded: ${isLoaded}, listeing: ${isListening}`);
+    console.log(`Porcupine loaded: ${isLoaded}, listening: ${isListening}`);
     if (isLoaded && settings.openMic && !isListening) {
       console.log('starting wake-word detection');
       start().catch((error) => {
@@ -327,7 +328,6 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         setSilenceTimer(null);
       }
       if (!voiceDetectedRef.current) {
-        console.log('voice detected');
         voiceDetectedRef.current = true;
       }
     } else {
@@ -353,14 +353,10 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     voiceProbabilityCallbackRef.current(probability);
   }, []);
   
-  const picoVoiceInitializedRef = React.useRef(false);
-  
   useEffect(() => {
-    if (PicoVoiceAccessKey.length === 0 || picoVoiceInitializedRef.current) {
+    if (PicoVoiceAccessKey.length === 0) {
       return;
     }
-    
-    picoVoiceInitializedRef.current = true;
     
     init(
       PicoVoiceAccessKey,
@@ -380,7 +376,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       console.log('Cobra initialized');
       cobra.current = cobraWorker;
     });
-  }, [init])
+    
+    return () => {
+      if (cobra.current) {
+        cobra.current.release();
+        console.log('Cobra released');
+      }
+      release().then(() => {
+        console.log('Porcupine released');
+      });
+    }
+  }, [init, release, voiceProbabilityCallback])
   
   if (awaitSpokenResponse && !conversationOpen) {
     startConversation();
