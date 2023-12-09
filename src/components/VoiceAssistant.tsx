@@ -143,6 +143,11 @@ async function streamChatCompletionLoop(
   settingsRef: React.MutableRefObject<SettingsType>,
   responseLevelRef: React.MutableRefObject<number>
 ) {
+  // console.log(`streamChatCompletionLoop(last message: "${currentMessages[currentMessages.length-1].content}, responseLevel: ${responseLevelRef.current}")`);
+  if (responseLevelRef.current > 0) {
+    console.log("Already responding to a message, ignoring");
+    return;
+  }
   let tries = 0
   responseLevelRef.current++;
   while (tries < 4) {
@@ -166,6 +171,10 @@ async function streamChatCompletionLoop(
   responseLevelRef.current--;
 }
 
+function appendMessage(messages: Message[], message: Message) {
+  return [...messages.filter(message => message.content !== ""), message];
+}
+
 export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [awaitSpokenResponse, setAwaitSpokenResponse] = React.useState(false);
@@ -179,14 +188,21 @@ export default function VoiceAssistant() {
   }, [settings]);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
+    console.log(`sendMessage("${message}", ${audible})`);
     if (respondingRef.current) {
       console.log("Already responding to a message, ignoring");
       return;
     }
     console.log("started responding");
     respondingRef.current = true;
+    if (message === "") {
+      console.log("inserted pending user message");
+      setMessages(appendMessage(messages, {role: "user", content: ""}));
+      respondingRef.current = false;
+      return;
+    }
     setMessages(currentMessages => {
-      const newMessages: Message[] = [...currentMessages, {role: "user", content: message}];
+      const newMessages: Message[] = appendMessage(currentMessages, {role: "user", content: message});
       
       streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef)
         .then(() => {
@@ -194,7 +210,7 @@ export default function VoiceAssistant() {
         })
         .catch(error => {
           console.error('Failed to stream chat completion', error);
-          setMessages([...currentMessages, {role: "user", content: message}]);
+          setMessages(appendMessage(currentMessages, {role: "user", content: message}));
         })
         .finally(() => {
           console.log("response finished");
