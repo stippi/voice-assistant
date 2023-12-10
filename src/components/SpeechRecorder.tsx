@@ -97,7 +97,6 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   // Start Porcupine wake word detection depending on settings and whether it is loaded
   useEffect(() => {
-    console.log(`Porcupine loaded: ${isLoaded}, listening: ${isListening}`);
     if (isLoaded && settings.openMic && !isListening) {
       console.log('starting wake-word detection');
       start().catch((error) => {
