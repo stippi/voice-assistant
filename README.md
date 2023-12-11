@@ -34,8 +34,8 @@ It just comes with a rate limit.
 Then run:
 
 ```bash
-npm install
-npm run dev
+yarn install
+yarn run dev
 ```
 
 :warning: **Do not build this project and host it somewhere publicly, since it would expose all keys from `secrets.ts`!**
