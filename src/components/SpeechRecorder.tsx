@@ -387,9 +387,11 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     }
   }, [init, release, voiceProbabilityCallback])
   
-  if (awaitSpokenResponse && !conversationOpen) {
-    startConversation();
-  }
+  useEffect(() => {
+    if (awaitSpokenResponse && !conversationOpen && openMicRef.current) {
+      startConversation();
+    }
+  }, [awaitSpokenResponse, conversationOpen, startConversation]);
   
   return (
     <div>
