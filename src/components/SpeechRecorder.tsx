@@ -5,13 +5,16 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 
 import OpenAI, { toFile } from 'openai';
+
+import {usePorcupine} from "@picovoice/porcupine-react";
+import {BuiltInKeyword} from "@picovoice/porcupine-web";
+import {CobraWorker} from "@picovoice/cobra-web";
+import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
+
 import {OpenAiConfig, PicoVoiceAccessKey} from "../secrets";
 import useSettings from "../hooks/useSettings";
 import {playSound} from "../utils/audio";
-import {usePorcupine} from "@picovoice/porcupine-react";
-import {BuiltInKeyword} from "@picovoice/porcupine-web";
-import { CobraWorker } from "@picovoice/cobra-web";
-import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
+import {textToLowerCaseWords} from "../utils/textUtils";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -77,6 +80,12 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
         language: 'de', // TODO: make configurable
         file: await toFile(audioBlob, `audio.${audioExt}`, { type: mimeType })
       });
+      const words = textToLowerCaseWords(transcription.text);
+      if (words.every(word => settingsRef.current.stopWords.includes(word))) {
+        console.log('conversation cancelled by stop word(s)');
+        sendMessage("", false);
+        return;
+      }
       sendMessage(transcription.text, true);
     } catch (error) {
       console.error('Failed to send request to Whisper API', error);

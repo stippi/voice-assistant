@@ -42,3 +42,19 @@ export function splitIntoSentencesAst(text: string): Sentence[] {
   }
   return sentences;
 }
+
+export function trimNonLetters(text: string): string {
+  // Regular expression to trim non-letters at the beginning (^) and the end ($)
+  // \p{L} means "any kind of letter from any language"
+  // ^[^\p{L}]+ trims the non-letters at the beginning of the string
+  // [^\p{L}]+$ trims the non-letters at the end of the string
+  const regex = /^[^\p{L}]+|[^\p{L}]+$/gu;
+  
+  return text.replace(regex, '');
+}
+
+export function textToLowerCaseWords(text: string): string[] {
+  text = text.toLowerCase();
+  const words = text.match(/\p{L}+/gu);
+  return words || [];
+}
