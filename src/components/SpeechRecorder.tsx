@@ -77,16 +77,17 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
       sendMessage("", true);
       const transcription = await openai.audio.transcriptions.create({
         model: 'whisper-1',
-        language: 'de', // TODO: make configurable
+        language: settingsRef.current.transcriptionLanguage.substring(0, 2),
         file: await toFile(audioBlob, `audio.${audioExt}`, { type: mimeType })
       });
       const words = textToLowerCaseWords(transcription.text);
-      if (words.every(word => settingsRef.current.stopWords.includes(word))) {
+      const stopWords = settingsRef.current.stopWords.map(word => word.toLowerCase());
+      if (words.every(word => stopWords.includes(word))) {
         console.log('conversation cancelled by stop word(s)');
         sendMessage("", false);
-        return;
+      } else {
+        sendMessage(transcription.text, true);
       }
-      sendMessage(transcription.text, true);
     } catch (error) {
       console.error('Failed to send request to Whisper API', error);
     }
@@ -235,7 +236,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
     recognition.current = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.current.continuous = true;
     recognition.current.interimResults = true;
-    recognition.current.lang = 'de-DE'; // TODO: Make configurable
+    recognition.current.lang = settingsRef.current.transcriptionLanguage;
     
     recognition.current.onstart = () => {
       setListening(true);

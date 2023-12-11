@@ -12,6 +12,7 @@ export type Settings = {
   stopWords: string[];
   audioSpeed: number;
   useWhisper: boolean;
+  transcriptionLanguage: string;
 }
 
 const defaultSettings: Settings = {
@@ -19,21 +20,17 @@ const defaultSettings: Settings = {
   personality: "snarky",
   openMic: true,
   triggerPhrase: "Computer",
-  stopWords: ["stop", "cancel", "nevermind", "stopp", "abbrechen"],
+  stopWords: ["Stopp", "Abbrechen"],
   audioSpeed: 1,
   useWhisper: true,
+  transcriptionLanguage: navigator.language,
 }
 let initialSettings = defaultSettings;
 
 const savedSettings = localStorage.getItem('voice-assistant-settings');
 if (savedSettings) {
-  initialSettings = JSON.parse(savedSettings);
-  for (const key in defaultSettings) {
-    if (!Object.prototype.hasOwnProperty.call(initialSettings, key)) {
-      // @ts-expect-error - I don't want to have multiple sources of truth for what is in the settings object
-      initialSettings[key] = defaultSettings[key];
-    }
-  }
+  const parsedSettings: Partial<Settings> = JSON.parse(savedSettings);
+  initialSettings = { ...defaultSettings, ...parsedSettings };
 }
 
 type SettingsContextType = {

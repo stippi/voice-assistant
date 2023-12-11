@@ -105,6 +105,20 @@ export function Settings() {
               helperText="Use something reliably recognized"
               variant="filled"
             />
+            <TextField
+              label="Stop words"
+              value={settings.stopWords.join(", ")}
+              onChange={(event) => setSettings({ ...settings, stopWords: event.target.value.split(", ") })}
+              helperText="Cancel when all spoken words are in this list"
+              variant="filled"
+            />
+            <TextField
+              label="Transcription language"
+              value={settings.transcriptionLanguage}
+              onChange={(event) => setSettings({ ...settings, transcriptionLanguage: event.target.value })}
+              helperText="Your language or leave empty"
+              variant="filled"
+            />
             <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
               <InputLabel>Personality</InputLabel>
               <Select
