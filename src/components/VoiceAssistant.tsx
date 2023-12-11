@@ -5,17 +5,17 @@ import {MessageBar} from "./MessageBar";
 import {Timers} from "./Timers";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
-import {splitIntoSentencesAst} from "../utils/splitSentences";
+import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
-import {Settings as SettingsType} from "../contexts/SettingsContext.tsx";
+import {Settings as SettingsType} from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
 import {ChatCompletionMessage} from "openai/resources";
-import {getTimers} from "../utils/timers.ts";
+import {getTimers} from "../utils/timers";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -175,7 +175,12 @@ async function streamChatCompletionLoop(
 }
 
 function appendMessage(messages: Message[], message: Message) {
-  return [...messages.filter(message => message.content !== ""), message];
+  const newMessages = messages.filter(message => message.content !== "");
+  if (messages.length > 0 && messages[messages.length - 1].content === "" && message.content === "") {
+    return newMessages;
+  }
+  newMessages.push(message);
+  return newMessages;
 }
 
 export default function VoiceAssistant() {

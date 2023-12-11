@@ -9,6 +9,7 @@ export type Settings = {
   personality: Personality;
   openMic: boolean;
   triggerPhrase: string;
+  stopWords: string[];
   audioSpeed: number;
   useWhisper: boolean;
 }
@@ -18,6 +19,7 @@ const defaultSettings: Settings = {
   personality: "snarky",
   openMic: true,
   triggerPhrase: "Computer",
+  stopWords: ["stop", "cancel", "nevermind", "stopp", "abbrechen"],
   audioSpeed: 1,
   useWhisper: true,
 }
