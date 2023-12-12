@@ -1,7 +1,7 @@
 import React from "react";
 import './MessageCard.css';
 
-import {Rings} from "react-loader-spinner";
+import {Discuss} from "react-loader-spinner";
 import PersonIcon from '@mui/icons-material/Person';
 import AssistantIcon from '@mui/icons-material/Assistant'
 import Markdown from 'react-markdown';
@@ -11,15 +11,14 @@ import {Message} from "../model/message.ts";
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   if (content === "") {
-    return (<Rings
-      height="30"
-      width="30"
-      color="rgb(58 90 124)"
-      radius="6"
-      wrapperStyle={{}}
-      wrapperClass=""
+    return (<Discuss
       visible={true}
-      ariaLabel="rings-loading"
+      height="2.5em"
+      width="2.5em"
+      ariaLabel="comment-loading"
+      wrapperStyle={{}}
+      wrapperClass="comment-wrapper"
+      colors={["rgba(0, 0, 0, 0.4", "rgba(0, 0, 0, 0.26"]}
     />)
   }
   if (role === "user") {
