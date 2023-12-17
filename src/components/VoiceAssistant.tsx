@@ -264,6 +264,8 @@ export default function VoiceAssistant() {
             // If "audible" is true, block here until all audio has finished playing,
             // before setting respondingRef.current to false.
             const checkAudioCompletion = () => {
+              // TODO: Stop audio here if responseCancelledRef.current is true
+              // TODO: Problem being that the chunk loop may long have been exited.
               if (responseLevelRef.current === 0) {
                 console.log("audio finished");
                 respondingRef.current = false;
