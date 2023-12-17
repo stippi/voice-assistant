@@ -3,9 +3,10 @@ import './MessageBar.css';
 import { TextareaAutosize } from '@mui/base';
 import {IconButton} from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
+import CancelIcon from '@mui/icons-material/Cancel';
 import SpeechRecorder from "./SpeechRecorder.tsx";
 
-export function MessageBar({ sendMessage, respondingRef, awaitSpokenResponse }: Props) {
+export function MessageBar({ sendMessage, stopResponding, respondingRef, awaitSpokenResponse }: Props) {
   
   const [message, setMessage] = React.useState("");
   const defaultPlaceHolder = "Type to chat";
@@ -44,7 +45,7 @@ export function MessageBar({ sendMessage, respondingRef, awaitSpokenResponse }: 
           maxRows={10}
         />
         <div className="buttonContainer">
-          <IconButton
+          {!respondingRef.current && <IconButton
             disabled={message === ""}
             aria-label="send message"
             onMouseDown={(event) => {
@@ -54,9 +55,19 @@ export function MessageBar({ sendMessage, respondingRef, awaitSpokenResponse }: 
             }}
           >
             <SendIcon />
-          </IconButton>
+          </IconButton>}
+          {respondingRef.current && <IconButton
+            aria-label="cancel response"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              stopResponding(false);
+            }}
+          >
+            <CancelIcon />
+          </IconButton>}
           <SpeechRecorder
             sendMessage={sendMessage}
+            stopResponding={stopResponding}
             setTranscript={setPlaceHolder}
             defaultMessage={defaultPlaceHolder}
             respondingRef={respondingRef}
@@ -70,6 +81,7 @@ export function MessageBar({ sendMessage, respondingRef, awaitSpokenResponse }: 
 
 interface Props {
   sendMessage: (message: string, audible: boolean) => void;
+  stopResponding: (audible: boolean) => void;
   respondingRef: React.MutableRefObject<boolean>;
   awaitSpokenResponse: boolean;
 }

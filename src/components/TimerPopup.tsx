@@ -1,6 +1,7 @@
 import React from "react";
 import './TimerPopup.css';
-import AvTimerIcon from '@mui/icons-material/AvTimer';
+//import AvTimerIcon from '@mui/icons-material/AvTimer';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {Timer} from "../model/timer";
@@ -32,7 +33,7 @@ export const TimerPopup = ({ timer, removeTimer }: Props) => {
     <div className="timer">
       {timer.ringing === true && <SoundWaves />}
       <div className="timer-icon">
-        {timer.type === "countdown" ? <AvTimerIcon /> : <AlarmIcon />}
+        {timer.type === "countdown" ? <HourglassTopIcon /> : <AlarmIcon />}
       </div>
       <div className="timer-info">
         <div className="timer-name">{timer.title}</div>
