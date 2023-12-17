@@ -39,7 +39,7 @@ if (MediaRecorder.isTypeSupported('audio/webm')) {
 
 const silenceTimeout = 2500;
 
-const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingRef, awaitSpokenResponse}: Props) => {
+const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMessage, respondingRef, awaitSpokenResponse}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
@@ -214,15 +214,20 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
   
   const conversationOpenRef = React.useRef(conversationOpen);
   const startConversationRef = React.useRef(startConversation);
+  const stopRespondingRef = React.useRef(stopResponding);
   React.useEffect(() => {
     conversationOpenRef.current = conversationOpen;
     startConversationRef.current = startConversation;
-  }, [conversationOpen, startConversation]);
+    stopRespondingRef.current = stopResponding;
+  }, [conversationOpen, startConversation, stopResponding]);
   
   useEffect(() => {
     if (keywordDetection !== null) {
       console.log('wake word detected:', keywordDetection.label);
       if (!conversationOpenRef.current && keywordDetection.label === BuiltInKeyword.Computer) {
+        if (respondingRef.current) {
+          stopRespondingRef.current(true);
+        }
         startConversationRef.current();
       }
     }
@@ -425,6 +430,7 @@ const SpeechRecorder = ({sendMessage, setTranscript, defaultMessage, respondingR
 
 interface Props {
   sendMessage: (message: string, audible: boolean) => void;
+  stopResponding: (audible: boolean) => void;
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
   respondingRef: React.MutableRefObject<boolean>;

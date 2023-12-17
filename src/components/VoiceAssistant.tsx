@@ -27,11 +27,17 @@ async function streamChatCompletion(
   stream: ChatCompletionStream,
   audible: boolean,
   settingsRef: React.MutableRefObject<SettingsType>,
-  responseLevelRef: React.MutableRefObject<number>
+  responseLevelRef: React.MutableRefObject<number>,
+  responseCancelledRef: React.MutableRefObject<boolean>
 ) {
   let audioEndedPromise: Promise<unknown> | null = null;
+  let currentAudio: HTMLAudioElement | null = null;
   
   const playSentence = async (sentence: string) => {
+    if (responseCancelledRef.current) {
+      return;
+    }
+ 
     responseLevelRef.current++;
     const response = await openai.audio.speech.create({
       model: "tts-1",
@@ -49,16 +55,19 @@ async function streamChatCompletion(
     }
     
     const audio = new Audio(url);
+    currentAudio = audio;
     audioEndedPromise = new Promise<void>((resolve) => {
       audio.onended = () => {
         URL.revokeObjectURL(url);
         responseLevelRef.current--;
+        currentAudio = null;
         resolve();
       };
     });
     
     audio.play().catch(error => {
       responseLevelRef.current--;
+      currentAudio = null;
       console.error('Failed to play audio', error);
     });
   };
@@ -73,6 +82,26 @@ async function streamChatCompletion(
       }
     }
     isAudioPlaying = false;
+  };
+  
+  const fadeOutAudio = () => {
+    if (currentAudio === null) {
+      return;
+    }
+    let volume = 1.0;
+    const fadeInterval = window.setInterval(() => {
+      if (currentAudio && volume > 0.2) {
+        volume -= 0.2;
+        currentAudio.volume = volume;
+      } else {
+        clearInterval(fadeInterval);
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+          currentAudio = null;
+        }
+      }
+    }, 100);
   };
   
   let content = "";
@@ -103,11 +132,17 @@ async function streamChatCompletion(
   
   let rawContent = "";
   for await (const chunk of stream) {
+    if (responseCancelledRef.current) {
+      console.log("Response cancelled");
+      fadeOutAudio();
+      currentMessages.push({role: "assistant", content: rawContent});
+      return;
+    }
     const newContent = chunk.choices[0]?.delta?.content || '';
     rawContent += newContent;
     content = removeCodeBlocks(rawContent);
-    if (content !== "") {
-      setMessages([...currentMessages, {role: "assistant", content}]);
+    if (rawContent !== "") {
+      setMessages([...currentMessages, {role: "assistant", content: rawContent}]);
     }
     
     playNextSentences(false);
@@ -144,7 +179,8 @@ async function streamChatCompletionLoop(
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   audible: boolean,
   settingsRef: React.MutableRefObject<SettingsType>,
-  responseLevelRef: React.MutableRefObject<number>
+  responseLevelRef: React.MutableRefObject<number>,
+  responseCancelledRef: React.MutableRefObject<boolean>
 ) {
   // console.log(`streamChatCompletionLoop(last message: "${currentMessages[currentMessages.length-1].content}, responseLevel: ${responseLevelRef.current}")`);
   if (responseLevelRef.current > 0) {
@@ -163,7 +199,7 @@ async function streamChatCompletionLoop(
       tools: tools,
     })
     await streamChatCompletion(
-      currentMessages, setMessages, stream, audible, settingsRef, responseLevelRef);
+      currentMessages, setMessages, stream, audible, settingsRef, responseLevelRef, responseCancelledRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -187,6 +223,7 @@ export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [awaitSpokenResponse, setAwaitSpokenResponse] = React.useState(false);
   const respondingRef = React.useRef(false);
+  const responseCancelledRef = React.useRef(false);
   const responseLevelRef = React.useRef(0);
 
   const {settings} = useSettings();
@@ -203,6 +240,7 @@ export default function VoiceAssistant() {
     }
     console.log("started responding");
     respondingRef.current = true;
+    responseCancelledRef.current = false;
     if (message === "") {
       console.log("inserted pending user message");
       setMessages(currentMessages => appendMessage(currentMessages, {role: "user", content: ""}));
@@ -212,7 +250,7 @@ export default function VoiceAssistant() {
     setMessages(currentMessages => {
       const newMessages: Message[] = appendMessage(currentMessages, {role: "user", content: message});
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef, responseCancelledRef)
         .then(() => {
           setMessages(newMessages)
         })
@@ -246,10 +284,19 @@ export default function VoiceAssistant() {
     });
   }, [setMessages, setAwaitSpokenResponse]);
   
+  const stopResponding = React.useCallback(() => {
+    responseCancelledRef.current = true;
+  }, []);
+  
   return (
     <>
       <Conversation chat={messages}/>
-      <MessageBar sendMessage={sendMessage} respondingRef={respondingRef} awaitSpokenResponse={awaitSpokenResponse}/>
+      <MessageBar
+        sendMessage={sendMessage}
+        stopResponding={stopResponding}
+        respondingRef={respondingRef}
+        awaitSpokenResponse={awaitSpokenResponse}
+      />
       <Settings/>
       <Timers/>
     </>
