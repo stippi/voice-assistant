@@ -44,9 +44,9 @@ yarn run dev
 
 - [x] Temporarily open the microphone for conversation after the assistant finished speaking
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
-- [ ] Add a "Stop" button while the response is streaming in
+- [x] Add a "Stop" button while the response is streaming in
 - [x] More visual feedback during phases of assembling the user message
-- [ ] While responding, the trigger phrase should interrupt the assistant from speaking
+- [x] While responding, the trigger phrase should interrupt the assistant from speaking
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
 - [ ] Display errors as strips, for example when audio playback is blocked
 - [x] Prevent code blocks from being part of text-to-speech
