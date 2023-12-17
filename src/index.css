@@ -25,7 +25,8 @@ a:hover {
 }
 
 html {
-  background-color: #f0f0f0
+  background-color: #f0f0f0;
+  overflow-y: scroll;
 }
 
 body {
