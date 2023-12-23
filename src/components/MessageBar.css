@@ -9,16 +9,16 @@
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 4px 0 rgba( 0,0,0 ,0.04)
 }
 
 .window-focused .fixedBottom:focus-within {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.08);
 }
 
 .textContainer {
     border-radius: 1rem;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     padding: 0 0 0 16px;
     position: relative;
     display: flex;
