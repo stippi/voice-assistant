@@ -28,7 +28,8 @@ async function streamChatCompletion(
   audible: boolean,
   settingsRef: React.MutableRefObject<SettingsType>,
   responseLevelRef: React.MutableRefObject<number>,
-  responseCancelledRef: React.MutableRefObject<boolean>
+  responseCancelledRef: React.MutableRefObject<boolean>,
+  cancelAudioRef: React.MutableRefObject<() => void>
 ) {
   let audioEndedPromise: Promise<unknown> | null = null;
   let currentAudio: HTMLAudioElement | null = null;
@@ -99,11 +100,17 @@ async function streamChatCompletion(
           currentAudio.pause();
           currentAudio.currentTime = 0;
           currentAudio = null;
+          responseLevelRef.current--;
         }
       }
     }, 100);
   };
   
+  cancelAudioRef.current = () => {
+    fadeOutAudio();
+    cancelAudioRef.current = () => {};
+  };
+
   let content = "";
   let lastPlayedOffset = 0;
   
@@ -180,7 +187,8 @@ async function streamChatCompletionLoop(
   audible: boolean,
   settingsRef: React.MutableRefObject<SettingsType>,
   responseLevelRef: React.MutableRefObject<number>,
-  responseCancelledRef: React.MutableRefObject<boolean>
+  responseCancelledRef: React.MutableRefObject<boolean>,
+  cancelAudioRef: React.MutableRefObject<() => void>
 ) {
   // console.log(`streamChatCompletionLoop(last message: "${currentMessages[currentMessages.length-1].content}, responseLevel: ${responseLevelRef.current}")`);
   if (responseLevelRef.current > 0) {
@@ -199,7 +207,7 @@ async function streamChatCompletionLoop(
       tools: tools,
     })
     await streamChatCompletion(
-      currentMessages, setMessages, stream, audible, settingsRef, responseLevelRef, responseCancelledRef);
+      currentMessages, setMessages, stream, audible, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -225,6 +233,7 @@ export default function VoiceAssistant() {
   const respondingRef = React.useRef(false);
   const responseCancelledRef = React.useRef(false);
   const responseLevelRef = React.useRef(0);
+  const cancelAudioRef = React.useRef<() => void>(() => {})
 
   const {settings} = useSettings();
   const settingsRef = React.useRef(settings);
@@ -250,7 +259,7 @@ export default function VoiceAssistant() {
     setMessages(currentMessages => {
       const newMessages: Message[] = appendMessage(currentMessages, {role: "user", content: message});
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef, responseCancelledRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef)
         .then(() => {
           setMessages(newMessages)
         })
@@ -264,11 +273,13 @@ export default function VoiceAssistant() {
             // If "audible" is true, block here until all audio has finished playing,
             // before setting respondingRef.current to false.
             const checkAudioCompletion = () => {
-              // TODO: Stop audio here if responseCancelledRef.current is true
-              // TODO: Problem being that the chunk loop may long have been exited.
+              if (responseCancelledRef.current) {
+                cancelAudioRef.current();
+              }
               if (responseLevelRef.current === 0) {
                 console.log("audio finished");
                 respondingRef.current = false;
+                cancelAudioRef.current = () => {};
                 setAwaitSpokenResponse(true);
                 setTimeout(() => setAwaitSpokenResponse(false), 1000);
               } else {
@@ -278,6 +289,7 @@ export default function VoiceAssistant() {
             checkAudioCompletion();
           } else {
             respondingRef.current = false;
+            cancelAudioRef.current = () => {};
           }
         });
       
