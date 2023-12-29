@@ -61,8 +61,6 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     setCurrentChatID(chatID);
   }
   
-  console.log(`loading: ${loading}`);
-  
   const newChat = React.useCallback(async (messages: Message[]) => {
     if (loading) throw new Error("Cannot create new chat while loading");
     const newChatID = crypto.randomUUID();
