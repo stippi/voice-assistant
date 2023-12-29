@@ -1,16 +1,12 @@
 const openDatabase = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const openDB = indexedDB.open("VoiceAssistant", 1);
-    openDB.onupgradeneeded = function() {
+    openDB.onupgradeneeded = () => {
       const db = openDB.result;
       db.createObjectStore("data");
     };
-    openDB.onsuccess = function() {
-      resolve(openDB.result);
-    };
-    openDB.onerror = function() {
-      reject(openDB.error);
-    };
+    openDB.onsuccess = () => resolve(openDB.result);
+    openDB.onerror = () => reject(openDB.error);
   });
 };
 
@@ -42,13 +38,7 @@ export const indexDbGetAllKeys = async (): Promise<string[]> => {
     const transaction = db.transaction('data', 'readonly');
     const store = transaction.objectStore('data');
     const request = store.getAllKeys();
-    
-    request.onsuccess = () => {
-      resolve(request.result.map(key => String(key)));
-    };
-    
-    request.onerror = () => {
-      reject(request.error);
-    };
+    request.onsuccess = () => resolve(request.result.map(key => String(key)));
+    request.onerror = () => reject(request.error);
   });
 };
