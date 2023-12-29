@@ -99,8 +99,10 @@ async function streamChatCompletion(
         if (currentAudio) {
           currentAudio.pause();
           currentAudio.currentTime = 0;
-          currentAudio = null;
-          responseLevelRef.current--;
+          if (currentAudio.onended) {
+            // @ts-expect-error - The onended event listener which we registered above, ignores the event.
+            currentAudio.onended();
+          }
         }
       }
     }, 100);
