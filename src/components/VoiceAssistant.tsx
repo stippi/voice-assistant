@@ -11,6 +11,7 @@ import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
 import {Settings} from "./Settings";
 import {Settings as SettingsType} from "../contexts/SettingsContext";
+import useChats from "../hooks/useChats";
 import useSettings from "../hooks/useSettings";
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
@@ -237,6 +238,14 @@ export default function VoiceAssistant() {
   const responseLevelRef = React.useRef(0);
   const cancelAudioRef = React.useRef<() => void>(() => {})
 
+  const {currentChatID, currentChat, newChat, updateChat} = useChats();
+  
+  React.useEffect(() => {
+    if (currentChat) {
+      setMessages(currentChat.messages);
+    }
+  }, [currentChat]);
+  
   const {settings} = useSettings();
   const settingsRef = React.useRef(settings);
   React.useEffect(() => {
@@ -264,6 +273,13 @@ export default function VoiceAssistant() {
       streamChatCompletionLoop(newMessages, setMessages, audible, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef)
         .then(() => {
           setMessages(newMessages)
+          if (currentChatID === "") {
+            newChat(newMessages).then((chatID) => {
+              console.log(`created new chat with ID: ${chatID}`);
+            });
+          } else {
+            updateChat(newMessages);
+          }
         })
         .catch(error => {
           console.error('Failed to stream chat completion', error);
@@ -298,7 +314,7 @@ export default function VoiceAssistant() {
       // Return the intermediate state to update conversation UI
       return [...newMessages, {role: "assistant", content: ""}];
     });
-  }, [setMessages, setAwaitSpokenResponse]);
+  }, [currentChatID, newChat, updateChat]);
   
   const stopResponding = React.useCallback(() => {
     responseCancelledRef.current = true;
