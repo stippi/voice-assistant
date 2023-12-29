@@ -73,3 +73,15 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* The next two blocks are supposed to fix a layout issue on Safari when the LLM streams markdown lists in a certain way. */
+li {
+  margin: 0;
+  padding: 0;
+}
+
+li p {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
