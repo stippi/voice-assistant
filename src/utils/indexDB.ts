@@ -35,3 +35,20 @@ export const indexDbGet = async <T>(key: string): Promise<T> => {
     request.onerror = () => reject(request.error);
   });
 };
+
+export const indexDbGetAllKeys = async (): Promise<string[]> => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('data', 'readonly');
+    const store = transaction.objectStore('data');
+    const request = store.getAllKeys();
+    
+    request.onsuccess = () => {
+      resolve(request.result.map(key => String(key)));
+    };
+    
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+};
