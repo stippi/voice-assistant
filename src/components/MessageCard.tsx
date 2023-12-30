@@ -2,12 +2,15 @@ import React from "react";
 import './MessageCard.css';
 
 import {Discuss} from "react-loader-spinner";
-import PersonIcon from '@mui/icons-material/Person';
-import AssistantIcon from '@mui/icons-material/Assistant'
+//import PersonIcon from '@mui/icons-material/Person';
+//import AssistantIcon from '@mui/icons-material/Assistant'
 import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import {Message} from "../model/message.ts";
+import {Message} from "../model/message";
+
+import { BsFillPersonFill } from "react-icons/bs";
+import { RiRobot2Fill } from "react-icons/ri";
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   if (content === "") {
@@ -70,9 +73,9 @@ export const MessageCard = React.forwardRef(({ className, message }: Props, ref:
   return (
     <div className={className} ref={ref}>
       {message.role === "user" ?
-        <PersonIcon className="role" color="disabled"/>
+        <BsFillPersonFill className="role"/>
         :
-        <AssistantIcon className="role" color="disabled"/>
+        <RiRobot2Fill className="role"/>
       }
       <div className="content">
         <MessageContent
