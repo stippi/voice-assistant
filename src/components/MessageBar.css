@@ -1,23 +1,24 @@
 .fixedBottom {
     position: fixed;
     bottom: 4rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 700px;
+    left: var(--chat-selection-width);
+    right: 0;
+
+    display: flex;
+    justify-content: center;
+
+    transition: left 0.3s ease-in-out;
+}
+
+.textContainer {
+    width: 50vw;
+
     border-radius: 1rem;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 4px 0 rgba( 0,0,0 ,0.04)
-}
+    box-shadow: 0 4px 4px 0 rgba( 0,0,0 ,0.04);
 
-.window-focused .fixedBottom:focus-within {
-    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.08);
-}
-
-.textContainer {
-    border-radius: 1rem;
     border: 1px solid #ddd;
     padding: 0 0 0 16px;
     position: relative;
@@ -56,5 +57,7 @@
 
 .window-focused .textContainer:focus-within {
     border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    box-shadow:
+            0 0 0 3px rgba(0, 123, 255, 0.25),
+            0 5px 5px rgba(0, 0, 0, 0.08);
 }
