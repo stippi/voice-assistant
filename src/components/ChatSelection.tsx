@@ -9,11 +9,9 @@ export function ChatSelection() {
   React.useEffect(() => {
     const root = document.documentElement;
     if (expanded) {
-      console.log("expanded");
       root.style.setProperty('--chat-selection-width', '12vw');
     } else {
-      console.log("collapsed");
-      root.style.setProperty('--chat-selection-width', '5vw');
+      root.style.setProperty('--chat-selection-width', '0.5rem');
     }
   }, [expanded]);
   
@@ -24,10 +22,9 @@ export function ChatSelection() {
   return (
     <div className="chat-selection">
       <div
+        className="chat-selection-toggle"
         onClick={() => setExpanded(!expanded)}
-      >
-        X
-      </div>
+      />
       
       {expanded && (
         <div
