@@ -3,7 +3,7 @@ import './ChatSelection.css'
 import useChats from "../hooks/useChats";
 
 export function ChatSelection() {
-  const { chats, setCurrentChat, newChat } = useChats();
+  const { chats, setCurrentChat, currentChatID, newChat } = useChats();
   const [expanded, setExpanded] = React.useState(true);
   
   React.useEffect(() => {
@@ -29,17 +29,19 @@ export function ChatSelection() {
         X
       </div>
       
-      <div
-        className="chat-item"
-        onClick={() => newChat([])}
-      >
-        New chat
-      </div>
+      {expanded && (
+        <div
+          className="chat-item"
+          onClick={() => newChat([])}
+        >
+          New chat
+        </div>
+      )}
       
-      {sortedChats.map((chat) => (
+      {expanded && sortedChats.map((chat) => (
         <div
           key={chat.id}
-          className="chat-item"
+          className={`chat-item${chat.id === currentChatID ? ' active-chat-item' : ''}`}
           onClick={() => setCurrentChat(chat.id)}
         >
           {new Date(chat.lastUpdated).toLocaleString()}

@@ -40,3 +40,11 @@
 .chat-item:hover {
     background-color: #e5e5e5;
 }
+
+.active-chat-item {
+    background-color: #efefef;
+}
+
+.active-chat-item:hover {
+    background-color: #efefef;
+}
