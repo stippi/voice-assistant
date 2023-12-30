@@ -51,4 +51,7 @@ yarn run dev
 - [ ] Display errors as strips, for example when audio playback is blocked
 - [x] Prevent code blocks from being part of text-to-speech
 - [ ] Add a "Clear" button to the chat
-- [ ] Allow to preserve chats
+- [x] Allow to preserve chats
+- [ ] Fix inconsistencies that developed over time:
+  - Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
+  - Trigger phrase can no longer actually be configured
