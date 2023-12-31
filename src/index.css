@@ -1,3 +1,114 @@
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Thin.otf) format("opentype");
+  font-weight: 100;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-ExtraLight.otf) format("opentype");
+  font-weight: 200;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Light.otf) format("opentype");
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Regular.otf) format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Medium.otf) format("opentype");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-SemiBold.otf) format("opentype");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Bold.otf) format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-ExtraBold.otf) format("opentype");
+  font-weight: 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Black.otf) format("opentype");
+  font-weight: 900;
+  font-style: normal;
+}
+
+/* ITALIC */
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-ThinItalic.otf) format("opentype");
+  font-weight: 100;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-ExtraLightItalic.otf) format("opentype");
+  font-weight: 200;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-LightItalic.otf) format("opentype");
+  font-weight: 300;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-Italic.otf) format("opentype");
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-MediumItalic.otf) format("opentype");
+  font-weight: 500;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-SemiBoldItalic.otf) format("opentype");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-BoldItalic.otf) format("opentype");
+  font-weight: 700;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-ExtraBoldItalic.otf) format("opentype");
+  font-weight: 800;
+  font-style: italic;
+}
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/inter/Inter-BlackItalic.otf) format("opentype");
+  font-weight: 900;
+  font-style: italic;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

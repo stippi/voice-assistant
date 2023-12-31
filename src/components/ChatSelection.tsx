@@ -1,4 +1,5 @@
 import React from "react";
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import './ChatSelection.css'
 import useChats from "../hooks/useChats";
 
@@ -31,6 +32,7 @@ export function ChatSelection() {
           className="chat-item"
           onClick={() => newChat([])}
         >
+          <AddCircleIcon fontSize="small"/>
           New chat
         </div>
       )}
