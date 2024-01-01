@@ -1,20 +1,8 @@
-import React from "react";
-import AddCircleIcon from '@mui/icons-material/AddCircle';
 import './ChatSelection.css'
 import useChats from "../hooks/useChats";
 
 export function ChatSelection() {
-  const { chats, setCurrentChat, currentChatID, newChat } = useChats();
-  const [expanded, setExpanded] = React.useState(true);
-  
-  React.useEffect(() => {
-    const root = document.documentElement;
-    if (expanded) {
-      root.style.setProperty('--chat-selection-width', '12vw');
-    } else {
-      root.style.setProperty('--chat-selection-width', '0.5rem');
-    }
-  }, [expanded]);
+  const { chats, setCurrentChat, currentChatID} = useChats();
   
   const sortedChats = chats.sort((a, b) => {
     return b.lastUpdated - a.lastUpdated;
@@ -22,22 +10,7 @@ export function ChatSelection() {
   
   return (
     <div className="chat-selection">
-      <div
-        className="chat-selection-toggle"
-        onClick={() => setExpanded(!expanded)}
-      />
-      
-      {expanded && (
-        <div
-          className="chat-item"
-          onClick={() => newChat([])}
-        >
-          <AddCircleIcon fontSize="small"/>
-          New chat
-        </div>
-      )}
-      
-      {expanded && sortedChats.map((chat) => (
+      {sortedChats.map((chat) => (
         <div
           key={chat.id}
           className={`chat-item${chat.id === currentChatID ? ' active-chat-item' : ''}`}

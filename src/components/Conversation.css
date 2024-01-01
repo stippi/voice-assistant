@@ -1,6 +1,6 @@
 .messages {
-    margin-left: var(--chat-selection-width);
-    width: calc(100% - var(--chat-selection-width));
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
     transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
     padding-bottom: 10rem;
 }
