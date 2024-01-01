@@ -1,3 +1,4 @@
+/* Inter Normal */
 @font-face {
   font-family: Inter;
   src: url(assets/fonts/inter/Inter-Thin.otf) format("opentype");
@@ -53,7 +54,7 @@
   font-style: normal;
 }
 
-/* ITALIC */
+/* Inter Italic */
 @font-face {
   font-family: Inter;
   src: url(assets/fonts/inter/Inter-ThinItalic.otf) format("opentype");
@@ -125,7 +126,7 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  --chat-selection-width: 12vw;
+  --sidebar-width: 12vw;
 }
 
 a {
@@ -138,7 +139,7 @@ a:hover {
 }
 
 html {
-  background-color: #f0f0f0;
+  background-color: #f5f5f5;
   overflow-y: scroll;
 }
 

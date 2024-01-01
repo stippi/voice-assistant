@@ -1,0 +1,63 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    background-color: #d9d9d9;
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.08);
+
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column;
+
+    box-sizing: border-box;
+
+    padding: 1rem 0;
+
+    overflow-y: auto;
+
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    transition: min-width 0.3s ease-in-out, max-width 0.3s ease-in-out;
+}
+
+.chat-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    margin: 0 1rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+
+    font-size: smaller;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s ease-in-out;
+}
+
+.chat-item:hover {
+    background-color: #e5e5e5;
+}
+
+
+.sidebar-toggle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0.5rem;
+
+    background-color: #d9d9d9;
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.08);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s ease-in-out;
+}

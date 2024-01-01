@@ -1,7 +1,7 @@
 .fixedBottom {
     position: fixed;
     bottom: 4rem;
-    left: var(--chat-selection-width);
+    left: var(--sidebar-width);
     right: 0;
 
     display: flex;
