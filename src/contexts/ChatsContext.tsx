@@ -1,7 +1,7 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {ChatInfo, Chat} from "../model/chat";
 import {Message} from "../model/message.ts";
-import {indexDbGet, indexDbPut} from "../utils/indexDB.ts";
+import {indexDbDelete, indexDbGet, indexDbPut} from "../utils/indexDB.ts";
 
 type ChatsContextType = {
   loading: boolean;
@@ -11,6 +11,7 @@ type ChatsContextType = {
   setCurrentChat: (chatID: string) => void;
   newChat: (messages: Message[]) => Promise<string>;
   updateChat: (messages: Message[]) => void;
+  deleteChat: (chatID: string) => void;
 };
 
 export const ChatsContext = createContext<ChatsContextType>({
@@ -21,6 +22,7 @@ export const ChatsContext = createContext<ChatsContextType>({
   setCurrentChat: () => {},
   newChat: async () => { return ""; },
   updateChat: () => {},
+  deleteChat: () => {},
 });
 
 export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) => {
@@ -100,8 +102,21 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     setChats(updatedChats);
   }, [currentChat, chats]);
   
+  const deleteChat = React.useCallback(async (chatId: string) => {
+    if (loading) throw new Error("Cannot delete chat while loading");
+    const newChats = chats.filter((chatInfo) => chatInfo.id !== chatId);
+    // TODO: Should use an atomic transaction here
+    await indexDbPut("chats", newChats);
+    await indexDbDelete(chatId);
+    console.log(`deleted chat ${chatId}`);
+    setChats(newChats);
+    await setCurrentChat("");
+  }, [loading, chats]);
+  
   return (
-    <ChatsContext.Provider value={{ loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat }}>
+    <ChatsContext.Provider value={{
+      loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat, deleteChat
+    }}>
       {children}
     </ChatsContext.Provider>
   );

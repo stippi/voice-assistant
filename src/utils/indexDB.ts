@@ -42,3 +42,14 @@ export const indexDbGetAllKeys = async (): Promise<string[]> => {
     request.onerror = () => reject(request.error);
   });
 };
+
+export const indexDbDelete = async (key: string): Promise<void> => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('data', 'readwrite');
+    const store = transaction.objectStore('data');
+    const request = store.delete(key);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
