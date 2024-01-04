@@ -1,7 +1,7 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {ChatInfo, Chat} from "../model/chat";
 import {Message} from "../model/message.ts";
-import {indexDbDelete, indexDbGet, indexDbPut} from "../utils/indexDB.ts";
+import {indexDbDelete, indexDbGet, indexDbGetAllKeys, indexDbPut} from "../utils/indexDB.ts";
 
 type ChatsContextType = {
   loading: boolean;
@@ -12,6 +12,7 @@ type ChatsContextType = {
   newChat: (messages: Message[]) => Promise<string>;
   updateChat: (messages: Message[]) => void;
   deleteChat: (chatID: string) => void;
+  syncChats: () => void;
 };
 
 export const ChatsContext = createContext<ChatsContextType>({
@@ -23,6 +24,7 @@ export const ChatsContext = createContext<ChatsContextType>({
   newChat: async () => { return ""; },
   updateChat: () => {},
   deleteChat: () => {},
+  syncChats: () => {},
 });
 
 export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) => {
@@ -104,18 +106,41 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
   
   const deleteChat = React.useCallback(async (chatId: string) => {
     if (loading) throw new Error("Cannot delete chat while loading");
-    const newChats = chats.filter((chatInfo) => chatInfo.id !== chatId);
+    
+    const index = chats.findIndex((chatInfo) => chatInfo.id === chatId);
+    if (index === -1) throw new Error("Cannot find chat to delete");
+    
+    const newChats = [...chats];
+    newChats.splice(index, 1);
     // TODO: Should use an atomic transaction here
     await indexDbPut("chats", newChats);
     await indexDbDelete(chatId);
     console.log(`deleted chat ${chatId}`);
     setChats(newChats);
-    await setCurrentChat("");
+    
+    if (index < chats.length) {
+      await setCurrentChat(newChats[index].id);
+    } else if (index > 0) {
+      await setCurrentChat(newChats[index - 1].id);
+    }
   }, [loading, chats]);
+  
+  const syncChats = React.useCallback(async () => {
+    const allChatIDs = (await indexDbGetAllKeys()).filter((key) => key !== "chats" && key !== "currentChatID");
+    const chatsFromDb = await Promise.all(allChatIDs.map((chatID) => indexDbGet<Chat>(chatID)));
+    const chatInfos = chatsFromDb.map((chat) => {
+      return {
+        id: chat.id,
+        created: chat.created,
+        lastUpdated: chat.lastUpdated,
+      };
+    });
+    await indexDbPut("chats", chatInfos);
+  }, []);
   
   return (
     <ChatsContext.Provider value={{
-      loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat, deleteChat
+      loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat, deleteChat, syncChats
     }}>
       {children}
     </ChatsContext.Provider>

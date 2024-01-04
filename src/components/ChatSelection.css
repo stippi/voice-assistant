@@ -12,12 +12,12 @@
 }
 
 .chat-item {
+    position: relative;
     display: flex;
     gap: 0.5rem;
     align-items: center;
 
     margin: 0 1rem;
-    padding: 0.5rem;
     border-radius: 0.5rem;
 
     font-size: smaller;
@@ -38,3 +38,22 @@
 .active-chat-item:hover {
     background-color: #efefef;
 }
+
+.chat-remove {
+    position: absolute;
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3px;
+    width: 30%;
+    background: linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0) 0%,
+            #efefef 50%
+    );
+}
+
