@@ -52,16 +52,24 @@ async function streamChatCompletion(
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
     const url = URL.createObjectURL(blob);
     
+    const cleanup = () => {
+      URL.revokeObjectURL(url);
+      responseLevelRef.current--;
+    }
+    
     if (audioEndedPromise) {
       await audioEndedPromise;
+      if (responseCancelledRef.current) {
+        cleanup();
+        return;
+      }
     }
     
     const audio = new Audio(url);
     currentAudio = audio;
     audioEndedPromise = new Promise<void>((resolve) => {
       audio.onended = () => {
-        URL.revokeObjectURL(url);
-        responseLevelRef.current--;
+        cleanup();
         currentAudio = null;
         resolve();
       };
@@ -233,6 +241,7 @@ function appendMessage(messages: Message[], message: Message) {
 export default function VoiceAssistant() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [awaitSpokenResponse, setAwaitSpokenResponse] = React.useState(false);
+  const [responding, setResponding] = React.useState(false);
   const respondingRef = React.useRef(false);
   const responseCancelledRef = React.useRef(false);
   const responseLevelRef = React.useRef(0);
@@ -259,11 +268,13 @@ export default function VoiceAssistant() {
       return;
     }
     console.log("started responding");
+    setResponding(true);
     respondingRef.current = true;
     responseCancelledRef.current = false;
     if (message === "") {
       console.log("inserted pending user message");
       setMessages(currentMessages => appendMessage(currentMessages, {role: "user", content: ""}));
+      setResponding(false);
       respondingRef.current = false;
       return;
     }
@@ -296,16 +307,20 @@ export default function VoiceAssistant() {
               }
               if (responseLevelRef.current === 0) {
                 console.log("audio finished");
+                setResponding(false);
                 respondingRef.current = false;
                 cancelAudioRef.current = () => {};
-                setAwaitSpokenResponse(true);
-                setTimeout(() => setAwaitSpokenResponse(false), 1000);
+                if (settingsRef.current.expectResponse) {
+                  setAwaitSpokenResponse(true);
+                  setTimeout(() => setAwaitSpokenResponse(false), 1000);
+                }
               } else {
                 setTimeout(checkAudioCompletion, 500);
               }
             };
             checkAudioCompletion();
           } else {
+            setResponding(false);
             respondingRef.current = false;
             cancelAudioRef.current = () => {};
           }
@@ -326,6 +341,7 @@ export default function VoiceAssistant() {
       <MessageBar
         sendMessage={sendMessage}
         stopResponding={stopResponding}
+        responding={responding}
         respondingRef={respondingRef}
         awaitSpokenResponse={awaitSpokenResponse}
       />
