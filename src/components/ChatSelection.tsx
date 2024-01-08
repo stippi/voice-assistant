@@ -3,6 +3,7 @@ import './ChatSelection.css'
 import useChats from "../hooks/useChats";
 import {IconButton} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from '@mui/icons-material/Edit';
 
 export function ChatSelection() {
   const { chats, setCurrentChat, currentChatID, deleteChat} = useChats();
@@ -31,11 +32,16 @@ export function ChatSelection() {
           onClick={() => setCurrentChat(chat.id)}
         >
           {chat.name || new Date(chat.lastUpdated).toLocaleString()}
-          {chat.id === currentChatID && chat.id === hoveredChat && (<div className="chat-remove">
-            <IconButton aria-label="delete" size="small" onClick={() => {deleteChat(chat.id)}}>
-              <DeleteIcon fontSize="inherit" sx={{color: "#999"}}/>
-            </IconButton>
-          </div>)}
+          {chat.id === currentChatID && chat.id === hoveredChat && (
+            <div className="chat-remove">
+              <IconButton aria-label="rename" size="small" onClick={() => {}}>
+                <EditIcon fontSize="inherit" sx={{color: "#888"}}/>
+              </IconButton>
+              <IconButton aria-label="delete" size="small" onClick={() => {deleteChat(chat.id)}}>
+                <DeleteIcon fontSize="inherit" sx={{color: "#888"}}/>
+              </IconButton>
+            </div>
+          )}
         </div>
       ))}
     </div>
