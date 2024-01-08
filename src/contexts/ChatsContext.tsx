@@ -11,6 +11,7 @@ type ChatsContextType = {
   setCurrentChat: (chatID: string) => void;
   newChat: (messages: Message[]) => Promise<string>;
   updateChat: (messages: Message[]) => void;
+  renameChat: (chatID: string, newName: string) => void;
   deleteChat: (chatID: string) => void;
   syncChats: () => void;
 };
@@ -23,6 +24,7 @@ export const ChatsContext = createContext<ChatsContextType>({
   setCurrentChat: () => {},
   newChat: async () => { return ""; },
   updateChat: () => {},
+  renameChat: () => {},
   deleteChat: () => {},
   syncChats: () => {},
 });
@@ -71,6 +73,7 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     const now = new Date().getTime();
     const newChatInfo: ChatInfo = {
       id: newChatID,
+      name: "",
       created: now,
       lastUpdated: now,
     };
@@ -104,24 +107,38 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     setChats(updatedChats);
   }, [currentChat, chats]);
   
-  const deleteChat = React.useCallback(async (chatId: string) => {
+  const renameChat = React.useCallback(async (chatID: string, newName: string) => {
+    if (loading) throw new Error("Cannot rename chat while loading");
+    
+    const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
+    if (index === -1) throw new Error("Cannot find chat to rename");
+    
+    const newChats = [...chats];
+    newChats[index].name = newName;
+    await indexDbPut("chats", newChats);
+    setChats(newChats);
+  }, [chats]);
+  
+  const deleteChat = React.useCallback(async (chatID: string) => {
     if (loading) throw new Error("Cannot delete chat while loading");
     
-    const index = chats.findIndex((chatInfo) => chatInfo.id === chatId);
+    const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
     if (index === -1) throw new Error("Cannot find chat to delete");
     
     const newChats = [...chats];
     newChats.splice(index, 1);
     // TODO: Should use an atomic transaction here
     await indexDbPut("chats", newChats);
-    await indexDbDelete(chatId);
-    console.log(`deleted chat ${chatId}`);
+    await indexDbDelete(chatID);
+    console.log(`deleted chat ${chatID}`);
     setChats(newChats);
     
     if (index < chats.length) {
       await setCurrentChat(newChats[index].id);
     } else if (index > 0) {
       await setCurrentChat(newChats[index - 1].id);
+    } else {
+      await setCurrentChat("");
     }
   }, [loading, chats]);
   
@@ -140,7 +157,7 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
   
   return (
     <ChatsContext.Provider value={{
-      loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat, deleteChat, syncChats
+      loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat, renameChat, deleteChat, syncChats
     }}>
       {children}
     </ChatsContext.Provider>
