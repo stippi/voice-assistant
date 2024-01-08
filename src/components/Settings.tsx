@@ -91,6 +91,15 @@ export function Settings() {
             </FormControl>
             <FormControl>
               <FormControlLabel
+                checked={settings.expectResponse}
+                control={<Switch color="primary" />}
+                label="Listen when done responding"
+                labelPlacement="end"
+                onChange={() => setSettings({ ...settings, expectResponse: !settings.expectResponse })}
+              />
+            </FormControl>
+            <FormControl>
+              <FormControlLabel
                 checked={settings.useWhisper}
                 control={<Switch color="primary" />}
                 label="Use Whisper Transcription"

@@ -8,6 +8,7 @@ export type Settings = {
   voice: Voice;
   personality: Personality;
   openMic: boolean;
+  expectResponse: boolean;
   triggerPhrase: string;
   stopWords: string[];
   audioSpeed: number;
@@ -19,6 +20,7 @@ const defaultSettings: Settings = {
   voice: "onyx",
   personality: "snarky",
   openMic: true,
+  expectResponse: true,
   triggerPhrase: "Computer",
   stopWords: ["Stopp", "Abbrechen"],
   audioSpeed: 1,
