@@ -10,7 +10,7 @@ Create a file named `secrets.ts` in the `src` directory with the following conte
 
 ```typescript
 export const OpenAiConfig = {
-  apiKey: '<Your platform.openai.com API key>',
+  apiKey: "<Your platform.openai.com API key>",
   dangerouslyAllowBrowser: true
 };
 
@@ -53,5 +53,8 @@ yarn run dev
 - [ ] Add a "Clear" button to the chat
 - [x] Allow to preserve chats
 - [ ] Fix inconsistencies that developed over time:
-  - Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
-  - Trigger phrase can no longer actually be configured
+  - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
+  - [x] Trigger word needs to be picked from Porcupine built-in keywords
+- [ ] Reset Porcupine when browser tab is (re-)activated
+- [ ] Move gear icon into sidebar
+- [ ] Switch to another component library?
