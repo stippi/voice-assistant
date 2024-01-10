@@ -12,6 +12,7 @@ import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
 
 import {OpenAiConfig, PicoVoiceAccessKey} from "../secrets";
 import useSettings from "../hooks/useSettings";
+import useWindowFocus from "../hooks/useWindowFocus";
 import {playSound} from "../utils/audio";
 import {textToLowerCaseWords} from "../utils/textUtils";
 
@@ -104,9 +105,11 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     isPorcupineLoadedRef.current = isLoaded;
   }, [settings, sendToWhisperAPI, isLoaded]);
   
+  const {documentVisible} = useWindowFocus();
+
   // Start Porcupine wake word detection depending on settings and whether it is loaded
   useEffect(() => {
-    if (isLoaded && settings.openMic && !isListening) {
+    if (isLoaded && settings.openMic && documentVisible && !isListening) {
       console.log('starting wake-word detection');
       start().catch((error) => {
         console.log("failed to start Porcupine wake-word detection", error);
@@ -120,7 +123,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         });
       }
     }
-  }, [start, stop, isListening, isLoaded, settings])
+  }, [start, stop, documentVisible, isListening, isLoaded, settings.openMic])
 
   const mediaRecorder = React.useRef<MediaRecorder | null>(null);
   const audioChunks  = React.useRef<Blob[]>([]);
