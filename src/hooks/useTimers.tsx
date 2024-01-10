@@ -1,25 +1,16 @@
-import React from "react";
-import {getTimers} from "../utils/timers.ts";
-import {Timer} from "../model/timer.ts";
-
-// export default function useTimers() {
-//   const timers = getTimers();
-//
-//   return {
-//     timers,
-//     setTimers
-//   };
-// }
+import {useEffect, useState} from "react";
+import {getTimers} from "../utils/timers";
+import {Timer} from "../model/timer";
 
 export default function useTimers() {
-  const [timers, setTimers] = React.useState(getTimers());
+  const [timers, setTimers] = useState(getTimers());
 
-  React.useEffect(() => {
+  useEffect(() => {
     const savedTimers = getTimers();
     if (JSON.stringify(savedTimers) !== JSON.stringify(timers)) {
       setTimers(savedTimers);
     }
-  });
+  }, [timers]);
 
   return {
     timers,
