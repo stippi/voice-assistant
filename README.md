@@ -1,6 +1,6 @@
 # Voice Assistant
 
-Start a spoken ChatGPT conversation by activation word
+Start a spoken ChatGPT conversation by activation word in your browser.
 
 This project was bootstrapped using `npm create vite@latest ./ -- --template react-ts`.
 
