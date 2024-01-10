@@ -1,4 +1,5 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
+import {BuiltInKeyword} from "@picovoice/porcupine-web";
 
 export type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
@@ -10,6 +11,7 @@ export type Settings = {
   openMic: boolean;
   expectResponse: boolean;
   triggerPhrase: string;
+  triggerWord: BuiltInKeyword;
   stopWords: string[];
   audioSpeed: number;
   useWhisper: boolean;
@@ -22,6 +24,7 @@ const defaultSettings: Settings = {
   openMic: true,
   expectResponse: true,
   triggerPhrase: "Computer",
+  triggerWord: BuiltInKeyword.Computer,
   stopWords: ["Stopp", "Abbrechen"],
   audioSpeed: 1,
   useWhisper: true,

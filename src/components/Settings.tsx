@@ -16,6 +16,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {Voice, Personality} from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
+import {BuiltInKeyword} from "@picovoice/porcupine-web";
 
 const audioSpeedMarks = [
   {
@@ -52,6 +53,8 @@ export function Settings() {
   
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
   const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
+  const triggerWords = ["Alexa", "Americano", "Blueberry", "Bumblebee", "Computer", "Grapefruit",
+    "Grasshopper", "Hey Google", "Hey Siri", "Jarvis", "Okay Google", "Picovoice", "Porcupine", "Terminator"];
   
   return (
     <div className={`fixedTopRight ${open ? 'open' : ''}`}>
@@ -66,6 +69,7 @@ export function Settings() {
         </IconButton>
         <Popover
           id={id}
+          sx={{ maxWidth: 500 }}
           open={open}
           anchorEl={anchorEl}
           onClose={handleClose}
@@ -89,6 +93,19 @@ export function Settings() {
                 onChange={() => setSettings({ ...settings, openMic: !settings.openMic })}
               />
             </FormControl>
+            <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
+              <InputLabel>Wake word</InputLabel>
+              <Select
+                value={settings.triggerWord.valueOf()}
+                label="Personality"
+                disabled={!settings.openMic}
+                onChange={(event) => {setSettings({ ...settings, triggerWord: event.target.value as BuiltInKeyword });}}
+              >
+                {triggerWords.map((word, index) => (
+                  <MenuItem key={index} value={word}>{word}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <FormControl>
               <FormControlLabel
                 checked={settings.expectResponse}
@@ -107,13 +124,6 @@ export function Settings() {
                 onChange={() => setSettings({ ...settings, useWhisper: !settings.useWhisper })}
               />
             </FormControl>
-            <TextField
-              label="Trigger phrase"
-              value={settings.triggerPhrase}
-              onChange={(event) => setSettings({ ...settings, triggerPhrase: event.target.value })}
-              helperText="Use something reliably recognized"
-              variant="filled"
-            />
             <TextField
               label="Stop words"
               value={settings.stopWords.join(", ")}
