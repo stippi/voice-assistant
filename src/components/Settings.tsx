@@ -69,7 +69,6 @@ export function Settings() {
         </IconButton>
         <Popover
           id={id}
-          sx={{ maxWidth: 500 }}
           open={open}
           anchorEl={anchorEl}
           onClose={handleClose}
