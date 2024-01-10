@@ -52,9 +52,14 @@ yarn run dev
 - [x] Prevent code blocks from being part of text-to-speech
 - [ ] Add a "Clear" button to the chat
 - [x] Allow to preserve chats
+- [ ] Implement renaming chats
+- [ ] Implement automatically naming chats via LLM
+- [ ] Structured replies that force the LLM to consider some things with each reply
+  - [ ] Always collect "things to remember"
 - [ ] Fix inconsistencies that developed over time:
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
 - [ ] Reset Porcupine when browser tab is (re-)activated
 - [ ] Move gear icon into sidebar
 - [ ] Switch to another component library?
+- [ ] Add Spotify integration?
