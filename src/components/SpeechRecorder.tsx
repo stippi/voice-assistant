@@ -7,7 +7,6 @@ import IconButton from '@mui/material/IconButton';
 import OpenAI, { toFile } from 'openai';
 
 import {usePorcupine} from "@picovoice/porcupine-react";
-import {BuiltInKeyword} from "@picovoice/porcupine-web";
 import {CobraWorker} from "@picovoice/cobra-web";
 import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
 
@@ -99,7 +98,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   const isPorcupineLoadedRef = React.useRef(isLoaded);
   
   // Update refs
-  React.useEffect(() => {
+  useEffect(() => {
     settingsRef.current = settings;
     sendToWhisperRef.current = sendToWhisperAPI;
     isPorcupineLoadedRef.current = isLoaded;
@@ -215,7 +214,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   const conversationOpenRef = React.useRef(conversationOpen);
   const startConversationRef = React.useRef(startConversation);
   const stopRespondingRef = React.useRef(stopResponding);
-  React.useEffect(() => {
+  useEffect(() => {
     conversationOpenRef.current = conversationOpen;
     startConversationRef.current = startConversation;
     stopRespondingRef.current = stopResponding;
@@ -224,14 +223,14 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   useEffect(() => {
     if (keywordDetection !== null) {
       console.log('wake word detected:', keywordDetection.label);
-      if (!conversationOpenRef.current && keywordDetection.label === BuiltInKeyword.Computer) {
+      if (!conversationOpenRef.current && keywordDetection.label === settings.triggerWord) {
         if (respondingRef.current) {
           stopRespondingRef.current(true);
         }
         startConversationRef.current();
       }
     }
-  }, [keywordDetection])
+  }, [keywordDetection, respondingRef, settings.triggerWord])
   
   useEffect(() => {
     if (PicoVoiceAccessKey.length !== 0) {
@@ -374,7 +373,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     
     init(
       PicoVoiceAccessKey,
-      [BuiltInKeyword.Computer],
+      settings.triggerWord,
       {
         publicPath: "models/porcupine_params.pv",
         customWritePath: "3.0.0_porcupine_params.pv",
@@ -400,7 +399,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         console.log('Porcupine released');
       });
     }
-  }, [init, release, voiceProbabilityCallback])
+  }, [init, release, voiceProbabilityCallback, settings.triggerWord])
   
   useEffect(() => {
     if (awaitSpokenResponse && !conversationOpen && openMicRef.current) {
