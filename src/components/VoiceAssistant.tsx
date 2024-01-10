@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
@@ -17,6 +17,7 @@ import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
 // @ts-expect-error - missing types
 import {ChatCompletionMessage} from "openai/resources";
 import {getTimers} from "../utils/timers";
+import useWindowFocus from "../hooks/useWindowFocus.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -334,6 +335,15 @@ export default function VoiceAssistant() {
   const stopResponding = React.useCallback(() => {
     responseCancelledRef.current = true;
   }, []);
+  
+  const { windowFocused} = useWindowFocus();
+  useEffect(() => {
+    if (windowFocused) {
+      document.body.classList.add('window-focused');
+    } else {
+      document.body.classList.remove('window-focused');
+    }
+  }, [windowFocused]);
   
   return (
     <>

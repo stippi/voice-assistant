@@ -1,31 +1,12 @@
-import { useEffect } from 'react';
+import React from 'react';
+import {WindowFocusContext} from "../contexts/WindowFocusContext.tsx";
 
 export default function useWindowFocus() {
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        document.body.classList.add('window-focused');
-      } else {
-        document.body.classList.remove('window-focused');
-      }
-    };
-    
-    const handleWindowFocus = () => {
-      document.body.classList.add('window-focused');
-    };
-    
-    const handleWindowBlur = () => {
-      document.body.classList.remove('window-focused');
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-    window.addEventListener('blur', handleWindowBlur);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-      window.removeEventListener('blur', handleWindowBlur);
-    };
-  }, []);
+  const context = React.useContext(WindowFocusContext);
+  
+  if (context === undefined) {
+    throw new Error("useWindowFocus must be used within a WindowFocusProvider");
+  }
+  
+  return context;
 }
