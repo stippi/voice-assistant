@@ -59,7 +59,7 @@ yarn run dev
 - [ ] Fix inconsistencies that developed over time:
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
-- [ ] Reset Porcupine when browser tab is (re-)activated
+- [x] Reset Porcupine when browser tab is (re-)activated
 - [ ] Move gear icon into sidebar
 - [ ] Switch to another component library?
 - [ ] Add Spotify integration?
