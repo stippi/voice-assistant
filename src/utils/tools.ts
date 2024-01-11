@@ -387,7 +387,6 @@ function loadMemory(): Record<string, string[]> {
 
 function saveMemory(memory: Record<string, string[]>) {
   window.localStorage.setItem('memory', JSON.stringify(memory));
-  return { result: "information stored" };
 }
 
 async function memorize(category: string, information: string) {
@@ -400,7 +399,8 @@ async function memorize(category: string, information: string) {
   }
   memory[category].push(...information.split('\n'));
 
-  return saveMemory(memory);
+  saveMemory(memory);
+  return { result: "information stored" };
 }
 
 async function deleteInformation(category: string, information: string) {
@@ -411,7 +411,8 @@ async function deleteInformation(category: string, information: string) {
   for (let i = 0; i < memory[category].length; i++) {
     if (memory[category][i].startsWith(information)) {
       memory[category].splice(i, 1);
-      return saveMemory(memory);
+      saveMemory(memory);
+      return { result: "information deleted" };
     }
   }
 
