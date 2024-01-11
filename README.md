@@ -45,7 +45,6 @@ yarn run dev
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
-- [ ] Display errors as strips, for example when audio playback is blocked
 - [ ] Add a "Clear" button to the chat
 - [ ] Implement renaming chats
 - [ ] Implement automatically naming chats via LLM
