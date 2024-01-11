@@ -42,16 +42,11 @@ yarn run dev
 
 ## Ideas for Next Features
 
-- [x] Temporarily open the microphone for conversation after the assistant finished speaking
+- [ ] Add a status/error React context, surfacing errors as message strips or similar.
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
-- [x] Add a "Stop" button while the response is streaming in
-- [x] More visual feedback during phases of assembling the user message
-- [x] While responding, the trigger phrase should interrupt the assistant from speaking
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
 - [ ] Display errors as strips, for example when audio playback is blocked
-- [x] Prevent code blocks from being part of text-to-speech
 - [ ] Add a "Clear" button to the chat
-- [x] Allow to preserve chats
 - [ ] Implement renaming chats
 - [ ] Implement automatically naming chats via LLM
 - [ ] Structured replies that force the LLM to consider some things with each reply
@@ -59,7 +54,16 @@ yarn run dev
 - [ ] Fix inconsistencies that developed over time:
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
-- [x] Reset Porcupine when browser tab is (re-)activated
 - [ ] Move gear icon into sidebar
 - [ ] Switch to another component library?
 - [ ] Add Spotify integration?
+
+## Done
+
+- [x] Temporarily open the microphone for conversation after the assistant finished speaking
+- [x] Add a "Stop" button while the response is streaming in
+- [x] More visual feedback during phases of assembling the user message
+- [x] While responding, the trigger phrase should interrupt the assistant from speaking
+- [x] Prevent code blocks from being part of text-to-speech
+- [x] Allow to preserve chats
+- [x] Reset Porcupine when browser tab is (re-)activated
