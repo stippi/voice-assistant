@@ -1,6 +1,6 @@
 // @ts-expect-error - The import works, no idea why the IDE complains
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
-import {OpenWeatherMapApiKey, NewsApiOrgKey} from "../secrets";
+import {OpenWeatherMapApiKey, NewsApiOrgKey, GooglePlacesApiKey} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {addIsoDurationToDate} from "./timeFormat";
@@ -103,6 +103,24 @@ export const tools: ChatCompletionTool[] = [
           sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
         },
         required: ["language"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_places_info",
+      description: "Get information about nearby places using the Google Places API",
+      parameters: {
+        type: "object",
+        properties: {
+          latitude: { type: "number" },
+          longitude: { type: "number" },
+          radius: { type: "number", description: "The radius in meters around the given location" },
+          query: { type: "string", description: "A text query like the name of a nearby place" },
+          fields: { type: "array", items: { type: "string" }, description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'currentOpeningHours'" }
+        },
+        required: ["latitude", "longitude", "query", "fields"]
       }
     }
   },
@@ -259,6 +277,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await getTopNews(args.language, args.country, args.category, args.query, args.sortBy);
       case 'get_news':
          return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
+      case 'get_places_info':
+        return await getPlacesInfo(args.query, args.fields, args.latitude, args.longitude, args.radius);
       case 'add_alarm':
         return await addTimer("alarm", args.time, args.title || "", appContext);
       case 'add_countdown':
@@ -349,6 +369,37 @@ async function getNews(language: string, country: string, query: string, sources
   console.log(`Fetching news (everything) from ${url}`);
   const response = await fetch(url);
   return await response.json();
+}
+
+async function getPlacesInfo(query: string, fields: string[], lat: number, lng: number, radius: number = 10000) {
+  const requestBody = {
+    "textQuery" : query,
+    "locationBias": {
+      "circle": {
+        "center": {
+          "latitude": lat,
+          "longitude": lng
+        },
+        "radius": radius
+      }
+    },
+    "maxResultCount": 3
+  }
+  const response = await fetch("/place-api", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GooglePlacesApiKey,
+      "X-Goog-FieldMask": ["displayName", ...fields].map(field => `places.${field}`).join(",")
+    },
+    body: JSON.stringify(requestBody)
+  });
+  const result = await response.json();
+  // Clean up "periods" arrays to make response less confusing to the LLM
+  for (const place of result.places) {
+    delete place.currentOpeningHours?.periods;
+  }
+  return result;
 }
 
 async function addTimer(type: "countdown" | "alarm", time: string, title: string, appContext: AppContextType) {

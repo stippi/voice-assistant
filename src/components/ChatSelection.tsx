@@ -34,14 +34,14 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
             <DoneIcon fontSize="inherit" sx={{color: "#666"}}/>
           </IconButton>
         ) : isSelected ? (
-          <div className="chat-buttons">
+          <>
             <IconButton edge="end" aria-label="rename" size="small" onClick={() => setIsEditing(true)}>
               <EditIcon fontSize="inherit" sx={{color: "#666"}}/>
             </IconButton>
             <IconButton edge="end" aria-label="delete" size="small" onClick={onDelete}>
               <DeleteIcon fontSize="inherit" sx={{color: "#666"}}/>
             </IconButton>
-          </div>
+          </>
         ) : (<></>)
       }
     >
