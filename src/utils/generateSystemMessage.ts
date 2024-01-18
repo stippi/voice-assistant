@@ -56,7 +56,7 @@ Be very concise, otherwise it will take a long time to read your reply to the us
   const personalityString = personalities[personality];
   return {
     role: "system",
-    content: `${personalityString} Always stay in character even when the user asks you to generate stories or other content.\n
+    content: `${personalityString} Always stay in character even when the user asks you to generate stories or other content. Be concise.\n
 ${voiceOptimization}\n
 Remember to memorize information that seems like it could be relevant in the future, also when only mentioned in passing.\n
 When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
