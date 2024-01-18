@@ -118,7 +118,7 @@ export const tools: ChatCompletionTool[] = [
           longitude: { type: "number" },
           radius: { type: "number", description: "The radius in meters around the given location" },
           query: { type: "string", description: "A text query like the name of a nearby place" },
-          fields: { type: "array", items: { type: "string" }, description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating'" },
+          fields: { type: "array", items: { type: "string" }, description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating' and 'websiteUri'" },
           maxResults: { type: "number" }
         },
         required: ["latitude", "longitude", "query", "fields"]
@@ -400,6 +400,7 @@ async function getPlacesInfo(query: string, fields: string[], lat: number, lng: 
   for (const place of result.places) {
     delete place.currentOpeningHours?.periods;
   }
+  console.log("found places:", result.places);
   return result;
 }
 
