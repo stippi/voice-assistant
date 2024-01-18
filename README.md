@@ -19,6 +19,8 @@ export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
 export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
 
 export const NewsApiOrgKey = "<Your newsapi.org API key>";
+
+export const GooglePlacesApiKey = "<Your maps.googleapis.com API key>";
 ```
 
 :bulb: **This file is ignored by git.**
