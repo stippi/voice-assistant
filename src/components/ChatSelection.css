@@ -38,7 +38,7 @@
     background-color: #efefef;
 }
 
-.chat-remove {
+.chat-buttons {
     position: absolute;
     border-radius: 0.5rem;
     display: flex;

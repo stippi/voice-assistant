@@ -7,9 +7,20 @@ import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
 import {ChatInfo} from "../model/chat.ts";
 
-const InlineEditListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onMouseLeave, isSelected }: ItemProps) => {
+const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onMouseLeave, isSelected }: ItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentName, setCurrentName] = useState(chat.name);
+  
+  const doneRenaming = () => {
+    onRename(currentName);
+    setIsEditing(false);
+  };
+  
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      doneRenaming();
+    }
+  }
   
   return (
     <ListItem
@@ -19,18 +30,18 @@ const InlineEditListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, o
       }}
       secondaryAction={
         isEditing ? (
-          <IconButton edge="end" aria-label="done" size="small" onClick={() => { onRename(currentName); setIsEditing(false); }}>
-            <DoneIcon fontSize="inherit" sx={{color: "#888"}}/>
+          <IconButton edge="end" aria-label="done" size="small" onClick={doneRenaming}>
+            <DoneIcon fontSize="inherit" sx={{color: "#666"}}/>
           </IconButton>
         ) : isSelected ? (
-          <>
+          <div className="chat-buttons">
             <IconButton edge="end" aria-label="rename" size="small" onClick={() => setIsEditing(true)}>
-              <EditIcon fontSize="inherit" sx={{color: "#888"}}/>
+              <EditIcon fontSize="inherit" sx={{color: "#666"}}/>
             </IconButton>
             <IconButton edge="end" aria-label="delete" size="small" onClick={onDelete}>
-              <DeleteIcon fontSize="inherit" sx={{color: "#888"}}/>
+              <DeleteIcon fontSize="inherit" sx={{color: "#666"}}/>
             </IconButton>
-          </>
+          </div>
         ) : (<></>)
       }
     >
@@ -40,13 +51,7 @@ const InlineEditListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, o
           onChange={(e) => setCurrentName(e.target.value)}
           autoFocus
           fullWidth
-          // Close the input box on Enter key down
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              onRename(currentName);
-              setIsEditing(false);
-            }
-          }}
+          onKeyDown={onKeyDown}
         />
       ) : (
         <ListItemButton
@@ -100,26 +105,7 @@ export function ChatSelection() {
   return (
     <List className="chat-selection" dense>
       {sortedChats.map((chat) => (
-        // <div
-        //   key={chat.id}
-        //   className={`chat-item${chat.id === currentChatID ? ' active-chat-item' : ''}`}
-        //   onMouseEnter={() => handleMouseEnter(chat.id)}
-        //   onMouseLeave={handleMouseLeave}
-        //   onClick={() => setCurrentChat(chat.id)}
-        // >
-        //   {chat.name || new Date(chat.lastUpdated).toLocaleString()}
-        //   {chat.id === currentChatID && chat.id === hoveredChat && (
-        //     <div className="chat-remove">
-        //       <IconButton aria-label="rename" size="small" onClick={() => {}}>
-        //         <EditIcon fontSize="inherit" sx={{color: "#888"}}/>
-        //       </IconButton>
-        //       <IconButton aria-label="delete" size="small" onClick={() => {deleteChat(chat.id)}}>
-        //         <DeleteIcon fontSize="inherit" sx={{color: "#888"}}/>
-        //       </IconButton>
-        //     </div>
-        //   )}
-        // </div>
-        <InlineEditListItem
+        <ChatInfoListItem
           key={chat.id}
           chat={chat}
           onClick={() => setCurrentChat(chat.id)}
