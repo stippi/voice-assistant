@@ -25,10 +25,10 @@
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 4px 0 rgba( 0,0,0 ,0.04);
+    box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.4), 0 2px 4px 0 rgba(0, 0, 0, 0.05);
 
-    border: 1px solid #ddd;
-    padding: 0 0 0 16px;
+    border: 2px solid transparent;
+    padding: 0 0 0 8px;
     position: relative;
     display: flex;
     align-items: start;
@@ -36,7 +36,7 @@
 }
 
 .buttonContainer {
-    padding: 8px;
+    padding: 4px;
     display: flex;
     align-items: start;
     flex-direction: row;
@@ -45,7 +45,7 @@
 .textArea {
     width: 100%;
     margin: auto 0;
-    padding: 16px 0;
+    padding: 8px 8px;
     border: none;
     resize: none;
     font-size: 16px;
@@ -65,7 +65,7 @@
 
 .window-focused .textContainer:focus-within {
     border-color: #007bff;
+/*    border-color: #ffb700; */
     box-shadow:
-            0 0 0 3px rgba(0, 123, 255, 0.25),
-            0 5px 5px rgba(0, 0, 0, 0.08);
+            0 3px 5px rgba(0, 0, 0, 0.1);
 }
