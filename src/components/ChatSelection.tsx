@@ -61,6 +61,7 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
         />
       ) : (
         <ListItemButton
+          disableRipple
           selected={isSelected}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
