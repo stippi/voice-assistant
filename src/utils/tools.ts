@@ -118,7 +118,8 @@ export const tools: ChatCompletionTool[] = [
           longitude: { type: "number" },
           radius: { type: "number", description: "The radius in meters around the given location" },
           query: { type: "string", description: "A text query like the name of a nearby place" },
-          fields: { type: "array", items: { type: "string" }, description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'currentOpeningHours'" }
+          fields: { type: "array", items: { type: "string" }, description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating'" },
+          maxResults: { type: "number" }
         },
         required: ["latitude", "longitude", "query", "fields"]
       }
@@ -278,7 +279,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'get_news':
          return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
       case 'get_places_info':
-        return await getPlacesInfo(args.query, args.fields, args.latitude, args.longitude, args.radius);
+        return await getPlacesInfo(args.query, args.fields, args.latitude, args.longitude, args.radius, args.maxResults);
       case 'add_alarm':
         return await addTimer("alarm", args.time, args.title || "", appContext);
       case 'add_countdown':
@@ -371,7 +372,7 @@ async function getNews(language: string, country: string, query: string, sources
   return await response.json();
 }
 
-async function getPlacesInfo(query: string, fields: string[], lat: number, lng: number, radius: number = 10000) {
+async function getPlacesInfo(query: string, fields: string[], lat: number, lng: number, radius: number = 10000, maxResults = 5) {
   const requestBody = {
     "textQuery" : query,
     "locationBias": {
@@ -383,7 +384,7 @@ async function getPlacesInfo(query: string, fields: string[], lat: number, lng: 
         "radius": radius
       }
     },
-    "maxResultCount": 3
+    "maxResultCount": maxResults
   }
   const response = await fetch("/place-api", {
     method: "POST",
