@@ -113,11 +113,11 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
     if (index === -1) throw new Error("Cannot find chat to rename");
     
-    const newChats = [...chats];
+    const newChats = chats.map((chatInfo) => ({...chatInfo}));
     newChats[index].name = newName;
     await indexDbPut("chats", newChats);
     setChats(newChats);
-  }, [chats]);
+  }, [loading, chats]);
   
   const deleteChat = React.useCallback(async (chatID: string) => {
     if (loading) throw new Error("Cannot delete chat while loading");
