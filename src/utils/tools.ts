@@ -3,8 +3,8 @@ import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
 import {OpenWeatherMapApiKey, NewsApiOrgKey} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
-import {getTimers, setTimers} from "./timers";
 import {addIsoDurationToDate} from "./timeFormat";
+import {AppContextType} from "../contexts/AppContext.tsx";
 
 const math = create(all, {})
 
@@ -247,7 +247,7 @@ export const tools: ChatCompletionTool[] = [
   }
 ];
 
-export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<object> {
+export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall, appContext: AppContextType): Promise<object> {
   try {
     const args = JSON.parse(functionCall.arguments || "{}");
     switch (functionCall.name) {
@@ -260,11 +260,11 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'get_news':
          return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
       case 'add_alarm':
-        return await addTimer("alarm", args.time, args.title || "");
+        return await addTimer("alarm", args.time, args.title || "", appContext);
       case 'add_countdown':
-        return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "");
+        return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "", appContext);
       case 'remove_timer':
-        return await removeTimer(args.id);
+        return await removeTimer(args.id, appContext);
       case 'evaluate_expression':
         return await evaluateExpression(args.expression);
       case 'memorize':
@@ -351,7 +351,7 @@ async function getNews(language: string, country: string, query: string, sources
   return await response.json();
 }
 
-async function addTimer(type: "countdown" | "alarm", time: string, title: string) {
+async function addTimer(type: "countdown" | "alarm", time: string, title: string, appContext: AppContextType) {
   console.log(`Adding timer: ${type} at ${time} with title '${title}'`);
   const timer: Timer = {
     id: Math.random().toString(36).substring(7),
@@ -359,13 +359,13 @@ async function addTimer(type: "countdown" | "alarm", time: string, title: string
     time,
     title
   }
-  setTimers([...getTimers(), timer]);
+  appContext.setTimers([...appContext.timers, timer]);
   return { result: `timer created with ID ${timer.id}` };
 }
 
-async function removeTimer(id: string) {
+async function removeTimer(id: string, appContext: AppContextType) {
   console.log(`Removing timer: ${id}`);
-  setTimers(getTimers().filter(timer => timer.id !== id))
+  appContext.setTimers(appContext.timers.filter(timer => timer.id !== id))
   return { result: "timer removed" };
 }
 
