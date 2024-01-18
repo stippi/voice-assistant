@@ -1,8 +1,8 @@
 import React from "react";
 import './Timers.css'
-import useTimers from "../hooks/useTimers";
 import {TimerPopup} from "./TimerPopup";
 import {playSound} from "../utils/audio.ts";
+import useAppContext from "../hooks/useAppContext.tsx";
 
 function isSameSecond(date1: Date, date2: Date): boolean {
   date1.setMilliseconds(0);
@@ -12,7 +12,7 @@ function isSameSecond(date1: Date, date2: Date): boolean {
 }
 
 export function Timers() {
-  const { timers, setTimers } = useTimers();
+  const { timers, setTimers } = useAppContext();
   
   React.useEffect(() => {
     const interval = window.setInterval(() => {
