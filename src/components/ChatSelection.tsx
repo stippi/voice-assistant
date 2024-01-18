@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import './ChatSelection.css'
 import useChats from "../hooks/useChats";
 import {List, ListItem, ListItemText, IconButton, Input, ListItemButton} from '@mui/material';
@@ -10,6 +10,12 @@ import {ChatInfo} from "../model/chat.ts";
 const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onMouseLeave, isSelected }: ItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentName, setCurrentName] = useState(chat.name);
+  
+  useEffect(() => {
+    if (!isSelected) {
+      setIsEditing(false);
+    }
+  }, [isSelected]);
   
   const doneRenaming = () => {
     onRename(currentName);
@@ -25,21 +31,18 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
   return (
     <ListItem
       disablePadding
-      sx={{
-        bgcolor: isSelected ? "action.selected" : "inherit",
-      }}
       secondaryAction={
         isEditing ? (
           <IconButton edge="end" aria-label="done" size="small" onClick={doneRenaming}>
-            <DoneIcon fontSize="inherit" sx={{color: "#666"}}/>
+            <DoneIcon fontSize="inherit"/>
           </IconButton>
         ) : isSelected ? (
           <>
             <IconButton edge="end" aria-label="rename" size="small" onClick={() => setIsEditing(true)}>
-              <EditIcon fontSize="inherit" sx={{color: "#666"}}/>
+              <EditIcon fontSize="inherit"/>
             </IconButton>
             <IconButton edge="end" aria-label="delete" size="small" onClick={onDelete}>
-              <DeleteIcon fontSize="inherit" sx={{color: "#666"}}/>
+              <DeleteIcon fontSize="inherit"/>
             </IconButton>
           </>
         ) : (<></>)
@@ -52,6 +55,9 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
           autoFocus
           fullWidth
           onKeyDown={onKeyDown}
+          sx={{
+            backgroundColor: "#eaeaea"
+          }}
         />
       ) : (
         <ListItemButton
