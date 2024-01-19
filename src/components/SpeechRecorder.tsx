@@ -141,8 +141,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       autoGainControl: false
     };
     recordingStartedRef.current = true;
-    navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false })
-      .then(stream => {
+    navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false }).then((stream) => {
         voiceDetectedRef.current = false;
         audioChunks.current = [];
         mediaRecorder.current = new MediaRecorder(stream, { mimeType });
@@ -176,9 +175,8 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         
         console.log('started MediaRecorder, MIME type:', mediaRecorder.current.mimeType);
         mediaRecorder.current.start();
-      })
-      .catch(error => {
-        console.log('Failed to start recorder', error);
+      }).catch((error) => {
+        console.error('Failed to start recorder', error);
       });
   }, []);
   
@@ -188,7 +186,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       mediaRecorder.current.stop();
       mediaRecorder.current = null;
     } else {
-      console.log('MediaRecorder undefined');
+      console.error('MediaRecorder undefined');
     }
   }, []);
   
@@ -383,6 +381,8 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       }
     ).then(() => {
       console.log('Porcupine initialized');
+    }).catch((error) => {
+      console.error('Faileed to initialize Porcupine', error);
     });
     
     CobraWorker.create(
@@ -391,15 +391,22 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     ).then((cobraWorker) => {
       console.log('Cobra initialized');
       cobra.current = cobraWorker;
+    }).catch((error) => {
+      console.error('Faileed to initialize Cobra', error);
     });
     
     return () => {
       if (cobra.current) {
-        cobra.current.release();
-        console.log('Cobra released');
+        cobra.current.release().then(() => {
+          console.log('Cobra released');
+        }).catch((error) => {
+          console.error('Failed to release Cobra', error);
+        });
       }
       release().then(() => {
         console.log('Porcupine released');
+      }).catch((error) => {
+        console.error('Failed to release Porcupine', error);
       });
     }
   }, [init, release, voiceProbabilityCallback, settings.triggerWord])
