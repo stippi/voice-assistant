@@ -342,7 +342,7 @@ export default function VoiceAssistant() {
     responseCancelledRef.current = true;
   }, []);
   
-  const { windowFocused} = useWindowFocus();
+  const {windowFocused} = useWindowFocus();
   useEffect(() => {
     if (windowFocused) {
       document.body.classList.add('window-focused');
