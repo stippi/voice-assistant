@@ -27,7 +27,8 @@
     "react-loader-spinner": "^5.4.5",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
-    "sentence-splitter": "^5.0.0"
+    "sentence-splitter": "^5.0.0",
+    "swr": "^2.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.23.6",
