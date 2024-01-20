@@ -16,7 +16,7 @@ import OpenAI from "openai";
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
 
 export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): boolean {
-  return ["show_image", "show_map"].includes(toolCall.function.name);
+  return ["show_image", "show_map", "show_directions"].includes(toolCall.function.name);
 }
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
@@ -72,13 +72,34 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
               )
             }
             case "show_map": {
-              const args: { latitude: number, longitude: number, zoom: number } = JSON.parse(tool_call.function.arguments);
+              const args: {
+                latitude: number,
+                longitude: number,
+                zoom: number
+              } = JSON.parse(tool_call.function.arguments);
               return (
                 <GoogleMapsCard
                   key={index}
                   latitude={args.latitude}
                   longitude={args.longitude}
                   zoom={args.zoom}
+                />
+              )
+            }
+            case "show_directions": {
+              const args: {
+                origin: string,
+                destination: string,
+                travelMode: google.maps.TravelMode
+              } = JSON.parse(tool_call.function.arguments);
+              return (
+                <GoogleMapsCard
+                  key={index}
+                  directions={{
+                    origin: args.origin,
+                    destination: args.destination,
+                    travelMode: args.travelMode
+                  }}
                 />
               )
             }

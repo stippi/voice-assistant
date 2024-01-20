@@ -144,6 +144,22 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "show_directions",
+      description: "Display a map with directions from the given origin to the given destination",
+      parameters: {
+        type: "object",
+        properties: {
+          origin: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
+          destination: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
+          travelMode: { type: "string", enum: [ "DRIVING", "BICYCLING", "TRANSIT", "WALKING" ] }
+        },
+        required: ["origin", "destination", "travelMode"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "add_alarm",
       description: "Add an alarm to the active timers. Displayed as an alarm for the given time.",
       parameters: {
@@ -312,6 +328,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return { result: "image displayed" };
       case 'show_map':
         return { result: "map displayed" };
+      case 'show_directions':
+        return { result: "directions displayed" };
       
       default:
         return { error: `unknown function '${functionCall.name}'`};
