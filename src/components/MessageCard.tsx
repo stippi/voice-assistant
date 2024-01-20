@@ -12,12 +12,7 @@ import {Message} from "../model/message";
 import { BsFillPersonFill } from "react-icons/bs";
 import { RiRobot2Fill } from "react-icons/ri";
 import {GoogleMapsCard} from "./GoogleMapsCard.tsx";
-import OpenAI from "openai";
-import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
-
-export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): boolean {
-  return ["show_image", "show_map", "show_directions"].includes(toolCall.function.name);
-}
+import {showToolCallInChat} from "../utils/tools.ts";
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   if (content === "") {

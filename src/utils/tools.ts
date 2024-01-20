@@ -5,6 +5,8 @@ import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {addIsoDurationToDate} from "./timeFormat";
 import {AppContextType} from "../contexts/AppContext.tsx";
+import OpenAI from "openai";
+import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
 
 const math = create(all, {})
 
@@ -297,6 +299,10 @@ export const tools: ChatCompletionTool[] = [
     }
   }
 ];
+
+export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): boolean {
+  return ["show_image", "show_map", "show_directions"].includes(toolCall.function.name);
+}
 
 export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall, appContext: AppContextType): Promise<object> {
   try {
