@@ -34,10 +34,6 @@ export const AppContextProvider: React.FC<{children: ReactNode}>  = ({ children 
   
   const {location} = useLocation();
   
-  if (location) {
-    console.log("Location:", location);
-  }
-  
   return (
     <AppContext.Provider value={{ timers, setTimers, location }}>
       {children}

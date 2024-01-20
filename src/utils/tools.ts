@@ -409,7 +409,7 @@ async function getPlacesInfo(query: string, fields: string[], lat: number, lng: 
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GooglePlacesApiKey,
-      "X-Goog-FieldMask": ["displayName", ...fields].map(field => `places.${field}`).join(",")
+      "X-Goog-FieldMask": ["displayName", "location", ...fields].map(field => `places.${field}`).join(",")
     },
     body: JSON.stringify(requestBody)
   });
