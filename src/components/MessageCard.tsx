@@ -11,6 +11,13 @@ import {Message} from "../model/message";
 
 import { BsFillPersonFill } from "react-icons/bs";
 import { RiRobot2Fill } from "react-icons/ri";
+import {GoogleMapsCard} from "./GoogleMapsCard.tsx";
+import OpenAI from "openai";
+import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
+
+export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): boolean {
+  return ["show_image", "show_map"].includes(toolCall.function.name);
+}
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   if (content === "") {
@@ -54,12 +61,28 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
     return (<>
       {markdown}
       {tool_calls
-        .filter(tool_call => tool_call.function.name === "show_image")
+        .filter(showToolCallInChat)
         .map((tool_call, index) => {
-          const args: { image: string } = JSON.parse(tool_call.function.arguments);
-          return (
-            <div key={index} dangerouslySetInnerHTML={{ __html: args.image }}/>
-          )
+          console.log("Displaying function call in chat:", tool_call.function.name);
+          switch (tool_call.function.name) {
+            case "show_image": {
+              const args: { image: string } = JSON.parse(tool_call.function.arguments);
+              return (
+                <div key={index} dangerouslySetInnerHTML={{__html: args.image}}/>
+              )
+            }
+            case "show_map": {
+              const args: { latitude: number, longitude: number, zoom: number } = JSON.parse(tool_call.function.arguments);
+              return (
+                <GoogleMapsCard
+                  key={index}
+                  latitude={args.latitude}
+                  longitude={args.longitude}
+                  zoom={args.zoom}
+                />
+              )
+            }
+          }
         })
       }
     </>)

@@ -128,6 +128,22 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "show_map",
+      description: "Display a map centered on the given location",
+      parameters: {
+        type: "object",
+        properties: {
+          latitude: { type: "number" },
+          longitude: { type: "number" },
+          zoom: { type: "number" }
+        },
+        required: ["latitude", "longitude"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "add_alarm",
       description: "Add an alarm to the active timers. Displayed as an alarm for the given time.",
       parameters: {
@@ -294,6 +310,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await deleteInformation(args.category, args.information);
       case 'show_image':
         return { result: "image displayed" };
+      case 'show_map':
+        return { result: "map displayed" };
       
       default:
         return { error: `unknown function '${functionCall.name}'`};
