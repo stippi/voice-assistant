@@ -1,16 +1,12 @@
-import getLocation from "./getLocation";
-import {LocationInfo} from "../model/location";
+import {GeoLocation} from "../model/location";
 import {Personality} from "../contexts/SettingsContext";
 import {Timer} from "../model/timer";
 
-const location: LocationInfo = {};
-
-function generateLocationSentence() {
-  getLocation(location);
-  if (!location.location) {
-    return "- The current location is Großbeeren, Brandenburg, Germany. Latitude: 52.3667, Longitude: 13.3333.";
+function generateLocationSentence(location: GeoLocation |  undefined) {
+  if (!location) {
+    return "- The current location is unknown.";
   }
-  return `- The current location is ${location.location.city}, ${location.location.region}, ${location.location.country}. Latitude: ${location.location.latitude}, Longitude: ${location.location.longitude}.`;
+  return `- The current location is ${location.city}, ${location.region}, ${location.country}. Latitude: ${location.latitude}, Longitude: ${location.longitude}.`;
 }
 
 function generateTimersSection(timers: Timer[]) {
@@ -41,7 +37,7 @@ const personalities = {
   zen: "You are an endlessly patient, helpful and wise assistant."
 }
 
-export default function generateSystemMessage(optimizeForVoiceOutput: boolean, personality: Personality, timers: Timer[]) {
+export default function generateSystemMessage(optimizeForVoiceOutput: boolean, personality: Personality, timers: Timer[], location: GeoLocation | undefined) {
   const voiceOptimization = optimizeForVoiceOutput ? `Note, the user's last message was transcribed from their speech and may be incomplete or garbled.
 If you think that is the case, just ask the user to clarify.
 Your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. It is capable of processing any language, so reply in the user's language.
@@ -62,7 +58,7 @@ Remember to memorize information that seems like it could be relevant in the fut
 When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
 You have access to some realtime data as provided below:
 - The current time and date is ${currentTimeAndDate}.
-${generateLocationSentence()}\n
+${generateLocationSentence(location)}\n
 ${generateTimersSection(timers)}\n
 ${restoreMemory()}`
   };

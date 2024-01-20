@@ -214,7 +214,7 @@ async function streamChatCompletionLoop(
   responseLevelRef.current++;
   while (tries < 4) {
     const systemMessage = generateSystemMessage(
-      audible, settingsRef.current.personality, appContextRef.current.timers);
+      audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location);
     const stream = openai.beta.chat.completions.stream({
       messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: model,
