@@ -33,6 +33,13 @@ The API key for `openweathermap.org` can be for the free tier.
 Similarly, the API key for `picovoice.ai` is free to obtain for personal use.
 It just comes with a rate limit. 
 
+The API key for the Google APIs needs to have the following APIs enabled:
+
+- Maps JavaScript API
+- Places API (New)
+- Routes API
+- Directions API
+
 Then run:
 
 ```bash
