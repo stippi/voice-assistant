@@ -13,7 +13,7 @@ const defaultDirections = {
   travelMode: "DRIVING" as google.maps.TravelMode
 }
 
-function MapComponent({key, latitude, longitude, zoom = 10, directions = defaultDirections}: Props) {
+function MapComponent({latitude, longitude, zoom = 10, directions = defaultDirections}: Props) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GooglePlacesApiKey
@@ -69,42 +69,47 @@ function MapComponent({key, latitude, longitude, zoom = 10, directions = default
   }, [response])
   
   return isLoaded ? (
-    <div key={key}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={zoom}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
-      >
-        {directions.destination !== '' &&
-          directions.origin !== '' && (
-            <DirectionsService
-              options={directionsServiceOptions}
-              callback={directionsCallback}
-            />
-          )}
-        
-        {directionsResult.directions && (
-          <DirectionsRenderer options={directionsResult} />
-        )}
-      </GoogleMap>
-    </div>
+    <GoogleMap
+      mapContainerStyle={containerStyle}
+      center={center}
+      zoom={zoom}
+      onLoad={onLoad}
+      onUnmount={onUnmount}
+    >
+      {directions.destination !== '' && directions.origin !== '' && (
+        <DirectionsService
+          options={directionsServiceOptions}
+          callback={directionsCallback}
+        />
+      )}
+      
+      {directionsResult.directions && (
+        <DirectionsRenderer options={directionsResult} />
+      )}
+    </GoogleMap>
   ) : <></>
 }
 
 export const GoogleMapsCard = React.memo(MapComponent);
 
+interface TransitOptions {
+  arrivalTime?: Date;
+  departureTime?: Date;
+  modes?: google.maps.TransitMode[];
+  routingPreference?: google.maps.TransitRoutePreference;
+}
+
 interface Directions {
   origin: string;
   destination: string;
   travelMode: google.maps.TravelMode;
+  transitOptions?: TransitOptions;
 }
 
 interface Props {
-  key: number;
   latitude?: number;
   longitude?: number;
   zoom?: number;
   directions?: Directions;
+  transitOptions?: TransitOptions;
 }
