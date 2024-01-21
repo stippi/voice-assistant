@@ -153,7 +153,9 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           origin: { type: "string", description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place" },
           destination: { type: "string", description: "Name of a place, address, or latitude and longitude in the format 'latitude,longitude'" },
-          travelMode: { type: "string", enum: [ "DRIVING", "BICYCLING", "TRANSIT", "WALKING" ] }
+          travelMode: { type: "string", enum: [ "DRIVING", "BICYCLING", "TRANSIT", "WALKING" ] },
+          arrivalTime: { type: "string", description: "Desired arrival time in ISO 8601 format" },
+          departureTime: { type: "string", description: "Desired departure time in ISO 8601 format" },
         },
         required: ["origin", "destination", "travelMode"]
       }
@@ -167,7 +169,7 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: "object",
         properties: {
-          origin: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
+          origin: { type: "string", description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place" },
           destination: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
           arrivalTime: { type: "string", description: "Desired arrival time in ISO 8601 format" },
           departureTime: { type: "string", description: "Desired departure time in ISO 8601 format" },
@@ -354,9 +356,17 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'show_map':
         return { result: "map displayed" };
       case 'show_directions':
-        return { result: "directions displayed" };
+        return await getDirections(
+          args.origin, args.destination, [],
+          args.travelMode, args.arrivalTime, args.departureTime);
       case 'show_transit_directions':
-        return { result: "transit directions displayed" };
+        return await getDirections(
+        args.origin, args.destination, [],
+        "TRANSIT", args.arrivalTime, args.departureTime,
+          undefined, undefined,
+          args.mode || args.routingPreference ?
+            { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
+            : undefined);
       
       default:
         return { error: `unknown function '${functionCall.name}'`};
@@ -449,7 +459,7 @@ async function getPlacesInfo(query: string, fields: string[], lat: number, lng: 
     },
     "maxResultCount": maxResults
   }
-  const response = await fetch("/place-api", {
+  const response = await fetch("/places-api", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -465,6 +475,119 @@ async function getPlacesInfo(query: string, fields: string[], lat: number, lng: 
   }
   console.log("found places:", result.places);
   return result;
+}
+
+type TravelMode = "DRIVE" | "BICYCLE" | "TRANSIT" | "WALK";
+type TransitType = "BUS" | "SUBWAY" | "TRAIN" | "RAIL" | "LIGHT_RAIL";
+type RoutingPreference = "TRAFFIC_UNAWARE" | "TRAFFIC_AWARE" | "TRAFFIC_AWARE_OPTIMAL";
+type TrafficModel = "BEST_GUESS" | "OPTIMISTIC" | "PESSIMISTIC";
+
+interface TransitPreferences {
+  allowedTravelModes: TransitType[]
+  routingPreference: "LESS_WALKING" | "FEWER_TRANSFERS"
+}
+
+interface Location {
+  latLng: { latitude: number, longitude: number }
+}
+
+interface WayPoint {
+  location?: Location
+  address?: string
+}
+
+interface RoutesRequest {
+  origin: WayPoint
+  destination: WayPoint
+  intermediates?: WayPoint[]
+  travelMode: TravelMode
+  routingPreference?: RoutingPreference
+  departureTime?: string
+  arrivalTime?: string
+  languageCode?: string
+  regionCode?: string
+  trafficModel?: TrafficModel
+  transitPreferences?: TransitPreferences
+}
+
+function toWayPoint(location: string): WayPoint {
+  if (location.split(",").length === 2) {
+    const latLng = location.split(",");
+    const lat = parseFloat(latLng[0]);
+    const lng = parseFloat(latLng[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { "location": { "latLng": { "latitude": lat, "longitude": lng } } };
+    }
+  }
+  return { "address": location };
+}
+
+function toTravelMode(mode: string): TravelMode {
+  switch (mode) {
+    case "BICYCLING":
+      return "BICYCLE";
+    case "TRANSIT":
+      return "TRANSIT";
+    case "WALKING":
+      return "WALK";
+    default:
+      return "DRIVE";
+  }
+}
+
+async function getDirections(
+  origin: string, destination: string, intermediates: string[] = [],
+  travelMode: string = "DRIVING", arrivalTime: string = "", departureTime: string = "",
+  trafficModel?: TrafficModel, routingPreference?: RoutingPreference,
+  transitPreferences?: TransitPreferences,
+  fields: string[] = []
+) {
+  const request: RoutesRequest = {
+    origin: toWayPoint(origin),
+    destination: toWayPoint(destination),
+    travelMode: toTravelMode(travelMode),
+    regionCode: "de",
+  }
+  if (intermediates.length > 0) {
+    request.intermediates = intermediates.map(intermediate => toWayPoint(intermediate));
+  }
+  if (arrivalTime) {
+    request.arrivalTime = arrivalTime;
+  }
+  if (departureTime) {
+    request.departureTime = departureTime;
+  }
+  if (trafficModel) {
+    request.trafficModel = trafficModel;
+  }
+  if (routingPreference) {
+    request.routingPreference = routingPreference;
+  }
+  if (transitPreferences) {
+    request.transitPreferences = transitPreferences;
+  }
+  
+  if (travelMode === "TRANSIT") {
+    fields.push("legs.steps.transitDetails");
+  }
+  
+  try {
+    const response = await fetch("/directions-api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GooglePlacesApiKey,
+        "X-Goog-FieldMask": ["description", "duration", "distanceMeters", ...fields].map(field => `routes.${field}`).join(",")
+      },
+      body: JSON.stringify(request)
+    });
+    const result = await response.json();
+    console.log("found directions:", result.routes);
+    return result;
+  } catch (error) {
+    console.error(error);
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
 }
 
 async function addTimer(type: "countdown" | "alarm", time: string, title: string, appContext: AppContextType) {
