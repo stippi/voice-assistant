@@ -546,7 +546,7 @@ async function getDirections(
     origin: toWayPoint(origin),
     destination: toWayPoint(destination),
     travelMode: toTravelMode(travelMode),
-    regionCode: "de",
+//    regionCode: "de",
   }
   if (intermediates.length > 0) {
     request.intermediates = intermediates.map(intermediate => toWayPoint(intermediate));
