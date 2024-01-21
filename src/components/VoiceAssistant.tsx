@@ -22,7 +22,7 @@ import {AppContextType} from "../contexts/AppContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
-const model = "gpt-4-1106-preview";
+const model = "gpt-4";//"gpt-4-1106-preview";
 
 async function streamChatCompletion(
   currentMessages: Message[],
