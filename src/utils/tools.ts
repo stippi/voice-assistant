@@ -151,11 +151,30 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: "object",
         properties: {
-          origin: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
-          destination: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
+          origin: { type: "string", description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place" },
+          destination: { type: "string", description: "Name of a place, address, or latitude and longitude in the format 'latitude,longitude'" },
           travelMode: { type: "string", enum: [ "DRIVING", "BICYCLING", "TRANSIT", "WALKING" ] }
         },
         required: ["origin", "destination", "travelMode"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "show_transit_directions",
+      description: "Display a map with public transport directions from the given origin to the given destination",
+      parameters: {
+        type: "object",
+        properties: {
+          origin: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
+          destination: { type: "string", description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'" },
+          arrivalTime: { type: "string", description: "Desired arrival time in ISO 8601 format" },
+          departureTime: { type: "string", description: "Desired departure time in ISO 8601 format" },
+          modes: { type: "array", items: { type: "string" }, description: "Preferred modes of transport. Available are 'BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'" },
+          routingPreference: { type: "string", enum: ["FEWER_TRANSFERS", "LESS_WALKING"] },
+        },
+        required: ["origin", "destination"]
       }
     }
   },
@@ -301,7 +320,7 @@ export const tools: ChatCompletionTool[] = [
 ];
 
 export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): boolean {
-  return ["show_image", "show_map", "show_directions"].includes(toolCall.function.name);
+  return ["show_image", "show_map", "show_directions", "show_transit_directions"].includes(toolCall.function.name);
 }
 
 export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall, appContext: AppContextType): Promise<object> {
@@ -336,6 +355,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return { result: "map displayed" };
       case 'show_directions':
         return { result: "directions displayed" };
+      case 'show_transit_directions':
+        return { result: "transit directions displayed" };
       
       default:
         return { error: `unknown function '${functionCall.name}'`};

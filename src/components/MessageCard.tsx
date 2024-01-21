@@ -98,6 +98,32 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
                 />
               )
             }
+            case "show_transit_directions": {
+              const args: {
+                origin: string,
+                destination: string,
+                arrivalTime: string,
+                departureTime: string,
+                modes: google.maps.TransitMode[],
+                routingPreference: google.maps.TransitRoutePreference
+              } = JSON.parse(tool_call.function.arguments);
+              return (
+                <GoogleMapsCard
+                  key={index}
+                  directions={{
+                    origin: args.origin,
+                    destination: args.destination,
+                    transitOptions: {
+                      arrivalTime: args.arrivalTime ? new Date(args.arrivalTime) : undefined,
+                      departureTime: args.departureTime ? new Date(args.departureTime) : undefined,
+                      modes: args.modes,
+                      routingPreference: args.routingPreference
+                    },
+                    travelMode: "TRANSIT" as google.maps.TravelMode
+                  }}
+                />
+              )
+            }
           }
         })
       }
