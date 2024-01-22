@@ -4,7 +4,8 @@ import {GooglePlacesApiKey} from "../secrets.ts";
 
 const containerStyle = {
   width: '100%',
-  height: '400px'
+  height: '400px',
+  borderRadius: '0.3rem'
 };
 
 const defaultDirections = {
@@ -75,6 +76,14 @@ function MapComponent({latitude, longitude, zoom = 10, directions = defaultDirec
       zoom={zoom}
       onLoad={onLoad}
       onUnmount={onUnmount}
+      options={{
+        streetViewControl: false,
+        fullscreenControl: false,
+        scrollwheel: false,
+        mapTypeControl: false,
+        draggableCursor: "grab",
+        draggingCursor: "grabbing"
+      }}
     >
       {directions.destination !== '' && directions.origin !== '' && (
         <DirectionsService
