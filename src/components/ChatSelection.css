@@ -1,12 +1,9 @@
 .chat-selection {
-    display: flex;
-    flex-direction: column;
-
     box-sizing: border-box;
 
     padding: 1rem 0;
 
-    flex: 1;
+    flex-grow: 1;
     overflow-y: auto;
 }
 
