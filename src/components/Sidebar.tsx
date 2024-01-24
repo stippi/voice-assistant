@@ -56,15 +56,43 @@ export function Sidebar() {
                 disableTouchRipple: true,
               },
             },
+            MuiFormControlLabel: {
+              styleOverrides: {
+                label: {
+                  fontSize: '14px'
+                }
+              }
+            },
+            MuiFormLabel: {
+              styleOverrides: {
+                root: {
+                  fontSize: '14px'
+                }
+              }
+            },
+            MuiInputBase: {
+              styleOverrides: {
+                input: {
+                  fontSize: '14px'
+                }
+              }
+            },
+            MuiSlider: {
+              styleOverrides: {
+                markLabel: {
+                  fontSize: '14px'
+                }
+              }
+            },
           },
           palette: {
             mode: 'dark',
-            primary: { main: 'rgb(102, 157, 246)' },
-            background: { paper: 'rgb(5, 30, 52)' },
-          },
+            primary: {main: 'rgb(102, 157, 246)'},
+            background: {paper: 'rgb(5, 30, 52)'},
+          }
         })}
       >
-        <Paper elevation={0} sx={{ maxWidth: 256, display: "flex", flexDirection: "column", maxHeight: "100%" }}>
+        <Paper elevation={0} sx={{ display: "flex", flexDirection: "column", maxHeight: "100%" }}>
           <SidebarList component="nav" disablePadding>
             <ListItemButton>
               <ListItemIcon sx={{ fontSize: 20 }}>🤖</ListItemIcon>

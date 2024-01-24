@@ -1,11 +1,10 @@
 import React, {useEffect, useState} from "react";
 import './ChatSelection.css'
 import useChats from "../hooks/useChats";
-import {List, ListItem, ListItemText, IconButton, Input, ListItemButton, ListItemIcon} from '@mui/material';
+import {List, ListItem, ListItemText, IconButton, Input, ListItemButton} from '@mui/material';
 import DeleteIcon from "@mui/icons-material/Delete";
 import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
-import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import {ChatInfo} from "../model/chat.ts";
 
 const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onMouseLeave, isSelected }: ItemProps) => {
@@ -68,9 +67,6 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
           onMouseLeave={onMouseLeave}
           onClick={onClick}
         >
-          <ListItemIcon sx={{ color: 'rgba(255,255,255,0.3)', }}>
-            <QuestionAnswerIcon />
-          </ListItemIcon>
           <ListItemText
             id={chat.id}
             primary={chat.name || new Date(chat.lastUpdated).toLocaleString()}
