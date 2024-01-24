@@ -4,7 +4,7 @@
     bottom: 0;
     left: 0;
 
-    background-color: #d9d9d9;
+    background-color: rgb(5, 30, 52);
     box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.08);
 
     display: flex;
@@ -14,8 +14,6 @@
     box-sizing: border-box;
 
     padding: 1rem 0;
-
-    overflow-y: auto;
 
     min-width: var(--sidebar-width);
     max-width: var(--sidebar-width);

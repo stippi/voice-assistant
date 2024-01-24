@@ -9,7 +9,6 @@ import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import {tools, callFunction} from "../utils/tools";
-import {Settings} from "./Settings";
 import {Settings as SettingsType} from "../contexts/SettingsContext";
 import useChats from "../hooks/useChats";
 import useSettings from "../hooks/useSettings";
@@ -361,7 +360,6 @@ export default function VoiceAssistant() {
         respondingRef={respondingRef}
         awaitSpokenResponse={awaitSpokenResponse}
       />
-      <Settings/>
       <Timers/>
     </>
   );
