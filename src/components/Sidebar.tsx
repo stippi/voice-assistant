@@ -46,6 +46,8 @@ export function Sidebar() {
     setAnchorEl(null);
   };
   
+  // const settingsOpen = Boolean(anchorEl);
+  
   return (
     <Box className="sidebar">
       <ThemeProvider
@@ -70,9 +72,23 @@ export function Sidebar() {
                 }
               }
             },
+            MuiFormHelperText: {
+              styleOverrides: {
+                root: {
+                  fontSize: '11px'
+                }
+              }
+            },
             MuiInputBase: {
               styleOverrides: {
                 input: {
+                  fontSize: '14px'
+                }
+              }
+            },
+            MuiMenuItem: {
+              styleOverrides: {
+                root: {
                   fontSize: '14px'
                 }
               }
@@ -92,9 +108,17 @@ export function Sidebar() {
           }
         })}
       >
-        <Paper elevation={0} sx={{ display: "flex", flexDirection: "column", maxHeight: "100%" }}>
+        <Paper
+          elevation={0}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "100%",
+            overscrollBehavior: "contain"
+        }}
+        >
           <SidebarList component="nav" disablePadding>
-            <ListItemButton>
+            <ListItem>
               <ListItemIcon sx={{ fontSize: 20 }}>🤖</ListItemIcon>
               <ListItemText
                 sx={{ my: 0 }}
@@ -105,7 +129,7 @@ export function Sidebar() {
                   letterSpacing: 0,
                 }}
               />
-            </ListItemButton>
+            </ListItem>
             <Divider />
             <ListItem component="div" disablePadding>
               <ListItemButton sx={{ height: 56 }} onClick={() => newChat([])}>

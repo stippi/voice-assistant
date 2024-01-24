@@ -126,7 +126,7 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  --sidebar-width: 12vw;
+  --sidebar-width: 230px;
 }
 
 a {
