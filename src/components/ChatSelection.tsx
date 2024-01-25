@@ -56,7 +56,8 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
           fullWidth
           onKeyDown={onKeyDown}
           sx={{
-            backgroundColor: "#eaeaea"
+            paddingLeft: "1rem",
+            paddingRight: "1rem",
           }}
         />
       ) : (
