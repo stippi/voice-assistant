@@ -1,6 +1,5 @@
 import React from "react";
 import './TimerPopup.css';
-//import AvTimerIcon from '@mui/icons-material/AvTimer';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -8,6 +7,9 @@ import {Timer} from "../model/timer";
 import {calculateTimeLeft, formatDateRelativeToToday} from "../utils/timeFormat.ts";
 import {SoundWaves} from "./SoundWaves.tsx";
 import {IconButton} from "@mui/material";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 
 function padWithZero(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
@@ -30,25 +32,30 @@ export const TimerPopup = ({ timer, removeTimer }: Props) => {
   }, [timer]);
   
   return (
-    <div className="timer">
-      {timer.ringing === true && <SoundWaves />}
-      <div className="timer-icon">
-        {timer.type === "countdown" ? <HourglassTopIcon /> : <AlarmIcon />}
-      </div>
-      <div className="timer-info">
-        <div className="timer-name">{timer.title}</div>
-        <div className="timer-time">
-          {timer.type === "countdown" ?
-            `${timeLeft.hours}:${padWithZero(timeLeft.minutes)}:${padWithZero(timeLeft.seconds)}`
-            : formatDateRelativeToToday(timer.time)}
-        </div>
-      </div>
-      <div className="timer-remove">
+    <ListItem
+      secondaryAction={
         <IconButton aria-label="delete" size="small" onClick={removeTimer}>
           <DeleteIcon fontSize="inherit" sx={{color: "#fff"}}/>
         </IconButton>
-      </div>
-    </div>
+      }
+    >
+      {timer.ringing === true && <SoundWaves />}
+      <ListItemIcon sx={{ fontSize: 20 }}>
+        {timer.type === "countdown" ? <HourglassTopIcon /> : <AlarmIcon />}
+      </ListItemIcon>
+      <ListItemText
+        sx={{ my: 0 }}
+        primary={timer.type === "countdown" ?
+          `${timeLeft.hours}:${padWithZero(timeLeft.minutes)}:${padWithZero(timeLeft.seconds)}`
+          : formatDateRelativeToToday(timer.time)}
+        primaryTypographyProps={{
+          fontSize: 20,
+          fontWeight: 'medium',
+          letterSpacing: 0,
+        }}
+        secondary={timer.title}
+      />
+    </ListItem>
   );
 };
 

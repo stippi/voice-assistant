@@ -10,28 +10,58 @@ import { createTheme, ThemeProvider } from '@mui/material';
 const theme = createTheme({
   components: {
     MuiListItemButton: {
-      styleOverrides: {
-        root: {
-          "&.Mui-selected": {
-            backgroundColor: "#eaeaea",
-          },
-          "&.Mui-selected:hover": {
-            backgroundColor: "#eaeaea",
-          },
-          "&:hover": {
-            backgroundColor: "#e5e5e5",
-          },
-        }
+      defaultProps: {
+        disableTouchRipple: true,
       },
     },
-    MuiListItemSecondaryAction: {
+    MuiFormControlLabel: {
+      styleOverrides: {
+        label: {
+          fontSize: '14px'
+        }
+      }
+    },
+    MuiFormLabel: {
       styleOverrides: {
         root: {
-          background: "linear-gradient(to right, rgba(0, 0, 0, 0) 0%, #eaeaea 30%);",
-        },
-      },
-    }
+          fontSize: '14px'
+        }
+      }
+    },
+    MuiFormHelperText: {
+      styleOverrides: {
+        root: {
+          fontSize: '11px'
+        }
+      }
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        input: {
+          fontSize: '14px'
+        }
+      }
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontSize: '14px'
+        }
+      }
+    },
+    MuiSlider: {
+      styleOverrides: {
+        markLabel: {
+          fontSize: '14px'
+        }
+      }
+    },
   },
+  palette: {
+    mode: 'dark',
+    primary: {main: 'rgb(102, 157, 246)'},
+    background: {paper: 'rgb(5, 30, 52)'},
+  }
 });
 
 export default function App() {

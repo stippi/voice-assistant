@@ -3,6 +3,10 @@ import './Timers.css'
 import {TimerPopup} from "./TimerPopup";
 import {playSound} from "../utils/audio.ts";
 import useAppContext from "../hooks/useAppContext.tsx";
+import Paper from "@mui/material/Paper";
+import {styled} from "@mui/material/styles";
+import List from "@mui/material/List";
+import Divider from "@mui/material/Divider";
 
 function isSameSecond(date1: Date, date2: Date): boolean {
   date1.setMilliseconds(0);
@@ -11,10 +15,25 @@ function isSameSecond(date1: Date, date2: Date): boolean {
   return date1.getTime() === date2.getTime();
 }
 
+const TimersList = styled(List)<{ component?: React.ElementType }>({
+  '& .MuiListItemButton-root': {
+    paddingLeft: 24,
+    paddingRight: 24,
+  },
+  '& .MuiListItemIcon-root': {
+    minWidth: 0,
+    marginRight: 16,
+  },
+  '& .MuiSvgIcon-root': {
+    fontSize: 20,
+  },
+});
+
 export function Timers() {
   const { timers, setTimers } = useAppContext();
   
   React.useEffect(() => {
+    document.documentElement.style.setProperty('--timer-width', timers.length > 0 ? '230px' : '0');
     const interval = window.setInterval(() => {
       if (timers.length === 0) {
         return;
@@ -59,18 +78,29 @@ export function Timers() {
   }, [timers, setTimers]);
   
   return (
-    <div className="timers">
-      {timers.map((timer, index) => (
-        <TimerPopup
-          key={index}
-          timer={timer}
-          removeTimer={() => {
-            const newTimers = [...timers];
-            newTimers.splice(index, 1);
-            setTimers(newTimers);
-          }}
-        />
-      ))}
-    </div>
+    <Paper
+      className="timers"
+      elevation={3}
+      style={{
+        display: timers.length > 0 ? "flex" : "none"
+      }}
+    >
+      <TimersList>
+        {timers.map((timer, index, array) => (
+          <>
+            <TimerPopup
+              key={index}
+              timer={timer}
+              removeTimer={() => {
+                const newTimers = [...timers];
+                newTimers.splice(index, 1);
+                setTimers(newTimers);
+              }}
+            />
+            {index < array.length - 1 && <Divider />}
+          </>
+        ))}
+      </TimersList>
+    </Paper>
   );
 }

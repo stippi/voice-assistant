@@ -2,7 +2,7 @@
     position: fixed;
     bottom: 0;
     left: var(--sidebar-width);
-    right: 0;
+    right: var(--timer-width);
 
     padding-bottom: 4rem;
 
@@ -14,7 +14,7 @@
     background: linear-gradient(
             to bottom,
             rgba(0, 0, 0, 0) 0%,
-            rgba(239, 239, 239, 0.7) 90%
+            rgba(225, 225, 225, 0.7) 90%
     );
 }
 
