@@ -57,7 +57,7 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
         horizontal: 'left',
       }}
       disableScrollLock={true}
-      sx={{fontSize: "14px"}}
+      sx={{fontSize: "14px", left: '-5px'}}
     >
       <div className="settingsMenu">
         <FormControl>
