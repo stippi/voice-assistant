@@ -1,10 +1,20 @@
 import React, {KeyboardEvent, MouseEvent} from "react";
 import './MessageBar.css';
 import { TextareaAutosize } from '@mui/base';
-import {IconButton} from "@mui/material";
+import {createTheme, IconButton, ThemeProvider} from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 import CancelIcon from '@mui/icons-material/Cancel';
 import SpeechRecorder from "./SpeechRecorder.tsx";
+
+
+const theme = createTheme({
+  components: {
+  },
+  palette: {
+    mode: 'light',
+    primary: {main: 'rgb(5, 30, 52)'}
+  }
+});
 
 export function MessageBar({ sendMessage, stopResponding, responding, respondingRef, awaitSpokenResponse }: Props) {
   
@@ -29,52 +39,54 @@ export function MessageBar({ sendMessage, stopResponding, responding, responding
   
   return (
     <div className="fixedBottom">
-      <div
-        className="textContainer"
-        onClick={focusTextArea}
-      >
-        <TextareaAutosize
-          name="Message input"
-          className="textArea"
-          ref={textAreaRef}
-          placeholder={placeHolder}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          minRows={1}
-          maxRows={10}
-        />
-        <div className="buttonContainer">
-          {!responding && <IconButton
-            disabled={message === ""}
-            aria-label="send message"
-            onMouseDown={(event) => {
-              event.preventDefault();
-              sendMessage(message, false);
-              setMessage("");
-            }}
-          >
-            <SendIcon />
-          </IconButton>}
-          {responding && <IconButton
-            aria-label="cancel response"
-            onMouseDown={(event) => {
-              event.preventDefault();
-              stopResponding(false);
-            }}
-          >
-            <CancelIcon />
-          </IconButton>}
-          <SpeechRecorder
-            sendMessage={sendMessage}
-            stopResponding={stopResponding}
-            setTranscript={setPlaceHolder}
-            defaultMessage={defaultPlaceHolder}
-            respondingRef={respondingRef}
-            awaitSpokenResponse={awaitSpokenResponse}
+      <ThemeProvider theme={theme}>
+        <div
+          className="textContainer"
+          onClick={focusTextArea}
+        >
+          <TextareaAutosize
+            name="Message input"
+            className="textArea"
+            ref={textAreaRef}
+            placeholder={placeHolder}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            minRows={1}
+            maxRows={10}
           />
+          <div className="buttonContainer">
+            {!responding && <IconButton
+              disabled={message === ""}
+              aria-label="send message"
+              onMouseDown={(event) => {
+                event.preventDefault();
+                sendMessage(message, false);
+                setMessage("");
+              }}
+            >
+              <SendIcon />
+            </IconButton>}
+            {responding && <IconButton
+              aria-label="cancel response"
+              onMouseDown={(event) => {
+                event.preventDefault();
+                stopResponding(false);
+              }}
+            >
+              <CancelIcon />
+            </IconButton>}
+            <SpeechRecorder
+              sendMessage={sendMessage}
+              stopResponding={stopResponding}
+              setTranscript={setPlaceHolder}
+              defaultMessage={defaultPlaceHolder}
+              respondingRef={respondingRef}
+              awaitSpokenResponse={awaitSpokenResponse}
+            />
+          </div>
         </div>
-      </div>
+      </ThemeProvider>
     </div>
   );
 }
