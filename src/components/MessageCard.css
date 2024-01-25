@@ -12,7 +12,7 @@
     top: 1rem;
     width: 1.5rem;
     height: 1.5rem;
-    color: #bbb;
+    color: rgba(0, 0, 0, 0.25);
 }
 
 .content {
@@ -37,6 +37,11 @@
 
 .content pre code {
     font-weight: normal;
+    background-color: #dadada!important;
+}
+
+.content code > span {
+    background-color: #dadada;
 }
 
 .list-number {
