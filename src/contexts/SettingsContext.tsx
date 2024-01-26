@@ -16,6 +16,8 @@ export type Settings = {
   audioSpeed: number;
   useWhisper: boolean;
   transcriptionLanguage: string;
+  
+  enableGoogle: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -29,6 +31,8 @@ const defaultSettings: Settings = {
   audioSpeed: 1,
   useWhisper: true,
   transcriptionLanguage: navigator.language,
+
+  enableGoogle: false,
 }
 let initialSettings = defaultSettings;
 

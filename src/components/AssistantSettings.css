@@ -1,32 +1,5 @@
-.fixedTopRight {
-    position: fixed;
-    top: 4rem;
-    right: 4rem;
-
-    border-radius: 21px;
-    background-color: #fff;
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.08);
-
-    opacity: 1;
-    transition: opacity 0.3s ease-in-out;
-}
-
-.settingsContainer {
-    border-radius: 21px;
-    border: 1px solid #ddd;
-    position: relative;
-    display: flex;
-    align-items: start;
-
-    overflow: hidden;
-}
-
-.open {
-    opacity: 0;
-}
-
-.settingsMenu {
-    margin: 2rem;
+.settingsColumn {
+    margin: 1.5rem;
 
     display: flex;
     flex-direction: column;
