@@ -59,8 +59,15 @@ const theme = createTheme({
   },
   palette: {
     mode: 'dark',
-    primary: {main: 'rgb(102, 157, 246)'},
-    background: {paper: 'rgb(5, 30, 52)'},
+    primary: {
+      main: 'rgb(102, 157, 246)'
+    },
+    text: {
+      primary: 'rgb(235, 235, 241)',
+    },
+    background: {
+      paper: 'rgb(5, 30, 52)'
+    },
   }
 });
 
