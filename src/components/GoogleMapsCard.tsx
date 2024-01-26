@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo, useState} from 'react'
 import {DirectionsRenderer, DirectionsService, GoogleMap, useJsApiLoader} from '@react-google-maps/api';
-import {GooglePlacesApiKey} from "../secrets.ts";
+import {GoogleApiKey} from "../secrets.ts";
 
 const containerStyle = {
   width: '100%',
@@ -17,7 +17,7 @@ const defaultDirections = {
 function MapComponent({latitude, longitude, zoom = 10, directions = defaultDirections}: Props) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: GooglePlacesApiKey
+    googleMapsApiKey: GoogleApiKey
   })
   
   const center = useMemo(() => {

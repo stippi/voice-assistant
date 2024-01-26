@@ -1,5 +1,5 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
-import {GoogleClientId, GooglePlacesApiKey} from "../secrets.ts";
+import {GoogleClientId, GoogleApiKey} from "../secrets.ts";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
@@ -41,7 +41,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
       gapi.load('client:auth2', () => {
         console.log("Google API client loaded");
         gapi.client.init({
-          apiKey: GooglePlacesApiKey,
+          apiKey: GoogleApiKey,
           discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
         }).then(() => {
           console.log("Google API client initialized");
