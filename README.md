@@ -20,7 +20,8 @@ export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
 
 export const NewsApiOrgKey = "<Your newsapi.org API key>";
 
-export const GooglePlacesApiKey = "<Your maps.googleapis.com API key>";
+export const GoogleApiKey = "<Your googleapis.com API key>";
+export const GoogleClientId = "XXX.apps.googleusercontent.com";
 ```
 
 :bulb: **This file is ignored by git.**
@@ -39,8 +40,25 @@ The API key for the Google APIs needs to have the following APIs enabled:
 - Places API (New)
 - Routes API
 - Directions API
+- Google Calendar API (if you plan to activate the Google Integration, see below)
 
-Then run:
+### Google Integration
+
+For the optional Google Calendar integration (enabled in the Assistant Settings via the switch `Google Integration`), you need to provide a GoogleClientId.
+The reason is that you need to log in with your Google account, and this requires setting up an OAuth2 Client of type `Web Application` on the Google cloud console for your project.
+A number of things need to be configured:
+
+- Create an `OAuth 2.0-Client-ID`:
+  - Add both `http://localhost:5173` and `http://localhost` to the authorized Javascript origins.
+  - Add both `http://localhost:5173` and `http://localhost` to the authorized redirection URIs (not entirely sure if this is indeed necessary).
+- *Edit* the `OAuth Consent Screen`:
+  - Set the start page to `http://localhost:5173` (not sure if this is indeed needed.)
+  - Configure the scopes and include `https://www.googleapis.com/auth/calendar`.
+  - Add the account you want to use as a test user.
+
+### Starting the Vite Dev Server
+
+After preparing the `secrets.ts` file, you can run:
 
 ```bash
 yarn install
@@ -55,7 +73,6 @@ yarn run dev
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
 - [ ] Add a "Clear" button to the chat
-- [ ] Implement renaming chats
 - [ ] Implement automatically naming chats via LLM
 - [ ] Structured replies that force the LLM to consider some things with each reply
   - [ ] Always collect "things to remember"
@@ -63,7 +80,7 @@ yarn run dev
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
 - [ ] Move gear icon into sidebar
-- [ ] Switch to another component library?
+- [ ] Optional integrate Google Calendar API
 - [ ] Add Spotify integration?
 
 ## Done
@@ -75,3 +92,4 @@ yarn run dev
 - [x] Prevent code blocks from being part of text-to-speech
 - [x] Allow to preserve chats
 - [x] Reset Porcupine when browser tab is (re-)activated
+- [x] Implement renaming chats

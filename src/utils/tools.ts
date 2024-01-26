@@ -1,6 +1,6 @@
 // @ts-expect-error - The import works, no idea why the IDE complains
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
-import {OpenWeatherMapApiKey, NewsApiOrgKey, GooglePlacesApiKey} from "../secrets";
+import {OpenWeatherMapApiKey, NewsApiOrgKey, GoogleApiKey} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {addIsoDurationToDate} from "./timeFormat";
@@ -463,7 +463,7 @@ async function getPlacesInfo(query: string, fields: string[], lat: number, lng: 
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Goog-Api-Key": GooglePlacesApiKey,
+      "X-Goog-Api-Key": GoogleApiKey,
       "X-Goog-FieldMask": ["displayName", "location", ...fields].map(field => `places.${field}`).join(",")
     },
     body: JSON.stringify(requestBody)
@@ -576,7 +576,7 @@ async function getDirections(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": GooglePlacesApiKey,
+        "X-Goog-Api-Key": GoogleApiKey,
         "X-Goog-FieldMask": ["description", "duration", "distanceMeters", ...fields].map(field => `routes.${field}`).join(",")
       },
       body: JSON.stringify(request)
