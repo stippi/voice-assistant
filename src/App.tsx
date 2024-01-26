@@ -1,4 +1,5 @@
 import './App.css';
+import {GoogleContextProvider} from "./contexts/GoogleContext";
 import {SettingsProvider} from "./contexts/SettingsContext";
 import VoiceAssistant from "./components/VoiceAssistant";
 import {ChatsProvider} from "./contexts/ChatsContext";
@@ -6,6 +7,7 @@ import {Sidebar} from "./components/Sidebar";
 import {WindowFocusProvider} from "./contexts/WindowFocusContext";
 import {AppContextProvider} from "./contexts/AppContext";
 import { createTheme, ThemeProvider } from '@mui/material';
+import useSettings from "./hooks/useSettings";
 
 const theme = createTheme({
   components: {
@@ -71,16 +73,26 @@ const theme = createTheme({
   }
 });
 
+function AssistantWithOptionalGoogleIntegration() {
+  const {settings} = useSettings();
+  
+  return (
+    <ChatsProvider>
+      <GoogleContextProvider enableGoogle={settings.enableGoogle}>
+        <Sidebar />
+        <VoiceAssistant />
+      </GoogleContextProvider>
+    </ChatsProvider>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <WindowFocusProvider>
         <AppContextProvider>
           <SettingsProvider>
-            <ChatsProvider>
-              <Sidebar />
-              <VoiceAssistant />
-            </ChatsProvider>
+            <AssistantWithOptionalGoogleIntegration />
           </SettingsProvider>
         </AppContextProvider>
       </WindowFocusProvider>

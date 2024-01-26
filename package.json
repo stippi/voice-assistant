@@ -20,6 +20,7 @@
     "@picovoice/porcupine-react": "^3.0.3",
     "@picovoice/web-voice-processor": "^4.0.8",
     "@react-google-maps/api": "^2.19.2",
+    "@react-oauth/google": "^0.12.1",
     "mathjs": "^12.1.0",
     "openai": "^4.17.4",
     "react": "^18.2.0",
@@ -34,6 +35,9 @@
   "devDependencies": {
     "@babel/core": "^7.23.6",
     "@types/dom-speech-recognition": "^0.0.4",
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.calendar": "^3.0.10",
+    "@types/google.accounts": "^0.0.14",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@types/react-syntax-highlighter": "^15.5.10",

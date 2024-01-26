@@ -8,16 +8,20 @@ export default defineConfig({
     // The proxy is used to avoid CORS issues when calling the Google Places API
     // The response does not include the Access-Control-Allow-Origin header.
     proxy: {
-      '/places-api': {
-        target: 'https://places.googleapis.com/v1/places:searchText',
+      "/places-api": {
+        target: "https://places.googleapis.com/v1/places:searchText",
         changeOrigin: true,
         rewrite: path => path.replace(/^\/places-api/, '')
       },
-      '/directions-api': {
-        target: 'https://routes.googleapis.com/directions/v2:computeRoutes',
+      "/directions-api": {
+        target: "https://routes.googleapis.com/directions/v2:computeRoutes",
         changeOrigin: true,
         rewrite: path => path.replace(/^\/directions-api/, '')
       }
+    },
+    headers: {
+      "Cross-Origin-Opener-Policy": "restrict-properties",
+      "Cross-Origin-Embedder-Policy": "unsafe-none"
     }
   }
 })
