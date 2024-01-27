@@ -1,6 +1,6 @@
-.timers {
+.dashboard {
     position: fixed;
-    bottom: 4rem;
+    top: 4rem;
     right: 4rem;
 
     display: flex;

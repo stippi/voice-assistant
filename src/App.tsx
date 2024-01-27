@@ -8,6 +8,7 @@ import {WindowFocusProvider} from "./contexts/WindowFocusContext";
 import {AppContextProvider} from "./contexts/AppContext";
 import { createTheme, ThemeProvider } from '@mui/material';
 import useSettings from "./hooks/useSettings";
+import {Dashboard} from "./components/Dashboard.tsx";
 
 const theme = createTheme({
   components: {
@@ -81,6 +82,7 @@ function AssistantWithOptionalGoogleIntegration() {
       <GoogleContextProvider enableGoogle={settings.enableGoogle}>
         <Sidebar />
         <VoiceAssistant />
+        <Dashboard />
       </GoogleContextProvider>
     </ChatsProvider>
   );

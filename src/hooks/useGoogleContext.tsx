@@ -5,7 +5,7 @@ export default function useGoogleContext() {
   const context = React.useContext(GoogleContext);
 
   if (context === undefined) {
-    throw new Error("useAppContext must be used within a GoogleContextProvider");
+    throw new Error("useGoogleContext must be used within a GoogleContextProvider");
   }
 
   return context;

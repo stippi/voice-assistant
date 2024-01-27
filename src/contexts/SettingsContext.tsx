@@ -18,6 +18,8 @@ export type Settings = {
   transcriptionLanguage: string;
   
   enableGoogle: boolean;
+  showTimers: boolean;
+  showUpcomingEvents: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -33,6 +35,8 @@ const defaultSettings: Settings = {
   transcriptionLanguage: navigator.language,
 
   enableGoogle: false,
+  showTimers: true,
+  showUpcomingEvents: true,
 }
 let initialSettings = defaultSettings;
 
