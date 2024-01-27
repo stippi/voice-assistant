@@ -47,13 +47,7 @@ export function formatDateRelativeToToday(date: string | number | Date) {
   return `${target.toLocaleDateString([], dateFormatOptions)} at ${target.toLocaleTimeString([], timeFormatOptions)}`;
 }
 
-export function getRelativeTimeString(date: Date | number, lang = navigator.language): string {
-  // Allow dates or times to be passed
-  const timeMs = typeof date === "number" ? date : date.getTime();
-  
-  // Get the amount of seconds between the given date and now
-  const deltaSeconds = Math.round((timeMs - Date.now()) / 1000);
-  
+export function getRelativeTimeString(deltaSeconds: number, lang = navigator.language): Intl.RelativeTimeFormatPart[] {
   // Array representing one minute, hour, day, week, month, etc. in seconds
   const cutoffs = [60, 3600, 86400, 86400 * 7, 86400 * 30, 86400 * 365, Infinity];
   
@@ -69,7 +63,7 @@ export function getRelativeTimeString(date: Date | number, lang = navigator.lang
   
   // Intl.RelativeTimeFormat do its magic
   const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
-  return rtf.format(Math.floor(deltaSeconds / divisor), units[unitIndex]);
+  return rtf.formatToParts(Math.floor(deltaSeconds / divisor), units[unitIndex]);
 }
 
 export function addIsoDurationToDate(date: Date, isoDuration: string) {

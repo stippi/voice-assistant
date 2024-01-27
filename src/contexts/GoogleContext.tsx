@@ -4,15 +4,13 @@ import {GoogleClientId, GoogleApiKey} from "../secrets.ts";
 export type GoogleContextType = {
   apiLoaded: boolean;
   loggedIn: boolean;
-  logIn: () => void;
-  logOut: () => void;
+  upcomingEvents: gapi.client.calendar.Event[];
 };
 
 export const GoogleContext = createContext<GoogleContextType>({
   apiLoaded: false,
   loggedIn: false,
-  logIn: () => {},
-  logOut: () => {},
+  upcomingEvents: []
 });
 
 interface Props {
@@ -86,7 +84,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
     }
   }, [apiLoaded]);
   
-  // Just for testing...
+  const [upcomingEvents, setUpcomingEvents] = useState<gapi.client.calendar.Event[]>([]);
   useEffect(() => {
     if (loggedIn) {
       gapi.client.calendar.events.list({
@@ -98,7 +96,8 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
         orderBy: "startTime",
       }).then((response) => {
         const events = response.result.items;
-        console.log("Upcoming events:", events)
+        console.log("Upcoming events:", events);
+        setUpcomingEvents(events);
       });
     }
   }, [loggedIn]);
@@ -108,8 +107,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
       value={{
         apiLoaded: false,
         loggedIn,
-        logIn: () => {},
-        logOut: () => {},
+        upcomingEvents,
       }}>
       {children}
     </GoogleContext.Provider>

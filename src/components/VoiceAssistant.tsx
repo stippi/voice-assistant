@@ -2,7 +2,6 @@ import React, {useEffect} from 'react';
 import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
-import {Timers} from "./Timers";
 import OpenAI from "openai";
 import {OpenAiConfig} from "../secrets";
 import {splitIntoSentencesAst} from "../utils/textUtils";
@@ -360,7 +359,6 @@ export default function VoiceAssistant() {
         respondingRef={respondingRef}
         awaitSpokenResponse={awaitSpokenResponse}
       />
-      <Timers/>
     </>
   );
 }
