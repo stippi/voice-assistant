@@ -1,7 +1,6 @@
 import React from "react";
 import {playSound} from "../utils/audio.ts";
 import useAppContext from "../hooks/useAppContext.tsx";
-import Divider from "@mui/material/Divider";
 import {calculateTimeLeft, formatDateRelativeToToday} from "../utils/timeFormat.ts";
 import ListItem from "@mui/material/ListItem";
 import {IconButton} from "@mui/material";
@@ -17,7 +16,7 @@ function padWithZero(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
-function Timer({ timer, removeTimer }: Props) {
+function TimerItem({ timer, removeTimer }: Props) {
   const [timeLeft, setTimeLeft] = React.useState(calculateTimeLeft(timer.time));
   
   React.useEffect(() => {
@@ -131,9 +130,9 @@ export function Timers() {
   
   return (
     <>
-      {timers.map((timer, index, array) => (
+      {timers.map((timer, index) => (
         <div key={timer.id}>
-          <Timer
+          <TimerItem
             timer={timer}
             removeTimer={() => {
               const newTimers = [...timers];
@@ -141,7 +140,6 @@ export function Timers() {
               setTimers(newTimers);
             }}
           />
-          {index < array.length - 1 && <Divider />}
         </div>
       ))}
     </>

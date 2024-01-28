@@ -20,6 +20,8 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
     paddingLeft: 16,
     paddingRight: 16,
+    paddingTop: 2,
+    paddingBottom: 2,
     display: 'grid',
     gridTemplateColumns: '32px 1fr 32px',
     alignItems: 'start',
@@ -28,6 +30,8 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItem-root': {
     paddingLeft: 16,
     paddingRight: 16,
+    paddingTop: 2,
+    paddingBottom: 2,
     display: 'grid',
     gridTemplateColumns: '32px 1fr 32px',
     alignItems: 'start',
@@ -54,7 +58,7 @@ function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: D
         <Box
           sx={{
             paddingTop: 0,
-            paddingBottom: 0
+            paddingBottom: open ? 1 : 0
           }}
         >
           <ListItemButton
@@ -62,11 +66,9 @@ function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: D
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setSettings({...settings, [settingsKey]: !open})}
             sx={{
-              px: 3,
-              pt: 2.5,
-              pb: open ? 0 : 2.5,
               //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
             }}
+            style={{paddingTop: 16, paddingBottom: open ? 0 : 16}}
           >
             <ListItemIcon style={{marginTop: 0}}>
               {icon}

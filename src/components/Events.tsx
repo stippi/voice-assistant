@@ -1,4 +1,4 @@
-import Divider from "@mui/material/Divider";
+//import Divider from "@mui/material/Divider";
 import useGoogleContext from "../hooks/useGoogleContext.tsx";
 import ListItemText from "@mui/material/ListItemText";
 import ListItem from "@mui/material/ListItem";
@@ -24,6 +24,7 @@ type ListItem = MonthDivider | EventItem;
 const pimpedEventList = (events: gapi.client.calendar.Event[], lang = navigator.language): ListItem[] => {
   const pimpedList: ListItem[] = [];
   let currentMonth: string | null = null;
+  let currentDay: string | null = null;
   
   events.forEach(event => {
     if (!event.start.dateTime || !event.end.dateTime) {
@@ -42,11 +43,21 @@ const pimpedEventList = (events: gapi.client.calendar.Event[], lang = navigator.
       currentMonth = monthYear;
     }
     
+    const newMonthDay = currentMonth + startDate.getDate().toString();
+    let monthDay = startDate.getDate().toString();
+    let weekday = startDate.toLocaleString(lang, { weekday: 'short' });
+    if (currentDay !== newMonthDay) {
+      currentDay = newMonthDay;
+    } else {
+      monthDay = '';
+      weekday = '';
+    }
+    
     pimpedList.push({
       type: 'event',
       id: event.id,
-      monthDay: startDate.getDate().toString(),
-      weekday: startDate.toLocaleString(lang, { weekday: 'short' }),
+      monthDay,
+      weekday,
       summary: event.summary,
       startTime: startDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }),
       endTime: endDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }),
@@ -109,7 +120,7 @@ export function Events() {
   
   return (
     <>
-      {pimpedEvents.map((item, index, array) => {
+      {pimpedEvents.map((item/*, index, array*/) => {
         if (item.type === 'month') {
           return <div key={item.id}>
             <ListItem style={{paddingTop: 2, paddingBottom: 2}}>
@@ -132,7 +143,7 @@ export function Events() {
               startTime={item.startTime}
               endTime={item.endTime}
             />
-            {index < array.length - 1 && <Divider />}
+            {/*{index < array.length - 1 && <Divider />}*/}
           </div>
         }
       })}
