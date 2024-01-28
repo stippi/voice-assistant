@@ -84,23 +84,35 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
     }
   }, [apiLoaded]);
   
+  const fetchUpcomingEvents = () => {
+    gapi.client.calendar.events.list({
+      calendarId: "primary",
+      timeMin: new Date().toISOString(),
+      showDeleted: false,
+      singleEvents: true,
+      maxResults: 5,
+      orderBy: "startTime",
+    }).then((response) => {
+      const events = response.result.items;
+      console.log("Upcoming events:", events);
+      setUpcomingEvents(events);
+    });
+  }
+  
   const [upcomingEvents, setUpcomingEvents] = useState<gapi.client.calendar.Event[]>([]);
   useEffect(() => {
     if (loggedIn) {
-      gapi.client.calendar.events.list({
-        calendarId: "primary",
-        timeMin: new Date().toISOString(),
-        showDeleted: false,
-        singleEvents: true,
-        maxResults: 5,
-        orderBy: "startTime",
-      }).then((response) => {
-        const events = response.result.items;
-        console.log("Upcoming events:", events);
-        setUpcomingEvents(events);
-      });
+      fetchUpcomingEvents();
     }
   }, [loggedIn]);
+  
+  useEffect(() => {
+    window.addEventListener('refresh-upcoming-events', fetchUpcomingEvents);
+    
+    return () => {
+      window.removeEventListener('refresh-upcoming-events', fetchUpcomingEvents);
+    };
+  }, []);
   
   return (
     <GoogleContext.Provider
