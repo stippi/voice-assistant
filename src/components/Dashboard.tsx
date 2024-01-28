@@ -165,7 +165,7 @@ export function Dashboard() {
         {timers.length > 0 && (
           <CollapsibleList
             icon={<AlarmIcon style={{color: "#ff4d17", fontSize: "1.5rem"}}/>}
-            title="Timers & alarms"
+            title="Alarms"
             secondaryTitle="Show alarms and timers"
             settingsKey="showTimers">
             <Timers/>
