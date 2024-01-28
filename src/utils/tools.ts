@@ -381,8 +381,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
           args.travelMode, args.arrivalTime, args.departureTime);
       case 'show_transit_directions':
         return await getDirections(
-        args.origin, args.destination, [],
-        "TRANSIT", args.arrivalTime, args.departureTime,
+          args.origin, args.destination, [],
+          "TRANSIT", args.arrivalTime, args.departureTime,
           undefined, undefined,
           args.mode || args.routingPreference ?
             { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
