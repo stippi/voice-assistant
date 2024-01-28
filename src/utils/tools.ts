@@ -648,13 +648,19 @@ async function createCalendarEvent(summary: string, description: string, startTi
       timeZone: timeZone,
     },
   };
-  return gapi.client.calendar.events.insert({
-    calendarId: "primary",
-    resource: event,
-    //@ts-expect-error the @types/gapi.calendar package is not up-to-date (https://developers.google.com/calendar/api/v3/reference/events/insert)
-    sendUpdates: "all",
-    conferenceDataVersion: 1,
-  });
+  try {
+    const result = await gapi.client.calendar.events.insert({
+      calendarId: "primary",
+      resource: event,
+      //@ts-expect-error the @types/gapi.calendar package is not up-to-date (https://developers.google.com/calendar/api/v3/reference/events/insert)
+      sendUpdates: "all",
+      conferenceDataVersion: 1,
+    });
+    window.dispatchEvent(new CustomEvent('refresh-upcoming-events', { detail: {} }));
+    return result;
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
 }
 
 async function evaluateExpression(expression: string) {
