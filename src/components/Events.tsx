@@ -59,7 +59,7 @@ const pimpedEventList = (events: gapi.client.calendar.Event[], lang = navigator.
 function Event({monthDay, weekday, summary, startTime, endTime}: EventProps) {
   return <ListItem alignItems={"flex-start"} >
     <ListItemText
-      style={{flex: 'none', width: '40px', marginRight: '4px', textAlign: 'center'}}
+      style={{textAlign: 'center'}}
       primary={monthDay}
       primaryTypographyProps={{
         fontSize: 18,
@@ -81,6 +81,9 @@ function Event({monthDay, weekday, summary, startTime, endTime}: EventProps) {
         fontWeight: 'medium',
         lineHeight: '20px',
         mb: '2px',
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
       }}
       secondary={`${startTime} - ${endTime}`}
       secondaryTypographyProps={{
@@ -109,7 +112,8 @@ export function Events() {
       {pimpedEvents.map((item, index, array) => {
         if (item.type === 'month') {
           return <div key={item.id}>
-            <ListItem style={{paddingTop: 2, paddingBottom: 2, paddingLeft: 24}}>
+            <ListItem style={{paddingTop: 2, paddingBottom: 2}}>
+              <div></div>
               <ListItemText
                 primary={item.monthAndYear}
                 primaryTypographyProps={{
