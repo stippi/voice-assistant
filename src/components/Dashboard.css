@@ -1,12 +1,13 @@
 .dashboard {
+    background-color: transparent;
     position: fixed;
-    top: 4rem;
-    right: 4rem;
+    top: 1.5rem;
+    right: 1.5rem;
 
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     flex-direction: column;
 
-    max-width: 15vw;
-    min-width: 14rem;
+    max-width: 17vw;
+    min-width: 17vw;
 }

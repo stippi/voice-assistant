@@ -35,7 +35,7 @@ export const TimerPopup = ({ timer, removeTimer }: Props) => {
     <ListItem
       secondaryAction={
         <IconButton aria-label="delete" size="small" onClick={removeTimer}>
-          <DeleteIcon fontSize="inherit" sx={{color: "#fff"}}/>
+          <DeleteIcon fontSize="inherit"/>
         </IconButton>
       }
     >
@@ -49,11 +49,20 @@ export const TimerPopup = ({ timer, removeTimer }: Props) => {
           `${timeLeft.hours}:${padWithZero(timeLeft.minutes)}:${padWithZero(timeLeft.seconds)}`
           : formatDateRelativeToToday(timer.time)}
         primaryTypographyProps={{
-          fontSize: 20,
+          fontSize: 15,
           fontWeight: 'medium',
-          letterSpacing: 0,
+          lineHeight: '20px',
+          mb: '2px',
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis"
         }}
         secondary={timer.title}
+        secondaryTypographyProps={{
+          noWrap: true,
+          fontSize: 12,
+          lineHeight: '16px'
+        }}
       />
     </ListItem>
   );

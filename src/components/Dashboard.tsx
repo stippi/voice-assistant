@@ -1,92 +1,138 @@
 import React from "react";
 import './Dashboard.css'
 import Paper from "@mui/material/Paper";
-import {styled} from "@mui/material/styles";
+import {styled, ThemeProvider} from "@mui/material/styles";
 import List from "@mui/material/List";
-import Divider from "@mui/material/Divider";
 import useAppContext from "../hooks/useAppContext.tsx";
 import useGoogleContext from "../hooks/useGoogleContext.tsx";
 import {KeyboardArrowDown} from "@mui/icons-material";
-import {Box, ListItemButton } from "@mui/material";
+import AlarmIcon from '@mui/icons-material/Alarm';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import {Box, createTheme, ListItemButton} from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import {Settings} from "../contexts/SettingsContext.tsx";
 import useSettings from "../hooks/useSettings.tsx";
 import {Timers} from "./Timers.tsx";
 import {Events} from "./Events.tsx";
+import ListItemIcon from "@mui/material/ListItemIcon";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
-    paddingLeft: 24,
-    paddingRight: 24,
+    paddingLeft: 16,
+    paddingRight: 16,
+    display: 'grid',
+    gridTemplateColumns: '32px 1fr 32px',
+    alignItems: 'start',
+    gap: '0 8px',
+  },
+  '& .MuiListItem-root': {
+    paddingLeft: 16,
+    paddingRight: 16,
+    display: 'grid',
+    gridTemplateColumns: '32px 1fr 32px',
+    alignItems: 'start',
+    gap: '0 8px',
   },
   '& .MuiListItemIcon-root': {
     minWidth: 0,
-    marginRight: 16,
+    justifySelf: 'center',
   },
   '& .MuiSvgIcon-root': {
     fontSize: 20,
+    marginRight: 0,
+    justifySelf: 'center',
   },
 });
 
-function CollapsibleList({title, secondaryTitle, settingsKey, children}: DashboardItemProps) {
-  
+function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: DashboardItemProps) {
   const {settings, setSettings} = useSettings();
   const open = settings[settingsKey];
 
-  return <Box
-    sx={{
-      paddingTop: 0,
-      paddingBottom: 0,
-      bgcolor: open ? 'rgba(71, 98, 130, 0.2)' : null,
-    }}
-  >
-    <ListItemButton
-      alignItems="flex-start"
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={() => setSettings({...settings, [settingsKey]: !open})}
-      sx={{
-        px: 3,
-        pt: 2.5,
-        pb: open ? 0 : 2.5,
-        '&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
-      }}
-    >
-      <ListItemText
-        primary={title}
-        primaryTypographyProps={{
-          fontSize: 15,
-          fontWeight: 'medium',
-          lineHeight: '20px',
-          mb: '2px',
-        }}
-        secondary={secondaryTitle}
-        secondaryTypographyProps={{
-          noWrap: true,
-          fontSize: 12,
-          lineHeight: '16px',
-          color: open ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0.5)',
-        }}
-        sx={{ my: 0 }}
-      />
-      <KeyboardArrowDown
-        sx={{
-          mr: -1,
-          opacity: 0,
-          transform: open ? 'rotate(-180deg)' : 'rotate(0)',
-          transition: '0.2s',
-        }}
-      />
-    </ListItemButton>
-    {open && children}
-  </Box>
+  return (
+    <Paper elevation={1} style={{display: "flex"}}>
+      <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
+        <Box
+          sx={{
+            paddingTop: 0,
+            paddingBottom: 0
+          }}
+        >
+          <ListItemButton
+            className="listItemGrid"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setSettings({...settings, [settingsKey]: !open})}
+            sx={{
+              px: 3,
+              pt: 2.5,
+              pb: open ? 0 : 2.5,
+              //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
+            }}
+          >
+            <ListItemIcon style={{marginTop: 0}}>
+              {icon}
+            </ListItemIcon>
+            <ListItemText
+              primary={title}
+              primaryTypographyProps={{
+                fontSize: 15,
+                fontWeight: 'medium',
+                lineHeight: '20px',
+                mb: '2px',
+              }}
+              secondary={secondaryTitle}
+              secondaryTypographyProps={{
+                noWrap: true,
+                fontSize: 12,
+                lineHeight: '16px',
+                color: open ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.5)',
+              }}
+              sx={{ my: 0 }}
+            />
+            <KeyboardArrowDown
+              sx={{
+                mr: -1,
+                //opacity: 0,
+                transform: open ? 'rotate(-180deg)' : 'rotate(0)',
+                transition: '0.2s',
+              }}
+            />
+          </ListItemButton>
+          {open && children}
+        </Box>
+      </DashboardList>
+    </Paper>
+  );
 }
 
 interface DashboardItemProps {
+  icon: React.ReactNode;
   title: string;
   secondaryTitle: string;
   settingsKey: keyof Settings;
   children: React.ReactNode;
 }
+
+const theme = createTheme({
+  components: {
+    MuiListItemButton: {
+      defaultProps: {
+        disableTouchRipple: true,
+      }
+    }
+  },
+  palette: {
+    mode: 'light',
+    primary: {
+      main: 'rgb(102, 157, 246)'
+    },
+    text: {
+      primary: 'rgb(40, 40, 40)',
+    },
+    background: {
+      paper: 'rgb(235, 235, 235)'
+    },
+  }
+});
 
 export function Dashboard() {
   const {timers} = useAppContext();
@@ -100,34 +146,32 @@ export function Dashboard() {
   }, [timers, upcomingEvents]);
   
   return (
-    <Paper
-      className="dashboard"
-      elevation={3}
-      style={{
-        display: timers.length > 0 || (settings.enableGoogle && upcomingEvents.length > 0) ? "flex" : "none"
-      }}
-    >
-      <DashboardList style={{paddingTop: 0, paddingBottom: 0}}>
+    <ThemeProvider theme={theme}>
+      <div
+        className="dashboard"
+        style={{
+            display: timers.length > 0 || (settings.enableGoogle && upcomingEvents.length > 0) ? "flex" : "none"
+        }}
+      >
         {settings.enableGoogle && upcomingEvents.length > 0 && (
-          <>
-            <CollapsibleList
-              title="Next events"
-              secondaryTitle="Click to show upcoming events"
-              settingsKey="showUpcomingEvents">
-              <Events/>
-            </CollapsibleList>
-            <Divider/>
-          </>
+          <CollapsibleList
+            icon={<CalendarMonthIcon style={{color: "#00c4ff", fontSize: "1.5rem"}}/>}
+            title="Events"
+            secondaryTitle="Show upcoming events"
+            settingsKey="showUpcomingEvents">
+            <Events/>
+          </CollapsibleList>
         )}
         {timers.length > 0 && (
           <CollapsibleList
+            icon={<AlarmIcon style={{color: "#ff4d17", fontSize: "1.5rem"}}/>}
             title="Timers & alarms"
-            secondaryTitle="Click to show alarms and timers"
+            secondaryTitle="Show alarms and timers"
             settingsKey="showTimers">
             <Timers/>
           </CollapsibleList>
         )}
-      </DashboardList>
-    </Paper>
+      </div>
+    </ThemeProvider>
   );
 }
