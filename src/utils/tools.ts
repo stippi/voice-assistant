@@ -241,6 +241,24 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "add_calendar_event",
+      description: "Add an event to the user's calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          summary: { type: "string", description: "Summary of the event" },
+          description: { type: "string", description: "Optional description of the event" },
+          startTime: { type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'" },
+          timeZone:  { type: "string", description: "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)" },
+          duration: { type: "string", description: "Duration in minutes" }
+        },
+        required: ["summary", "startTime", "timeZone", "duration"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "evaluate_expression",
       description: "Evaluate a mathematical expression in the mathjs syntax",
       parameters: {
@@ -345,6 +363,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "", appContext);
       case 'remove_timer':
         return await removeTimer(args.id, appContext);
+      case 'add_calendar_event':
+        return await createCalendarEvent(args.summary, args.description, args.startTime, args.timeZone, args.duration);
       case 'evaluate_expression':
         return await evaluateExpression(args.expression);
       case 'memorize':
@@ -606,6 +626,35 @@ async function removeTimer(id: string, appContext: AppContextType) {
   console.log(`Removing timer: ${id}`);
   appContext.setTimers(appContext.timers.filter(timer => timer.id !== id))
   return { result: "timer removed" };
+}
+
+async function createCalendarEvent(summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number) {
+  if (!gapi) {
+    return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
+  }
+  if (!gapi.client.getToken()) {
+    return { error: "User is not signed into Google account, or has not given Calendar access permissions" };
+  }
+  const start = new Date(startTime);
+  const event: gapi.client.calendar.EventInput = {
+    summary,
+    description: description || "",
+    start: {
+      dateTime: start.toISOString(),
+      timeZone: timeZone,
+    },
+    end: {
+      dateTime: new Date(start.getTime() + durationInMinutes * 60000).toISOString(),
+      timeZone: timeZone,
+    },
+  };
+  return gapi.client.calendar.events.insert({
+    calendarId: "primary",
+    resource: event,
+    //@ts-expect-error the @types/gapi.calendar package is not up-to-date (https://developers.google.com/calendar/api/v3/reference/events/insert)
+    sendUpdates: "all",
+    conferenceDataVersion: 1,
+  });
 }
 
 async function evaluateExpression(expression: string) {
