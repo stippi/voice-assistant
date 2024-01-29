@@ -176,13 +176,13 @@ async function streamChatCompletion(
     return;
   }
   
-  console.log('detected function call', finalMessage.tool_calls);
-  // For each tool call, we generate a new message with the role 'tool'.
+  // For each tool call, we generate a new message with the role 'tool' and the content of the JSON result of that function.
   for (const toolCall of finalMessage.tool_calls) {
     if (toolCall.type !== "function") {
       continue;
     }
     const result = await callFunction(toolCall.function, appContextRef.current);
+    console.log("function result:", result);
     const functionReply = {
       role: "tool",
       name: toolCall.function.name,

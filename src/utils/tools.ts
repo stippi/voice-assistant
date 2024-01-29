@@ -346,6 +346,7 @@ export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): bo
 export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall, appContext: AppContextType): Promise<object> {
   try {
     const args = JSON.parse(functionCall.arguments || "{}");
+    console.log("calling function:", functionCall.name, args);
     switch (functionCall.name) {
       case 'get_current_weather':
         return await getCurrentWeather(args.latitude, args.longitude);
