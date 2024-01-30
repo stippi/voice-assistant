@@ -2,17 +2,57 @@ import React from "react";
 import './MessageCard.css';
 
 import {Discuss} from "react-loader-spinner";
-//import PersonIcon from '@mui/icons-material/Person';
-//import AssistantIcon from '@mui/icons-material/Assistant'
 import Markdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {oneLight} from 'react-syntax-highlighter/dist/esm/styles/prism';
+// @ts-expect-error react-katex has no types
+import {InlineMath, BlockMath} from "react-katex";
+import 'katex/dist/katex.min.css';
 import {Message} from "../model/message";
-
-import { BsFillPersonFill } from "react-icons/bs";
-import { RiRobot2Fill } from "react-icons/ri";
+import {BsFillPersonFill} from "react-icons/bs";
+import {RiRobot2Fill} from "react-icons/ri";
 import {GoogleMapsCard} from "./GoogleMapsCard.tsx";
 import {showToolCallInChat} from "../utils/tools.ts";
+
+function parseMath(text: string) {
+  const result = [];
+  let lastIndex = 0;
+  const regex = /\[ (.*?) ]|\( (.*?) \)/g;
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    // Text before the math
+    if (match.index > lastIndex) {
+      result.push(text.slice(lastIndex, match.index));
+    }
+    
+    if (match[1] !== undefined) {
+      // Block math
+      result.push(<BlockMath key={lastIndex}>{match[1]}</BlockMath>);
+    } else if (match[2] !== undefined) {
+      // Inline math
+      result.push(<InlineMath key={lastIndex}>{match[2]}</InlineMath>);
+    }
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Text after the last math
+  if (lastIndex < text.length) {
+    result.push(text.slice(lastIndex));
+  }
+  
+  return result;
+}
+
+function convertTextChildrenToMath(children: React.ReactNode) {
+  return React.Children.map(children, (child) => {
+    if (typeof child === 'string') {
+      return parseMath(child);
+    }
+    return child;
+  });
+}
 
 const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   if (content === "") {
@@ -52,7 +92,15 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
             {children}
           </code>
         )
-      }
+      },
+      p(props) {
+        const {children, ...rest } = props
+        return <p {...rest}>{convertTextChildrenToMath(children)}</p>;
+      },
+      li(props) {
+        const {children, ...rest } = props
+        return <li {...rest}>{convertTextChildrenToMath(children)}</li>;
+      },
     }}
   />)
   if (role === "assistant" && tool_calls) {
