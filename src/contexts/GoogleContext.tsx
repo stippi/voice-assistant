@@ -40,7 +40,11 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
         console.log("Google API client loaded");
         gapi.client.init({
           apiKey: GoogleApiKey,
-          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
+          // Add calendar and people APIs to discovery list
+          discoveryDocs: [
+            "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+            "https://www.googleapis.com/discovery/v1/apis/people/v1/rest"
+          ],
         }).then(() => {
           console.log("Google API client initialized");
           setApiLoaded(true);
@@ -62,7 +66,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
     const accountsScript = createScript("https://accounts.google.com/gsi/client", () => {
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GoogleClientId,
-        scope: "https://www.googleapis.com/auth/calendar",
+        scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts.readonly",
         prompt: "",
         callback: (tokenResponse: google.accounts.oauth2.TokenResponse): void => {
           console.log("Google API client logged in");

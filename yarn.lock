@@ -1033,6 +1033,13 @@
   dependencies:
     "@types/gapi" "*"
 
+"@types/gapi.people@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@types/gapi.people/-/gapi.people-1.0.13.tgz#d2a275f34cc76b77de168af1c0716129fc827828"
+  integrity sha512-yZaJbq9mgH0Rp05EdYCaGH/XG+GtRWowvEUZ7l/yB/3kkyd20kklEUEIlH3wZSZ5aO1ANrixtSuwGT2XfgatMQ==
+  dependencies:
+    "@types/gapi" "*"
+
 "@types/gapi@*", "@types/gapi@^0.0.47":
   version "0.0.47"
   resolved "https://registry.yarnpkg.com/@types/gapi/-/gapi-0.0.47.tgz#3cef0a6a2accf4fc1405d08e2e001759cf440f56"
