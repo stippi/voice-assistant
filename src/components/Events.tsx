@@ -31,11 +31,22 @@ const pimpedEventList = (events: gapi.client.calendar.Event[], lang = navigator.
   let currentDay: string | null = null;
   
   events.forEach(event => {
-    if (!event.start.dateTime || !event.end.dateTime) {
+    let startDate: Date;
+    let endDate: Date;
+    if (event.start.dateTime) {
+      startDate = new Date(event.start.dateTime);
+    } else if (event.start.date) {
+      startDate = new Date(event.start.date);
+    } else {
       return;
     }
-    const startDate = new Date(event.start.dateTime);
-    const endDate = new Date(event.end.dateTime);
+    if (event.end.dateTime) {
+      endDate = new Date(event.end.dateTime);
+    } else if (event.end.date) {
+      endDate = new Date(event.end.date);
+    } else {
+      return;
+    }
     const monthYear = startDate.toLocaleString(lang, { month: 'long', year: 'numeric' });
     
     if (currentMonth !== monthYear) {
@@ -57,14 +68,21 @@ const pimpedEventList = (events: gapi.client.calendar.Event[], lang = navigator.
       weekday = '';
     }
     
+    let startString = "";
+    let endString = "";
+    if (event.start.dateTime && event.end.dateTime) {
+      startString = startDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+      endString = endDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+    }
+    
     pimpedList.push({
       type: 'event',
       id: event.id,
       monthDay,
       weekday,
       summary: event.summary,
-      startTime: startDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }),
-      endTime: endDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }),
+      startTime: startString,
+      endTime: endString,
       uiLink: event.htmlLink,
     });
   });
@@ -126,7 +144,7 @@ function Event({monthDay, weekday, summary, startTime, endTime, uiLink}: EventPr
           overflow: "hidden",
           textOverflow: "ellipsis"
         }}
-        secondary={`${startTime} - ${endTime}`}
+        secondary={startTime != endTime ? `${startTime} - ${endTime}` : startTime}
         secondaryTypographyProps={{
           noWrap: true,
           fontSize: 12,
