@@ -281,6 +281,20 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "list_google_contacts",
+      description: "List all contacts from the the user.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Text search over contacts" }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "evaluate_expression",
       description: "Evaluate a mathematical expression in the mathjs syntax",
       parameters: {
@@ -390,6 +404,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration);
       case 'list_google_calendar_events':
         return await listCalendarEvents(args.calendarId, args.query, args.timeMin, args.timeMax, args.maxResults, args.singleEvents, args.orderBy, args.showDeleted);
+      case 'list_google_contacts':
+        return await listContacts(args.query);
       case 'evaluate_expression':
         return await evaluateExpression(args.expression);
       case 'memorize':
@@ -708,6 +724,72 @@ async function listCalendarEvents(calendarId: string = "primary", query: string,
   };
   try {
     return await gapi.client.calendar.events.list(request);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function listContacts(query: string) {
+  if (!gapi) {
+    return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
+  }
+  if (!gapi.client.getToken()) {
+    return { error: "User is not signed into Google account, or has not given Contacts access permissions" };
+  }
+  try {
+    type Contact = {
+      id: string,
+      displayName?: string,
+      emailAddresses?: string[],
+      notes?: string,
+    }
+    const contacts: Contact[] = [];
+    const requestOptions: gapi.client.people.people.connections.ListParameters = {
+      resourceName: 'people/me',
+      pageSize: 100,
+      personFields: 'names,emailAddresses,biographies'
+    }
+    while (true) {
+      const response = await gapi.client.people.people.connections.list(requestOptions);
+      if (!response?.result?.connections) {
+        break;
+      }
+      contacts.push(...response.result.connections.map(connection => {
+        const contact: Contact = {
+          id: connection.resourceName.split("/").pop() || ""
+        };
+        if (connection.names && connection.names[0].displayName) {
+          contact.displayName = connection.names[0].displayName;
+        }
+        if (connection.emailAddresses) {
+          contact.emailAddresses = connection.emailAddresses.map(email => email.value);
+        }
+        if (connection.biographies) {
+          // @ts-ignore
+          contact.notes = connection.biographies[0].value;
+        }
+        return contact;
+      }));
+      if (!response.result.nextPageToken) {
+        break;
+      }
+      requestOptions.pageToken = response.result.nextPageToken;
+    }
+    if (query) {
+      query = query.toLowerCase();
+      return contacts.filter(contact => {
+        if (contact.emailAddresses) {
+          for (const email of contact.emailAddresses) {
+            if (email.toLowerCase().includes(query)) {
+              return true;
+            }
+          }
+        }
+        return !!(contact.displayName && contact.displayName.toLowerCase().includes(query))
+          || !!(contact.notes && contact.notes.toLowerCase().includes(query));
+      });
+    }
+    return contacts;
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }

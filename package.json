@@ -39,6 +39,7 @@
     "@types/dom-speech-recognition": "^0.0.4",
     "@types/gapi": "^0.0.47",
     "@types/gapi.calendar": "^3.0.10",
+    "@types/gapi.people": "^1.0.13",
     "@types/google.accounts": "^0.0.14",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
