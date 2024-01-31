@@ -13,6 +13,8 @@ import {BsFillPersonFill} from "react-icons/bs";
 import {RiRobot2Fill} from "react-icons/ri";
 import {GoogleMapsCard} from "./GoogleMapsCard.tsx";
 import {showToolCallInChat} from "../utils/tools.ts";
+import {ButtonGroup, IconButton} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 function parseMath(text: string) {
   const result = [];
@@ -183,9 +185,11 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   return markdown;
 });
 
-export const MessageCard = React.forwardRef(({ className, message }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
-  // const user = "😀";
-  // const assistant = "🤖";
+export const MessageCard = React.forwardRef(({ className, message, deleteMessage }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
+  const [hovered, setHovered] = React.useState(false);
+  const onMouseEnter = () => setHovered(true);
+  const onMouseLeave = () => setHovered(false);
+  
   return (
     <div className={className} ref={ref}>
       {message.role === "user" ?
@@ -193,12 +197,26 @@ export const MessageCard = React.forwardRef(({ className, message }: Props, ref:
         :
         <RiRobot2Fill className="role"/>
       }
-      <div className="content">
+      <div
+        className="content"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
         <MessageContent
           role={message.role}
           content={message.content}
           tool_calls={message.tool_calls}
         />
+        <ButtonGroup
+          disableElevation
+          variant="outlined"
+          aria-label="Message actions"
+          style={{opacity: hovered ? 1 : 0, transition: "opacity 0.2s ease-in-out"}}
+        >
+          <IconButton size="small" onClick={deleteMessage}>
+            <DeleteIcon fontSize="inherit" style={{color: "#666"}}/>
+          </IconButton>
+        </ButtonGroup>
       </div>
     </div>
   );
@@ -206,6 +224,7 @@ export const MessageCard = React.forwardRef(({ className, message }: Props, ref:
 
 interface Props {
   message: Message
+  deleteMessage: () => void
   className: string
   ref?: React.Ref<HTMLDivElement>
 }

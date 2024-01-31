@@ -349,9 +349,16 @@ export default function VoiceAssistant() {
     }
   }, [windowFocused]);
   
+  const deleteMessage = React.useCallback((message: Message) => {
+    updateChat(messages.filter(m => m !== message));
+  }, [messages, updateChat]);
+  
   return (
     <>
-      <Conversation chat={messages}/>
+      <Conversation
+        chat={messages}
+        deleteMessage={deleteMessage}
+      />
       <MessageBar
         sendMessage={sendMessage}
         stopResponding={stopResponding}

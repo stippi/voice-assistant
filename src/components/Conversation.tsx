@@ -14,7 +14,7 @@ function showInline(toolCalls: ChatCompletionMessageToolCall[] | undefined): boo
   return toolCalls.some(showToolCallInChat);
 }
 
-export function Conversation({chat}: Props) {
+export function Conversation({chat, deleteMessage}: Props) {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
   const messageCountRef = React.useRef(0);
   React.useEffect(() => {
@@ -39,6 +39,7 @@ export function Conversation({chat}: Props) {
           key={index}
           className="message"
           message={message}
+          deleteMessage={() => deleteMessage(message)}
           ref={index === filteredChat.length - 1 ? messagesEndRef : undefined}
         />
       ))
@@ -48,4 +49,5 @@ export function Conversation({chat}: Props) {
 
 interface Props {
   chat: Message[] | undefined
+  deleteMessage: (message: Message) => void
 }
