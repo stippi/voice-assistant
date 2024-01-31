@@ -1,14 +1,14 @@
 import React from "react";
 import './Dashboard.css'
 import Paper from "@mui/material/Paper";
-import {styled, ThemeProvider} from "@mui/material/styles";
+import {styled, ThemeProvider, createTheme} from "@mui/material/styles";
 import List from "@mui/material/List";
 import useAppContext from "../hooks/useAppContext.tsx";
 import useGoogleContext from "../hooks/useGoogleContext.tsx";
 import {KeyboardArrowDown} from "@mui/icons-material";
 import AlarmIcon from '@mui/icons-material/Alarm';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import {Box, createTheme, ListItemButton} from "@mui/material";
+import {Box, ListItemButton} from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import {Settings} from "../contexts/SettingsContext.tsx";
 import useSettings from "../hooks/useSettings.tsx";
