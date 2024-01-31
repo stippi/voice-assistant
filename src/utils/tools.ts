@@ -241,11 +241,12 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "add_calendar_event",
-      description: "Add an event to the user's calendar.",
+      name: "add_google_calendar_event",
+      description: "Add an event to a user's calendar.",
       parameters: {
         type: "object",
         properties: {
+          calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
           summary: { type: "string", description: "Summary of the event" },
           description: { type: "string", description: "Optional description of the event" },
           startTime: { type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'" },
@@ -253,6 +254,27 @@ export const tools: ChatCompletionTool[] = [
           duration: { type: "string", description: "Duration in minutes" }
         },
         required: ["summary", "startTime", "timeZone", "duration"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_google_calendar_events",
+      description: "List or query events from the user's calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
+          query: { type: "string", description: "Text search over events" },
+          timeMin: { type: "string", description: "Start time of the search (inclusive), in ISO format" },
+          timeMax: { type: "string", description: "End time of the search (exclusive), in ISO format" },
+          maxResults: { type: "integer", description: "Maximum number of results to return" },
+          singleEvents: { type: "boolean", description: "Whether to return single events from recurring events" },
+          orderBy: { type: "string", enum: ["startTime", "updated"], description: "Order of the results" },
+          showDeleted: { type: "boolean", description: "Whether to include deleted events in the results" }
+        },
+        required: ["singleEvents"]
       }
     }
   },
@@ -364,8 +386,10 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "", appContext);
       case 'remove_timer':
         return await removeTimer(args.id, appContext);
-      case 'add_calendar_event':
-        return await createCalendarEvent(args.summary, args.description, args.startTime, args.timeZone, args.duration);
+      case 'add_google_calendar_event':
+        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration);
+      case 'list_google_calendar_events':
+        return await listCalendarEvents(args.calendarId, args.query, args.timeMin, args.timeMax, args.maxResults, args.singleEvents, args.orderBy, args.showDeleted);
       case 'evaluate_expression':
         return await evaluateExpression(args.expression);
       case 'memorize':
@@ -629,7 +653,7 @@ async function removeTimer(id: string, appContext: AppContextType) {
   return { result: "timer removed" };
 }
 
-async function createCalendarEvent(summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number) {
+async function createCalendarEvent(calendarId: string = "primary", summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number) {
   if (!gapi) {
     return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
   }
@@ -651,7 +675,7 @@ async function createCalendarEvent(summary: string, description: string, startTi
   };
   try {
     const result = await gapi.client.calendar.events.insert({
-      calendarId: "primary",
+      calendarId: calendarId,
       resource: event,
       //@ts-expect-error the @types/gapi.calendar package is not up-to-date (https://developers.google.com/calendar/api/v3/reference/events/insert)
       sendUpdates: "all",
@@ -659,6 +683,31 @@ async function createCalendarEvent(summary: string, description: string, startTi
     });
     window.dispatchEvent(new CustomEvent('refresh-upcoming-events', { detail: {} }));
     return result;
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function listCalendarEvents(calendarId: string = "primary", query: string, timeMin: string = (new Date()).toISOString(), timeMax: string, maxResults: number, singleEvents: boolean, orderBy: string, showDeleted: boolean) {
+  if (!gapi) {
+    return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
+  }
+  if (!gapi.client.getToken()) {
+    return { error: "User is not signed into Google account, or has not given Calendar access permissions" };
+  }
+  const request: gapi.client.calendar.EventsListParameters = {
+    calendarId: calendarId,
+    q: query,
+    timeMin: timeMin,
+    timeMax: timeMax,
+    maxResults: maxResults,
+    singleEvents: singleEvents,
+    // @ts-ignore
+    orderBy: orderBy,
+    showDeleted: showDeleted,
+  };
+  try {
+    return await gapi.client.calendar.events.list(request);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
