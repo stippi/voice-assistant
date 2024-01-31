@@ -6,7 +6,7 @@ import {ChatsProvider} from "./contexts/ChatsContext";
 import {Sidebar} from "./components/Sidebar";
 import {WindowFocusProvider} from "./contexts/WindowFocusContext";
 import {AppContextProvider} from "./contexts/AppContext";
-import { createTheme, ThemeProvider } from '@mui/material';
+import {createTheme, ThemeProvider} from '@mui/material/styles';
 import useSettings from "./hooks/useSettings";
 import {Dashboard} from "./components/Dashboard.tsx";
 
@@ -61,15 +61,15 @@ const theme = createTheme({
     },
   },
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: 'rgb(102, 157, 246)'
     },
     text: {
-      primary: 'rgb(235, 235, 241)',
+      primary: 'rgb(40, 40, 40)',
     },
     background: {
-      paper: 'rgb(5, 30, 52)'
+      paper: 'rgb(235, 235, 235)'
     },
   }
 });

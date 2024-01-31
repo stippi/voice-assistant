@@ -40,6 +40,7 @@ export function Conversation({chat, deleteMessage}: Props) {
           className="message"
           message={message}
           deleteMessage={() => deleteMessage(message)}
+          regenerateMessage={index === filteredChat.length - 1 && message.role === "assistant" ? () => {} : undefined}
           ref={index === filteredChat.length - 1 ? messagesEndRef : undefined}
         />
       ))

@@ -11,10 +11,11 @@ import 'katex/dist/katex.min.css';
 import {Message} from "../model/message";
 import {BsFillPersonFill} from "react-icons/bs";
 import {RiRobot2Fill} from "react-icons/ri";
-import {GoogleMapsCard} from "./GoogleMapsCard.tsx";
-import {showToolCallInChat} from "../utils/tools.ts";
+import {GoogleMapsCard} from "./GoogleMapsCard";
+import {showToolCallInChat} from "../utils/tools";
 import {ButtonGroup, IconButton} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ReplayIcon from '@mui/icons-material/Replay';
 
 function parseMath(text: string) {
   const result = [];
@@ -185,7 +186,7 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
   return markdown;
 });
 
-export const MessageCard = React.forwardRef(({ className, message, deleteMessage }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
+export const MessageCard = React.forwardRef(({ className, message, deleteMessage, regenerateMessage }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
   const [hovered, setHovered] = React.useState(false);
   const onMouseEnter = () => setHovered(true);
   const onMouseLeave = () => setHovered(false);
@@ -214,8 +215,13 @@ export const MessageCard = React.forwardRef(({ className, message, deleteMessage
           style={{opacity: hovered ? 1 : 0, transition: "opacity 0.2s ease-in-out"}}
         >
           <IconButton size="small" onClick={deleteMessage}>
-            <DeleteIcon fontSize="inherit" style={{color: "#666"}}/>
+            <DeleteIcon fontSize="inherit"/>
           </IconButton>
+          {regenerateMessage && (
+            <IconButton size="small" onClick={regenerateMessage}>
+              <ReplayIcon fontSize="inherit"/>
+            </IconButton>
+          )}
         </ButtonGroup>
       </div>
     </div>
@@ -223,9 +229,10 @@ export const MessageCard = React.forwardRef(({ className, message, deleteMessage
 });
 
 interface Props {
+  className: string
   message: Message
   deleteMessage: () => void
-  className: string
+  regenerateMessage?: () => void
   ref?: React.Ref<HTMLDivElement>
 }
 
