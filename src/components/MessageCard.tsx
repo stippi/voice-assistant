@@ -104,6 +104,9 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
         const {children, ...rest } = props
         return <li {...rest}>{convertTextChildrenToMath(children)}</li>;
       },
+      hr() {
+        return <hr style={{border: "none", borderTop: "1px solid rgba(0,0,0,0.2)"}}/>
+      }
     }}
   />)
   if (role === "assistant" && tool_calls) {
