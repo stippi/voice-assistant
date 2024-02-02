@@ -9,22 +9,35 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
-export default function MediaControlCard({title, artist, albumUrl, playing, togglePlay, skipNext, skipPrevious}: Props) {
+export default function MediaControlCard({title, artist, albumUrl, playing, togglePlay, skipNext, skipPrevious, markFavorite}: Props) {
   const theme = useTheme();
 
   return (
     <Card sx={{ display: 'flex' }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <CardContent sx={{ flex: '1 0 auto' }}>
-          <Typography component="div" variant="h6">
-            {title.substring(0, 30)}
+          <Typography component="div" style={{
+            fontSize: '18px',
+            maxWidth: '130px',
+            overflow: 'none',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}>
+            {title}
           </Typography>
-          <Typography variant="subtitle2" color="text.secondary" component="div">
+          <Typography color="text.secondary" component="div" style={{
+            fontSize: '14px',
+            maxWidth: '130px',
+            overflow: 'none',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}>
             {artist}
           </Typography>
         </CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', pl: 1, pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', padding: '4px' }}>
           <IconButton
             aria-label="previous"
             onClick={theme.direction === 'rtl' ? skipNext : skipPrevious}
@@ -42,6 +55,13 @@ export default function MediaControlCard({title, artist, albumUrl, playing, togg
             onClick={theme.direction === 'rtl' ? skipPrevious : skipNext}
           >
             {theme.direction === 'rtl' ? <SkipPreviousIcon /> : <SkipNextIcon />}
+          </IconButton>
+          <IconButton
+            style={{ fontSize: '12px' }}
+            aria-label="mark as favorite"
+            onClick={markFavorite}
+            >
+            <FavoriteIcon fontSize="inherit"/>
           </IconButton>
         </Box>
       </Box>
@@ -64,5 +84,6 @@ interface Props {
   skipPrevious: () => void,
   skipNext: () => void,
   togglePlay: () => void,
+  markFavorite: () => void,
   playing: boolean,
 }

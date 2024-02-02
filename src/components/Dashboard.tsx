@@ -8,6 +8,7 @@ import useGoogleContext from "../hooks/useGoogleContext.tsx";
 import {KeyboardArrowDown} from "@mui/icons-material";
 import AlarmIcon from '@mui/icons-material/Alarm';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import RadioIcon from '@mui/icons-material/Radio';
 import {Box, ListItemButton} from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import {Settings} from "../contexts/SettingsContext.tsx";
@@ -142,7 +143,7 @@ export function Dashboard() {
   const {timers} = useAppContext();
   const {upcomingEvents} = useGoogleContext();
   const {settings} = useSettings();
-  const {playerState, player} = useSpotifyContext();
+  const {playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious, markAsFavorite} = useSpotifyContext();
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || upcomingEvents.length > 0;
@@ -181,21 +182,16 @@ export function Dashboard() {
             title={playerState.name}
             artist={playerState.artists.join(", ")}
             albumUrl={playerState.coverImageUrl}
-            skipPrevious={async () => {
-              if (player) {
-                await player.previousTrack();
-              }
-            }}
-            skipNext={async () => {
-              if (player) {
-                await player.nextTrack();
-              }
-            }}
+            skipPrevious={async () => skipPrevious(deviceId)}
+            skipNext={async () => skipNext(deviceId)}
             togglePlay={async () => {
-              if (player) {
-                await player.togglePlay();
+              if (playerState.paused) {
+                await playTracks(deviceId, []);
+              } else {
+                await pausePlayback(deviceId);
               }
             }}
+            markFavorite={async () => markAsFavorite(playerState.trackId)}
             playing={!playerState.paused}
           />
         )}

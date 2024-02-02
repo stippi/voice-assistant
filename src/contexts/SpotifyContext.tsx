@@ -11,6 +11,7 @@ const scopes = [
   'user-read-email',
   'user-read-playback-state',
   'user-modify-playback-state',
+  'user-library-modify',
   'streaming',
   'playlist-read-private',
   'playlist-read-collaborative',
@@ -18,6 +19,7 @@ const scopes = [
 
 type SpotifyPlayerState = {
   paused: boolean;
+  trackId: string;
   name: string;
   artists: string[];
   albumName: string;
@@ -31,6 +33,9 @@ export type SpotifyContextType = {
   playerState: SpotifyPlayerState;
   playTracks: (deviceId: string, trackIds: string[]) => Promise<{ result?: string, error?: string }>;
   pausePlayback: (deviceId: string) => Promise<{ result?: string, error?: string }>;
+  skipNext: (deviceId: string) => Promise<{ result?: string, error?: string }>;
+  skipPrevious: (deviceId: string) => Promise<{ result?: string, error?: string }>;
+  markAsFavorite: (trackId: string) => Promise<{ result?: string, error?: string }>;
 };
 
 export const SpotifyContext = createContext<SpotifyContextType>({
@@ -39,6 +44,7 @@ export const SpotifyContext = createContext<SpotifyContextType>({
   player: null,
   playerState: {
     paused: true,
+    trackId: "",
     name: "",
     artists: [],
     albumName: "",
@@ -46,6 +52,9 @@ export const SpotifyContext = createContext<SpotifyContextType>({
   },
   playTracks: playTracks,
   pausePlayback: pausePlayback,
+  skipNext: skipNext,
+  skipPrevious: skipPrevious,
+  markAsFavorite: markAsFavorite,
 });
 
 interface Props {
@@ -222,12 +231,77 @@ async function pausePlayback(deviceId: string) {
   }
 }
 
+async function markAsFavorite(trackId: string) {
+  if (!trackId) {
+    return { result: "no track is currently playing" };
+  }
+  const accessToken = await getAccessToken();
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${trackId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+    });
+    if (response.ok) {
+      return { result: "track marked as favorite" };
+    } else {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function skipNext(deviceId: string) {
+  const accessToken = await getAccessToken();
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+    });
+    if (response.ok) {
+      return { result: "skipped next" };
+    } else {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function skipPrevious(deviceId: string) {
+  const accessToken = await getAccessToken();
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+    });
+    if (response.ok) {
+      return { result: "skipped previous" };
+    } else {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+
 export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, children }) => {
   const [accessToken, setAccessToken] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [spotifyPlayer, setPlayer] = React.useState<Spotify.Player | null>(null);
   const [playerState, setPlayerState] = useState<SpotifyPlayerState>({
     paused: true,
+    trackId: "",
     name: "",
     artists: [],
     albumName: "",
@@ -352,6 +426,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       player.addListener('player_state_changed', ({ paused, track_window: { current_track }}) => {
         setPlayerState({
           paused: paused,
+          trackId: current_track.id || "",
           name: current_track.name,
           artists: current_track.artists.map(artist => artist.name),
           albumName: current_track.album.name,
@@ -382,6 +457,9 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         playerState,
         playTracks,
         pausePlayback,
+        skipNext,
+        skipPrevious,
+        markAsFavorite,
       }}>
       {children}
     </SpotifyContext.Provider>
