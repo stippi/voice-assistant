@@ -18,6 +18,7 @@ export type Settings = {
   transcriptionLanguage: string;
   
   enableGoogle: boolean;
+  enableSpotify: boolean;
   showTimers: boolean;
   showUpcomingEvents: boolean;
 }
@@ -35,6 +36,7 @@ const defaultSettings: Settings = {
   transcriptionLanguage: navigator.language,
 
   enableGoogle: false,
+  enableSpotify: false,
   showTimers: true,
   showUpcomingEvents: true,
 }

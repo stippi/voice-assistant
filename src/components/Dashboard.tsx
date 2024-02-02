@@ -15,6 +15,8 @@ import useSettings from "../hooks/useSettings.tsx";
 import {Timers} from "./Timers.tsx";
 import {Events} from "./Events.tsx";
 import ListItemIcon from "@mui/material/ListItemIcon";
+import MediaControlCard from "./MediaControlCard.tsx";
+import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
@@ -140,6 +142,7 @@ export function Dashboard() {
   const {timers} = useAppContext();
   const {upcomingEvents} = useGoogleContext();
   const {settings} = useSettings();
+  const {playerState, player} = useSpotifyContext();
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || upcomingEvents.length > 0;
@@ -172,6 +175,29 @@ export function Dashboard() {
             settingsKey="showTimers">
             <Timers/>
           </CollapsibleList>
+        )}
+        {settings.enableSpotify && (
+          <MediaControlCard
+            title={playerState.name}
+            artist={playerState.artists.join(", ")}
+            albumUrl={playerState.coverImageUrl}
+            skipPrevious={async () => {
+              if (player) {
+                await player.previousTrack();
+              }
+            }}
+            skipNext={async () => {
+              if (player) {
+                await player.nextTrack();
+              }
+            }}
+            togglePlay={async () => {
+              if (player) {
+                await player.togglePlay();
+              }
+            }}
+            playing={!playerState.paused}
+          />
         )}
       </div>
     </ThemeProvider>

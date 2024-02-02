@@ -4,7 +4,7 @@ import {OpenWeatherMapApiKey, NewsApiOrgKey, GoogleApiKey} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {addIsoDurationToDate} from "./timeFormat";
-import {AppContextType} from "../contexts/AppContext.tsx";
+import {AppContextType, Spotify} from "../contexts/AppContext.tsx";
 import OpenAI from "openai";
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
 
@@ -372,6 +372,89 @@ export const tools: ChatCompletionTool[] = [
         required: ["image"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_on_spotify",
+      description: "Find tracks, artists, albums or playlists on Spotify",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "A search query" },
+          type: {
+            type: "string",
+            enum: ["track", "artist", "album", "playlist"],
+            description: "The type of item to search for"
+          },
+          market: { type: "string", description: "An ISO 3166-1 alpha-2 country code" },
+          limit: { type: "integer", description: "The maximum number of items to return" }
+        },
+        required: ["query", "type"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "start_spotify_playback",
+      description: "Start streaming playback on Spotify Player.",
+      parameters: {
+        type: "object",
+        properties: {
+          trackIds: { type: "array", items: { type: "string" }, description: "A track ID" },
+        },
+        required: ["trackIds"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "resume_spotify_playback",
+      description: "Resume streaming playback on Spotify Player.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "pause_spotify_playback",
+      description: "Pause streaming playback on Spotify Player",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "spotify_skip_next",
+      description: "Skip to the next song on the Spotify Player",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "spotify_skip_previous",
+      description: "Skip to the previous song on the Spotify Player",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
   }
 ];
 
@@ -428,7 +511,18 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
           args.mode || args.routingPreference ?
             { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
             : undefined);
-      
+      case 'find_on_spotify':
+        return await findOnSpotify(appContext.spotify?.accessToken, args.query, args.type, args.market, args.limit);
+      case 'start_spotify_playback':
+        return await playOnSpotify(appContext.spotify, args.trackIds);
+      case 'resume_spotify_playback':
+        return await playOnSpotify(appContext.spotify, []);
+      case 'pause_spotify_playback':
+        return await pauseSpotifyPlayback(appContext.spotify);
+      case 'spotify_skip_next':
+        return await skipSpotifyPlaybackNext(appContext.spotify);
+      case 'spotify_skip_previous':
+        return await skipSpotifyPlaybackPrevious(appContext.spotify);
       default:
         return { error: `unknown function '${functionCall.name}'`};
     }
@@ -843,4 +937,61 @@ async function deleteInformation(category: string, information: string) {
   }
 
   return { result: "information not found in category" };
+}
+
+async function findOnSpotify(accessToken: string | undefined, query: string, type: string, market: string, limit: number) {
+  if (!accessToken) {
+    return { error: "Spotify integration not enabled, or not logged into Spotify" };
+  }
+  const queryParams = new URLSearchParams();
+  queryParams.append("q", query);
+  queryParams.append("type", type);
+  if (market) {
+    queryParams.append("market", market);
+  }
+  if (limit) {
+    queryParams.append("limit", limit.toString());
+  }
+  const url = `https://api.spotify.com/v1/search?${queryParams.toString()}`;
+  console.log(`Fetching from Spotify: ${url}`);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function playOnSpotify(spotify: Spotify | undefined, trackIds: string[]) {
+  if (!spotify) {
+    return { error: "Spotify integration not enabled, or not logged into Spotify" };
+  }
+  return await spotify.playTracks(spotify.deviceId, trackIds);
+}
+
+async function pauseSpotifyPlayback(spotify: Spotify | undefined) {
+  if (!spotify) {
+    return { error: "Spotify integration not enabled, or not logged into Spotify" };
+  }
+  return await spotify.playTracks(spotify.deviceId, []);
+}
+
+async function skipSpotifyPlaybackNext(spotify: Spotify | undefined) {
+  if (!spotify || !spotify.player) {
+    return { error: "Spotify integration not enabled, or not logged into Spotify" };
+  }
+  await spotify.player.nextTrack();
+  return { result: "playback skipped" };
+}
+
+async function skipSpotifyPlaybackPrevious(spotify: Spotify | undefined) {
+  if (!spotify || !spotify.player) {
+    return { error: "Spotify integration not enabled, or not logged into Spotify" };
+  }
+  await spotify.player.previousTrack();
+  return { result: "playback skipped" };
 }
