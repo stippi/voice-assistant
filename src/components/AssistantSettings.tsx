@@ -164,6 +164,15 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               onChange={() => setSettings({ ...settings, enableGoogle: !settings.enableGoogle })}
             />
           </FormControl>
+          <FormControl>
+            <FormControlLabel
+              checked={settings.enableSpotify}
+              control={<Switch color="primary" />}
+              label="Spotify Integration"
+              labelPlacement="end"
+              onChange={() => setSettings({ ...settings, enableSpotify: !settings.enableSpotify })}
+            />
+          </FormControl>
         </Box>
       </Box>
     </Popover>

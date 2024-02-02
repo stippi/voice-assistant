@@ -1,5 +1,6 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {GoogleClientId, GoogleApiKey} from "../secrets.ts";
+import {createScript} from "../utils/createScript.ts";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
@@ -18,14 +19,10 @@ interface Props {
   enableGoogle: boolean
 }
 
-function createScript(src: string, onLoadCallback: () => void): HTMLScriptElement {
-  const script = document.createElement('script');
-  script.src = src;
-  script.async = true;
-  script.defer = true;
-  script.onload = onLoadCallback;
-  return script;
-}
+type TokenSet = {
+  accessToken: string;
+  expires: number;
+};
 
 export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children }) => {
   const [apiLoaded, setApiLoaded] = useState(false);
@@ -63,6 +60,17 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
 
   useEffect(() => {
     if (!apiLoaded) return;
+    
+    const storedTokenSet = localStorage.getItem("google-token-set");
+    if (storedTokenSet) {
+      const tokenSet: TokenSet = JSON.parse(storedTokenSet);
+      if (tokenSet.expires > Date.now()) {
+        console.log("Using stored Google API access token");
+        gapi.client.setToken({access_token: tokenSet.accessToken});
+        setLoggedIn(true);
+      }
+    }
+    
     const accountsScript = createScript("https://accounts.google.com/gsi/client", () => {
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GoogleClientId,
@@ -71,13 +79,17 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
         callback: (tokenResponse: google.accounts.oauth2.TokenResponse): void => {
           console.log("Google API client logged in");
           gapi.client.setToken(tokenResponse);
+          const tokenSet: TokenSet = {
+            accessToken: tokenResponse.access_token,
+            expires: Date.now() + Number.parseInt(tokenResponse.expires_in) * 1000,
+          }
+          localStorage.setItem("google-token-set", JSON.stringify(tokenSet));
           setLoggedIn(true);
         },
       });
       if (gapi.client.getToken() === null) {
+        console.log("Requesting Google API access token");
         tokenClient.requestAccessToken({ prompt: "consent" });
-      // } else {
-      //   tokenClient.requestAccessToken({ prompt: "" });
       }
     });
 
@@ -121,7 +133,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
   return (
     <GoogleContext.Provider
       value={{
-        apiLoaded: false,
+        apiLoaded,
         loggedIn,
         upcomingEvents,
       }}>

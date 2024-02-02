@@ -21,6 +21,7 @@
     "@picovoice/web-voice-processor": "^4.0.8",
     "@react-google-maps/api": "^2.19.2",
     "@react-oauth/google": "^0.12.1",
+    "@types/spotify-web-playback-sdk": "^0.1.19",
     "mathjs": "^12.1.0",
     "openai": "^4.17.4",
     "prop-types": "^15.8.1",

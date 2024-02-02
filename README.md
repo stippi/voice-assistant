@@ -22,6 +22,8 @@ export const NewsApiOrgKey = "<Your newsapi.org API key>";
 
 export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
+
+export const SpotifyClientId = "<Your Spotify Client ID>";
 ```
 
 :bulb: **This file is ignored by git.**
@@ -56,6 +58,17 @@ A number of things need to be configured:
   - Configure the scopes and include `https://www.googleapis.com/auth/calendar`.
   - Add the account you want to use as a test user.
 
+### Spotify Integration
+
+For the optional Spotify integration (enabled in the Assistant Settings via the switch `Spotify Integration`), you need to provide a SpotifyClientId.
+To get a client ID, you need to register an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
+
+As website, specify `http://localhost:5173`.
+As redirect URL, also specify `http://localhost:5173`.
+
+When enabling the Spotify integration, you will be redirected to a Spotify login page where you also need to give Voice Assistant (or however you named your app in the Spotify developer dashboard) the requested permissions.
+In addition, the embedded playback streaming capabilities work only for Spotify Premium users, since the Web Playback SDK requires a Premium account.
+
 ### Starting the Vite Dev Server
 
 After preparing the `secrets.ts` file, you can run:
@@ -72,6 +85,10 @@ yarn run dev
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
+  - [x] Delete a single message button
+  - [ ] Edit a single message button
+  - [ ] Play a single message button
+  - [ ] Regenerate the LLM response
 - [ ] Add a "Clear" button to the chat
 - [ ] Implement automatically naming chats via LLM
 - [ ] Structured replies that force the LLM to consider some things with each reply
@@ -79,12 +96,16 @@ yarn run dev
 - [ ] Fix inconsistencies that developed over time:
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
-- [ ] Move gear icon into sidebar
-- [ ] Optional integrate Google Calendar API
-- [ ] Add Spotify integration?
+- [ ] Strip URLs from audible replies
 
 ## Done
 
+- [x] Optional integrate Google Calendar API
+- [X] Add Spotify integration (in progress)
+  - [x] Spotify auth flow
+  - [x] Spotify playback SDK loading
+  - [X] Spotify search
+  - [X] Spotify playback
 - [x] Temporarily open the microphone for conversation after the assistant finished speaking
 - [x] Add a "Stop" button while the response is streaming in
 - [x] More visual feedback during phases of assembling the user message
@@ -93,3 +114,4 @@ yarn run dev
 - [x] Allow to preserve chats
 - [x] Reset Porcupine when browser tab is (re-)activated
 - [x] Implement renaming chats
+- [x] Move gear icon into sidebar

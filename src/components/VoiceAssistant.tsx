@@ -17,6 +17,7 @@ import {ChatCompletionMessage} from "openai/resources";
 import useWindowFocus from "../hooks/useWindowFocus.tsx";
 import useAppContext from "../hooks/useAppContext.tsx";
 import {AppContextType} from "../contexts/AppContext.tsx";
+import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -265,6 +266,21 @@ export default function VoiceAssistant() {
     appContextRef.current = appContext;
     settingsRef.current = settings;
   }, [settings, appContext]);
+  
+  const spotifyContext = useSpotifyContext();
+  React.useEffect(() => {
+    if (spotifyContext.player && spotifyContext.accessToken && spotifyContext.deviceId) {
+      appContext.setSpotify({
+        player: spotifyContext.player,
+        accessToken: spotifyContext.accessToken,
+        deviceId: spotifyContext.deviceId,
+        playTracks: spotifyContext.playTracks,
+        pausePlayback: spotifyContext.pausePlayback,
+      });
+    } else {
+      appContext.setSpotify(undefined);
+    }
+  }, [spotifyContext.player, spotifyContext.accessToken, spotifyContext.deviceId]);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
     console.log(`sendMessage("${message}", ${audible})`);
