@@ -36,31 +36,34 @@ The API key for `openweathermap.org` can be for the free tier.
 Similarly, the API key for `picovoice.ai` is free to obtain for personal use.
 It just comes with a rate limit. 
 
-The API key for the Google APIs needs to have the following APIs enabled:
+To get an API key for the Google APIs, you need create a "project" in the Google developer console and enable the following APIs:
 
 - Maps JavaScript API
 - Places API (New)
 - Routes API
 - Directions API
-- Google Calendar API (if you plan to activate the Google Integration, see below)
+- Calendar API (if you plan to activate the Google Integration, see below)
+- People API (if you plan to activate the Google Integration, see below)
 
 ### Google Integration
 
-For the optional Google Calendar integration (enabled in the Assistant Settings via the switch `Google Integration`), you need to provide a GoogleClientId.
+For the optional Google Calendar and Contacts integration (enabled in the Assistant Settings via the switch `Google Integration`), you need to provide a `GoogleClientId` in addition to the `GoogleApiKey`.
 The reason is that you need to log in with your Google account, and this requires setting up an OAuth2 Client of type `Web Application` on the Google cloud console for your project.
-A number of things need to be configured:
+
+To get a Google Client ID, you need to create a Google Cloud Project in the developer console and a number of things need to be configured:
 
 - Create an `OAuth 2.0-Client-ID`:
   - Add both `http://localhost:5173` and `http://localhost` to the authorized Javascript origins.
   - Add both `http://localhost:5173` and `http://localhost` to the authorized redirection URIs (not entirely sure if this is indeed necessary).
 - *Edit* the `OAuth Consent Screen`:
   - Set the start page to `http://localhost:5173` (not sure if this is indeed needed.)
-  - Configure the scopes and include `https://www.googleapis.com/auth/calendar`.
+  - Configure the scopes and include `https://www.googleapis.com/auth/calendar` and `https://www.googleapis.com/auth/contacts.readonly`.
+    The scopes are available only if you also enabled the APIs in your cloud project.
   - Add the account you want to use as a test user.
 
 ### Spotify Integration
 
-For the optional Spotify integration (enabled in the Assistant Settings via the switch `Spotify Integration`), you need to provide a SpotifyClientId.
+For the optional Spotify integration (enabled in the Assistant Settings via the switch `Spotify Integration`), you need to provide a `SpotifyClientId`.
 To get a client ID, you need to register an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
 
 As website, specify `http://localhost:5173`.
