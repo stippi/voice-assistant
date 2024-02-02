@@ -50,7 +50,7 @@ To get an API key for the Google APIs, you need create a "project" in the Google
 For the optional Google Calendar and Contacts integration (enabled in the Assistant Settings via the switch `Google Integration`), you need to provide a `GoogleClientId` in addition to the `GoogleApiKey`.
 The reason is that you need to log in with your Google account, and this requires setting up an OAuth2 Client of type `Web Application` on the Google cloud console for your project.
 
-To get a Google Client ID, you need to create a Google Cloud Project in the developer console and a number of things need to be configured:
+A number of things need to be configured in your cloud project:
 
 - Create an `OAuth 2.0-Client-ID`:
   - Add both `http://localhost:5173` and `http://localhost` to the authorized Javascript origins.
