@@ -376,28 +376,7 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "find_on_spotify",
-      description: "Find tracks, artists, albums or playlists on Spotify",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "A search query" },
-          type: {
-            type: "string",
-            enum: ["track", "artist", "album", "playlist"],
-            description: "The type of item to search for"
-          },
-          market: { type: "string", description: "An ISO 3166-1 alpha-2 country code" },
-          limit: { type: "integer", description: "The maximum number of items to return" }
-        },
-        required: ["query", "type"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "start_spotify_playback_tracks",
+      name: "play_tracks_on_spotify",
       description: "Start streaming tracks on Spotify Player.",
       parameters: {
         type: "object",
@@ -411,14 +390,35 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "start_spotify_playback_artist",
-      description: "Start streaming an artist on Spotify Player.",
+      name: "play_artist_top_tracks_on_spotify",
+      description: "Start streaming top songs of an artist on Spotify Player.",
       parameters: {
         type: "object",
         properties: {
-          artist: { type: "string", description: "The name of an artist (will be used as query)" },
+          artist: { type: "string", description: "The name of an artist" },
         },
         required: ["artist"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_on_spotify",
+      description: "Find tracks, artists, albums or playlists on Spotify",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "A search query" },
+          type: {
+            type: "string",
+            items: { type: "string" },
+            description: "An array of item types to search across. Valid types are: 'album', 'artist', 'playlist', 'track', 'show', and 'episode'."
+          },
+          market: { type: "string", description: "An ISO 3166-1 alpha-2 country code" },
+          limit: { type: "integer", description: "The maximum number of items to return" }
+        },
+        required: ["query", "type"]
       }
     }
   },
@@ -525,12 +525,12 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
           args.mode || args.routingPreference ?
             { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
             : undefined);
+      case 'play_tracks_on_spotify':
+        return await playOnSpotify(appContext.spotify, args.trackIds);
+      case 'play_artist_top_tracks_on_spotify':
+        return await playOnSpotifyArtist(appContext.spotify, args.artist);
       case 'find_on_spotify':
         return await findOnSpotify(appContext.spotify?.accessToken, args.query, args.type, args.market, args.limit);
-      case 'start_spotify_playback_tracks':
-        return await playOnSpotify(appContext.spotify, args.trackIds);
-      case 'start_spotify_playback_artist':
-        return await playOnSpotifyArtist(appContext.spotify, args.artist);
       case 'resume_spotify_playback':
         return await playOnSpotify(appContext.spotify, []);
       case 'pause_spotify_playback':
@@ -828,7 +828,7 @@ async function listCalendarEvents(calendarId: string = "primary", query: string,
     timeMax: timeMax,
     maxResults: maxResults,
     singleEvents: singleEvents,
-    // @ts-ignore
+    // @ts-expect-error - orderBy is not in the types
     orderBy: orderBy,
     showDeleted: showDeleted,
   };
@@ -859,6 +859,7 @@ async function listContacts(query: string) {
       pageSize: 100,
       personFields: 'names,emailAddresses,biographies'
     }
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const response = await gapi.client.people.people.connections.list(requestOptions);
       if (!response?.result?.connections) {
@@ -875,7 +876,7 @@ async function listContacts(query: string) {
           contact.emailAddresses = connection.emailAddresses.map(email => email.value);
         }
         if (connection.biographies) {
-          // @ts-ignore
+          // @ts-expect-error - biographies is not in the types
           contact.notes = connection.biographies[0].value;
         }
         return contact;
