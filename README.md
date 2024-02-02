@@ -9,11 +9,13 @@ This project was bootstrapped using `npm create vite@latest ./ -- --template rea
 Create a file named `secrets.ts` in the `src` directory with the following contents:
 
 ```typescript
+// Required:
 export const OpenAiConfig = {
   apiKey: "<Your platform.openai.com API key>",
   dangerouslyAllowBrowser: true
 };
 
+// Theoretically optional, but untested if missing:
 export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
 
 export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
@@ -86,6 +88,8 @@ yarn run dev
 ## Ideas for Next Features
 
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
+- [ ] Make providing any keys besides the OpenAI key truly optional, also removing corresponding LLM function declarations
+- [ ] Allow chosing the model (downgrading to GPT-3.5 and potentially improving latency)
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
   - [x] Delete a single message button
