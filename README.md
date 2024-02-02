@@ -36,7 +36,7 @@ The API key for `openweathermap.org` can be for the free tier.
 Similarly, the API key for `picovoice.ai` is free to obtain for personal use.
 It just comes with a rate limit. 
 
-To get an API key for the Google APIs, you need create a "project" in the Google developer console and enable the following APIs:
+To get an API key for the Google APIs, you need create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
 
 - Maps JavaScript API
 - Places API (New)
