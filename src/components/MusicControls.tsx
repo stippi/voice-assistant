@@ -64,7 +64,7 @@ export default function MediaControls({
           <Typography noWrap>
             <b>{title}</b>
           </Typography>
-          <Typography noWrap letterSpacing={-0.25}>
+          <Typography noWrap variant="caption" color="text.secondary" letterSpacing={-0.25}>
             {albumTitle}
           </Typography>
         </Box>
