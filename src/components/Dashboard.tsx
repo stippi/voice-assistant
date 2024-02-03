@@ -16,8 +16,9 @@ import useSettings from "../hooks/useSettings.tsx";
 import {Timers} from "./Timers.tsx";
 import {Events} from "./Events.tsx";
 import ListItemIcon from "@mui/material/ListItemIcon";
-import MediaControlCard from "./MediaControlCard.tsx";
-import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
+//import MediaControlCard from "./MediaControlCard";
+import MusicControls from "./MusicControls";
+import useSpotifyContext from "../hooks/useSpotifyContext";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
@@ -143,7 +144,7 @@ export function Dashboard() {
   const {timers} = useAppContext();
   const {upcomingEvents} = useGoogleContext();
   const {settings} = useSettings();
-  const {playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
+  const {player, playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || upcomingEvents.length > 0;
@@ -178,12 +179,31 @@ export function Dashboard() {
           </CollapsibleList>
         )}
         {settings.enableSpotify && playerState.trackId && (
-          <MediaControlCard
+          // <MediaControlCard
+          //   title={playerState.name}
+          //   artist={playerState.artists.join(", ")}
+          //   albumUrl={playerState.coverImageUrl}
+          //   skipPrevious={async () => skipPrevious(deviceId)}
+          //   skipNext={async () => skipNext(deviceId)}
+          //   togglePlay={async () => {
+          //     if (playerState.paused) {
+          //       await playTracks(deviceId, []);
+          //     } else {
+          //       await pausePlayback(deviceId);
+          //     }
+          //   }}
+          //   markFavorite={async () => {}}
+          //   playing={!playerState.paused}
+          // />
+          <MusicControls
             title={playerState.name}
             artist={playerState.artists.join(", ")}
-            albumUrl={playerState.coverImageUrl}
+            albumTitle={playerState.albumName}
+            albumCoverUrl={playerState.coverImageUrl}
             skipPrevious={async () => skipPrevious(deviceId)}
             skipNext={async () => skipNext(deviceId)}
+            canSkipPrevious={playerState.canSkipPrevious}
+            canSkipNext={playerState.canSkipNext}
             togglePlay={async () => {
               if (playerState.paused) {
                 await playTracks(deviceId, []);
@@ -193,6 +213,13 @@ export function Dashboard() {
             }}
             markFavorite={async () => {}}
             playing={!playerState.paused}
+            position={playerState.position}
+            duration={playerState.duration}
+            setPosition={async (value: number) => {
+              if (player) {
+                await player.seek(value * 1000);
+              }
+            }}
           />
         )}
         {settings.enableSpotify && !playerState.trackId && (
