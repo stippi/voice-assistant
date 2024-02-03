@@ -96,14 +96,14 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
           </code>
         )
       },
-      p(props) {
-        const {children, ...rest } = props
-        return <p {...rest}>{convertTextChildrenToMath(children)}</p>;
-      },
-      li(props) {
-        const {children, ...rest } = props
-        return <li {...rest}>{convertTextChildrenToMath(children)}</li>;
-      },
+      // p(props) {
+      //   const {children, ...rest } = props
+      //   return <p {...rest}>{convertTextChildrenToMath(children)}</p>;
+      // },
+      // li(props) {
+      //   const {children, ...rest } = props
+      //   return <li {...rest}>{convertTextChildrenToMath(children)}</li>;
+      // },
       hr() {
         return <hr style={{border: "none", borderTop: "1px solid rgba(0,0,0,0.2)"}}/>
       }
