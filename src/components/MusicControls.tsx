@@ -10,7 +10,6 @@ import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
 import PauseRounded from '@mui/icons-material/PauseRounded';
 //import VolumeUpRounded from '@mui/icons-material/VolumeUpRounded';
 //import VolumeDownRounded from '@mui/icons-material/VolumeDownRounded';
-import { Paper } from '@mui/material';
 import {useEffect, useRef, useState} from "react";
 import Tooltip from "@mui/material/Tooltip";
 
@@ -92,7 +91,7 @@ export default function MediaControls({
   // const lightIconColor =
   //   theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
   return (
-    <Paper sx={{padding: 2}}>
+    <Box sx={{padding: 2}}>
       <Box sx={{display: 'flex', alignItems: 'center'}}>
         <CoverImage>
           <img
@@ -202,7 +201,7 @@ export default function MediaControls({
       {/*  />*/}
       {/*  <VolumeUpRounded htmlColor={lightIconColor}/>*/}
       {/*</Stack>*/}
-    </Paper>
+    </Box>
   );
 }
 

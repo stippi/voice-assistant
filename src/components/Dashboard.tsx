@@ -52,12 +52,13 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   },
 });
 
-function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: DashboardItemProps) {
+function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, children, disableExpand}: DashboardItemProps) {
   const {settings, setSettings} = useSettings();
   const open = settings[settingsKey];
 
   return (
-    <Paper elevation={1} style={{display: "flex"}}>
+    <Paper elevation={1} style={{display: "flex", flexDirection: "column"}}>
+      {header}
       <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
         <Box
           sx={{
@@ -68,15 +69,23 @@ function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: D
           <ListItemButton
             className="listItemGrid"
             onMouseDown={(e) => e.preventDefault()}
+            disabled={disableExpand}
             onClick={() => setSettings({...settings, [settingsKey]: !open})}
             sx={{
               //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
             }}
-            style={{paddingTop: 16, paddingBottom: open ? 0 : 16}}
+            style={{
+              paddingTop: header ? 4 : 16,
+              paddingBottom: open ? 0 : header ? 4 : 16
+            }}
           >
-            <ListItemIcon style={{marginTop: 0}}>
-              {icon}
-            </ListItemIcon>
+            {icon ? (
+              <ListItemIcon style={{marginTop: 0}}>
+                {icon}
+              </ListItemIcon>
+            ) : (
+              <div />
+            )}
             <ListItemText
               primary={title}
               primaryTypographyProps={{
@@ -85,7 +94,7 @@ function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: D
                 lineHeight: '20px',
                 mb: '2px',
               }}
-              secondary={secondaryTitle}
+              secondary={!header ? secondaryTitle : null}
               secondaryTypographyProps={{
                 noWrap: true,
                 fontSize: 12,
@@ -94,14 +103,16 @@ function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: D
               }}
               sx={{ my: 0 }}
             />
-            <KeyboardArrowDown
-              sx={{
-                mr: -1,
-                //opacity: 0,
-                transform: open ? 'rotate(-180deg)' : 'rotate(0)',
-                transition: '0.2s',
-              }}
-            />
+            {!disableExpand && (
+              <KeyboardArrowDown
+                sx={{
+                  mr: -1,
+                  //opacity: 0,
+                  transform: open ? 'rotate(-180deg)' : 'rotate(0)',
+                  transition: '0.2s',
+                }}
+              />
+            )}
           </ListItemButton>
           {open && children}
         </Box>
@@ -111,11 +122,13 @@ function CollapsibleList({title, icon, secondaryTitle, settingsKey, children}: D
 }
 
 interface DashboardItemProps {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
+  header?: React.ReactNode;
   title: string;
   secondaryTitle: string;
   settingsKey: keyof Settings;
   children: React.ReactNode;
+  disableExpand?: boolean;
 }
 
 const theme = createTheme({
@@ -178,85 +191,46 @@ export function Dashboard() {
             <Timers/>
           </CollapsibleList>
         )}
-        {settings.enableSpotify && playerState.trackId && (
-          // <MediaControlCard
-          //   title={playerState.name}
-          //   artist={playerState.artists.join(", ")}
-          //   albumUrl={playerState.coverImageUrl}
-          //   skipPrevious={async () => skipPrevious(deviceId)}
-          //   skipNext={async () => skipNext(deviceId)}
-          //   togglePlay={async () => {
-          //     if (playerState.paused) {
-          //       await playTracks(deviceId, []);
-          //     } else {
-          //       await pausePlayback(deviceId);
-          //     }
-          //   }}
-          //   markFavorite={async () => {}}
-          //   playing={!playerState.paused}
-          // />
-          <MusicControls
-            title={playerState.name}
-            artist={playerState.artists.join(", ")}
-            albumTitle={playerState.albumName}
-            albumCoverUrl={playerState.coverImageUrl}
-            skipPrevious={async () => skipPrevious(deviceId)}
-            skipNext={async () => skipNext(deviceId)}
-            canSkipPrevious={playerState.canSkipPrevious}
-            canSkipNext={playerState.canSkipNext}
-            togglePlay={async () => {
-              if (playerState.paused) {
-                await playTracks(deviceId, []);
-              } else {
-                await pausePlayback(deviceId);
-              }
-            }}
-            markFavorite={async () => {}}
-            playing={!playerState.paused}
-            position={playerState.position}
-            duration={playerState.duration}
-            setPosition={async (value: number) => {
-              if (player) {
-                await player.seek(value * 1000);
-              }
-            }}
-          />
-        )}
-        {settings.enableSpotify && !playerState.trackId && (
-          <Paper elevation={1} style={{display: "flex"}}>
-            <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
-              <Box
-                sx={{paddingTop: 0, paddingBottom: 0}}
-              >
-                <ListItemButton
-                  className="listItemGrid"
-                  onMouseDown={(e) => e.preventDefault()}
-                  style={{paddingTop: 16, paddingBottom: 16}}
-                >
-                  <ListItemIcon style={{marginTop: 0}}>
-                   <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Music"
-                    primaryTypographyProps={{
-                      fontSize: 15,
-                      fontWeight: 'medium',
-                      lineHeight: '20px',
-                      mb: '2px',
-                    }}
-                    secondary="No music is currently streaming"
-                    secondaryTypographyProps={{
-                      noWrap: true,
-                      fontSize: 12,
-                      lineHeight: '16px',
-                      color: 'rgba(0,0,0,0.5)',
-                    }}
-                    sx={{ my: 0 }}
-                  />
-                </ListItemButton>
-              </Box>
-            </DashboardList>
-          </Paper>
+        {settings.enableSpotify && (
+          <CollapsibleList
+            header={playerState.trackId && (
+              <MusicControls
+                title={playerState.name}
+                artist={playerState.artists.join(", ")}
+                albumTitle={playerState.albumName}
+                albumCoverUrl={playerState.coverImageUrl}
+                skipPrevious={async () => skipPrevious(deviceId)}
+                skipNext={async () => skipNext(deviceId)}
+                canSkipPrevious={playerState.canSkipPrevious}
+                canSkipNext={playerState.canSkipNext}
+                togglePlay={async () => {
+                  if (playerState.paused) {
+                    await playTracks(deviceId, []);
+                  } else {
+                    await pausePlayback(deviceId);
+                  }
+                }}
+                markFavorite={async () => {}}
+                playing={!playerState.paused}
+                position={playerState.position}
+                duration={playerState.duration}
+                setPosition={async (value: number) => {
+                  if (player) {
+                    await player.seek(value * 1000);
+                  }
+                }}
+              />
+            )}
+            icon={playerState.trackId ? (
+              <HeadphonesIcon/>
+              ) : (
+              <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
+            )}
+            title={playerState.trackId ? "Playlist" : "Music"}
+            secondaryTitle={playerState.trackId ? "Show playlist" : "No music is currently streaming"}
+            settingsKey="showPlaylist">
+            <Timers/>
+          </CollapsibleList>
         )}
       </div>
     </ThemeProvider>
