@@ -236,9 +236,6 @@ async function search(query: string, types: string[], limit: number = 5, market:
       if (responseResult.error) {
         return responseResult;
       }
-      if (!responseResult.tracks) {
-        return { error: "No tracks found" };
-      }
       const result: SearchResult = {};
       if (responseResult.tracks) {
         result.tracks = { items: responseResult.tracks.items.map(item => ({
@@ -251,7 +248,7 @@ async function search(query: string, types: string[], limit: number = 5, market:
       if (responseResult.artists) {
         result.artists = { items: responseResult.artists.items.map(item => ({
           id: item.id,
-            name: item.name
+          name: item.name
         }))};
       }
       return result;
