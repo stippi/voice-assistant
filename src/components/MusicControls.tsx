@@ -1,6 +1,6 @@
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import Typography, {TypographyProps} from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 //import Stack from '@mui/material/Stack';
@@ -11,6 +11,8 @@ import PauseRounded from '@mui/icons-material/PauseRounded';
 //import VolumeUpRounded from '@mui/icons-material/VolumeUpRounded';
 //import VolumeDownRounded from '@mui/icons-material/VolumeDownRounded';
 import { Paper } from '@mui/material';
+import {useEffect, useRef, useState} from "react";
+import Tooltip from "@mui/material/Tooltip";
 
 const CoverImage = styled('div')({
   width: 100,
@@ -31,6 +33,47 @@ const TinyText = styled(Typography)({
   fontWeight: 500,
   letterSpacing: 0.2,
 });
+
+const TextWithTooltip = ({ text, ...props }: TextWithTooltipProps) => {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  
+  useEffect(() => {
+    const textElement = textRef.current;
+    if (!textElement) return;
+    
+    const updateOverflowStatus = () => {
+      setIsOverflowing(textElement.offsetWidth < textElement.scrollWidth);
+    };
+    
+    updateOverflowStatus();
+    
+    const resizeObserver = new ResizeObserver(updateOverflowStatus);
+    resizeObserver.observe(textElement);
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [text]);
+  
+  const renderContent = () => (
+    <Typography {...props} noWrap ref={textRef}>
+      {text}
+    </Typography>
+  );
+  
+  return isOverflowing ? (
+    <Tooltip title={text} placement="top">
+      {renderContent()}
+    </Tooltip>
+  ) : (
+    renderContent()
+  );
+};
+
+interface TextWithTooltipProps extends TypographyProps {
+  text: string;
+}
 
 export default function MediaControls({
   title, artist, albumTitle, albumCoverUrl,
@@ -58,15 +101,9 @@ export default function MediaControls({
           />
         </CoverImage>
         <Box sx={{ml: 1.5, minWidth: 0}}>
-          <Typography variant="caption" color="text.secondary" fontWeight={500}>
-            {artist}
-          </Typography>
-          <Typography noWrap>
-            <b>{title}</b>
-          </Typography>
-          <Typography noWrap variant="caption" color="text.secondary" letterSpacing={-0.25}>
-            {albumTitle}
-          </Typography>
+          <TextWithTooltip text={artist} variant="caption" color="text.secondary" fontWeight={500} />
+          <TextWithTooltip text={title} fontWeight={700}/>
+          <TextWithTooltip text={albumTitle} noWrap variant="subtitle2" color="text.secondary" letterSpacing={-0.25} />
         </Box>
       </Box>
       <Slider
