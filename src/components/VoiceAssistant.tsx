@@ -270,7 +270,7 @@ export default function VoiceAssistant() {
   const spotifyContext = useSpotifyContext();
   React.useEffect(() => {
     if (spotifyContext.player && spotifyContext.accessToken && spotifyContext.deviceId) {
-      appContext.setSpotify({
+      appContextRef.current.setSpotify({
         player: spotifyContext.player,
         accessToken: spotifyContext.accessToken,
         deviceId: spotifyContext.deviceId,
@@ -280,9 +280,9 @@ export default function VoiceAssistant() {
         pausePlayback: spotifyContext.pausePlayback,
       });
     } else {
-      appContext.setSpotify(undefined);
+      appContextRef.current.setSpotify(undefined);
     }
-  }, [spotifyContext.player, spotifyContext.accessToken, spotifyContext.deviceId, spotifyContext.search, spotifyContext.playTracks, spotifyContext.playTopTracks, spotifyContext.pausePlayback, appContext]);
+  }, [spotifyContext.player, spotifyContext.accessToken, spotifyContext.deviceId, spotifyContext.search, spotifyContext.playTracks, spotifyContext.playTopTracks, spotifyContext.pausePlayback]);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
     console.log(`sendMessage("${message}", ${audible})`);
