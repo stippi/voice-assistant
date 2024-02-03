@@ -6,9 +6,9 @@ import CardMedia from '@mui/material/CardMedia';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 
 export default function MediaControlCard({title, artist, albumUrl, playing, togglePlay, skipNext, skipPrevious, markFavorite}: Props) {

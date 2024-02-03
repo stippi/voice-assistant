@@ -395,9 +395,9 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: "object",
         properties: {
-          artist: { type: "string", description: "The name of an artist" },
+          artistName: { type: "string" },
         },
-        required: ["artist"]
+        required: ["artistName"]
       }
     }
   },
@@ -528,7 +528,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'play_tracks_on_spotify':
         return await playOnSpotify(appContext.spotify, args.trackIds);
       case 'play_artist_top_tracks_on_spotify':
-        return await playOnSpotifyArtist(appContext.spotify, args.artist);
+        return await playOnSpotifyArtist(appContext.spotify, args.artistName);
       case 'find_on_spotify':
         return await findOnSpotify(appContext.spotify?.accessToken, args.query, args.type, args.market, args.limit);
       case 'resume_spotify_playback':

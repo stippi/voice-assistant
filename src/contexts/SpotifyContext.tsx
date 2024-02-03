@@ -24,6 +24,10 @@ type SpotifyPlayerState = {
   artists: string[];
   albumName: string;
   coverImageUrl: string;
+  position: number,
+  duration: number,
+  canSkipPrevious: boolean,
+  canSkipNext: boolean,
 };
 
 export type SpotifyContextType = {
@@ -50,6 +54,10 @@ export const SpotifyContext = createContext<SpotifyContextType>({
     artists: [],
     albumName: "",
     coverImageUrl: "",
+    position: 0,
+    duration: 0,
+    canSkipPrevious: false,
+    canSkipNext: false,
   },
 //  search: search,
   playTracks: playTracks,
@@ -405,6 +413,10 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     artists: [],
     albumName: "",
     coverImageUrl: "",
+    position: 0,
+    duration: 0,
+    canSkipPrevious: false,
+    canSkipNext: false,
   });
   
   useEffect(() => {
@@ -437,7 +449,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     const accountErrorListener = ({ message }: { message: string }) => {
       console.error(message);
     }
-    const playerStateChangedListener = ({ paused, track_window: { current_track }}: Spotify.PlaybackState) => {
+    const playerStateChangedListener = ({ paused, disallows, track_window: { current_track }, position, duration }: Spotify.PlaybackState) => {
       setPlayerState({
         paused: paused,
         trackId: current_track.id || "",
@@ -445,8 +457,23 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         artists: current_track.artists.map(artist => artist.name),
         albumName: current_track.album.name,
         coverImageUrl: current_track.album.images[0].url,
+        duration: duration / 1000,
+        position: position / 1000,
+        canSkipPrevious: !disallows?.skipping_prev,
+        canSkipNext: !disallows?.skipping_next,
       });
     }
+    
+    const updatePosition = () => {
+      if (!playerRef.current) return;
+      playerRef.current.getCurrentState().then(state => {
+        if (!state) {
+          return;
+        }
+        setPlayerState(current => ({ ...current, position: state.position / 1000, duration: state.duration / 1000}))
+      });
+    };
+    const positionInterval = window.setInterval(updatePosition, 1000);
     
     window.onSpotifyWebPlaybackSDKReady = () => {
       if (!playerRef.current) {
@@ -478,6 +505,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     document.body.appendChild(apiScript);
 
     return () => {
+      clearInterval(positionInterval);
       if (playerRef.current) {
         console.log("Disconnecting Spotify Player");
         // Detach listeners
