@@ -138,6 +138,7 @@ async function runLoginFlow() {
   const code = args.get('code');
   if (!code) {
     console.log("no code found in URL, redirecting to Spotify authorize");
+    await redirectToSpotifyAuthorize();
     return "";
   }
   // If we find a code, we're in a callback, do a token exchange
