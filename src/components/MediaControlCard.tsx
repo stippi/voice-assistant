@@ -17,20 +17,19 @@ export default function MediaControlCard({title, artist, albumUrl, playing, togg
   return (
     <Card sx={{ display: 'flex' }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <CardContent sx={{ flex: '1 0 auto' }}>
+        <CardContent sx={{ flex: '1 0 auto', maxWidth: 140 }}>
           <Typography component="div" style={{
-            fontSize: '18px',
-            maxWidth: '130px',
-            overflow: 'none',
+            fontSize: 18,
+            fontWeight: 'medium',
+            overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',
           }}>
             {title}
           </Typography>
           <Typography color="text.secondary" component="div" style={{
-            fontSize: '14px',
-            maxWidth: '130px',
-            overflow: 'none',
+            fontSize: 14,
+            overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',
           }}>
