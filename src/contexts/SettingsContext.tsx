@@ -21,6 +21,7 @@ export type Settings = {
   enableSpotify: boolean;
   showTimers: boolean;
   showUpcomingEvents: boolean;
+  showPlaylist: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -30,7 +31,7 @@ const defaultSettings: Settings = {
   expectResponse: true,
   triggerPhrase: "Computer",
   triggerWord: BuiltInKeyword.Computer,
-  stopWords: ["Stopp", "Abbrechen"],
+  stopWords: ["Stop", "Cancel", "Nevermind"],
   audioSpeed: 1,
   useWhisper: true,
   transcriptionLanguage: navigator.language,
@@ -39,6 +40,7 @@ const defaultSettings: Settings = {
   enableSpotify: false,
   showTimers: true,
   showUpcomingEvents: true,
+  showPlaylist: false,
 }
 let initialSettings = defaultSettings;
 
