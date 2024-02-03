@@ -62,10 +62,10 @@ export default function MediaControls({
             {artist}
           </Typography>
           <Typography noWrap>
-            <b>{albumTitle}</b>
+            <b>{title}</b>
           </Typography>
           <Typography noWrap letterSpacing={-0.25}>
-            {title}
+            {albumTitle}
           </Typography>
         </Box>
       </Box>

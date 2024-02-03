@@ -409,16 +409,15 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: "object",
         properties: {
-          query: { type: "string", description: "A search query" },
-          type: {
-            type: "string",
+          query: { type: "string" },
+          types: {
+            type: "array",
             items: { type: "string" },
-            description: "An array of item types to search across. Valid types are: 'album', 'artist', 'playlist', 'track', 'show', and 'episode'."
+            description: "Types to search across. Valid types are: 'track', 'artist'." //, 'album', 'playlist', 'show', and 'episode'.
           },
-          market: { type: "string", description: "An ISO 3166-1 alpha-2 country code" },
           limit: { type: "integer", description: "The maximum number of items to return" }
         },
-        required: ["query", "type"]
+        required: ["query", "types"]
       }
     }
   },
@@ -530,7 +529,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'play_artist_top_tracks_on_spotify':
         return await playOnSpotifyArtist(appContext.spotify, args.artistName);
       case 'find_on_spotify':
-        return await findOnSpotify(appContext.spotify?.accessToken, args.query, args.type, args.market, args.limit);
+        return await findOnSpotify(appContext.spotify, args.query, args.types, args.limit);
       case 'resume_spotify_playback':
         return await playOnSpotify(appContext.spotify, []);
       case 'pause_spotify_playback':
@@ -956,30 +955,11 @@ async function deleteInformation(category: string, information: string) {
   return { result: "information not found in category" };
 }
 
-async function findOnSpotify(accessToken: string | undefined, query: string, type: string, market: string | undefined, limit: number | undefined) {
-  if (!accessToken) {
+async function findOnSpotify(spotify: Spotify | undefined, query: string, types: string[], limit: number | undefined) {
+  if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  const queryParams = new URLSearchParams();
-  queryParams.append("q", query);
-  queryParams.append("type", type);
-  if (market) {
-    queryParams.append("market", market);
-  }
-  if (limit) {
-    queryParams.append("limit", limit.toString());
-  }
-  const url = `https://api.spotify.com/v1/search?${queryParams.toString()}`;
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`
-      }
-    });
-    return await response.json();
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "unknown error" };
-  }
+  return await spotify.search(query, types, limit);
 }
 
 async function playOnSpotify(spotify: Spotify | undefined, trackIds: string[]) {
@@ -993,27 +973,7 @@ async function playOnSpotifyArtist(spotify: Spotify | undefined, artist: string)
   if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  const result = await findOnSpotify(spotify.accessToken, artist, "artist", undefined, 1);
-  if (result.error) {
-    return result;
-  }
-  if (result.artists?.items?.length === 0) {
-    return { error: "No artist found" };
-  }
-  const artistId = result.artists.items[0].id;
-  const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${spotify.accessToken}`
-      }
-    });
-    const tracks: {tracks: {id: string}[]} = await response.json();
-    const trackIds = tracks.tracks.map((track) => track.id);
-    return playOnSpotify(spotify, trackIds);
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "unknown error" };
-  }
+  return await spotify.playTopTracks(spotify.deviceId, artist);
 }
 
 async function pauseSpotifyPlayback(spotify: Spotify | undefined) {

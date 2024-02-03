@@ -35,8 +35,9 @@ export type SpotifyContextType = {
   deviceId: string;
   player: Spotify.Player | null;
   playerState: SpotifyPlayerState;
-//  search: (query: string, type: string, market?: string, limit?: number) => Promise<never>;
+  search: (query: string, types: string[], limit?: number, market?: string) => Promise<SearchResult>;
   playTracks: (deviceId: string, trackIds: string[]) => Promise<{ result?: string, error?: string }>;
+  playTopTracks: (deviceId: string, artist: string) => Promise<{ result?: string, error?: string }>;
   pausePlayback: (deviceId: string) => Promise<{ result?: string, error?: string }>;
   skipNext: (deviceId: string) => Promise<{ result?: string, error?: string }>;
   skipPrevious: (deviceId: string) => Promise<{ result?: string, error?: string }>;
@@ -59,8 +60,9 @@ export const SpotifyContext = createContext<SpotifyContextType>({
     canSkipPrevious: false,
     canSkipNext: false,
   },
-//  search: search,
+  search: search,
   playTracks: playTracks,
+  playTopTracks: playTopTracks,
   pausePlayback: pausePlayback,
   skipNext: skipNext,
   skipPrevious: skipPrevious,
@@ -136,28 +138,33 @@ async function runLoginFlow() {
   const code = args.get('code');
   if (!code) {
     console.log("No code found in URL, redirecting to Spotify authorize");
-    await redirectToSpotifyAuthorize();
     return "";
   }
   // If we find a code, we're in a callback, do a token exchange
   console.log("Found code in URL, exchanging for token");
-  const json = await getToken(code);
-  console.log("Received access token set", json);
-  const newTokenSet: TokenSet = {
-    accessToken: json.access_token,
-    refreshToken: json.refresh_token,
-    expires: Date.now() + json.expires_in * 1000,
-  };
-  localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
-  
-  // Remove code from URL so we can refresh correctly.
-  const url = new URL(window.location.href);
-  url.searchParams.delete("code");
-  
-  const updatedUrl = url.search ? url.href : url.href.replace('?', '');
-  window.history.replaceState({}, document.title, updatedUrl);
-  
-  return newTokenSet.accessToken;
+  try {
+    const json = await getToken(code);
+    console.log("Received access token set", json);
+    const newTokenSet: TokenSet = {
+      accessToken: json.access_token,
+      refreshToken: json.refresh_token,
+      expires: Date.now() + json.expires_in * 1000,
+    };
+    localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
+    
+    // Remove code from URL so we can refresh correctly.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("code");
+    
+    const updatedUrl = url.search ? url.href : url.href.replace('?', '');
+    window.history.replaceState({}, document.title, updatedUrl);
+    
+    return newTokenSet.accessToken;
+  } catch (error) {
+    console.error("Failed to exchange code for token", error);
+    await redirectToSpotifyAuthorize();
+    return "";
+  }
 }
 
 async function getAccessToken() {
@@ -195,7 +202,7 @@ async function getAccessToken() {
   return newTokenSet.accessToken;
 }
 
-type SearchResult = {
+export type SearchResult = {
   error?: string;
   tracks?: {
     items: {
@@ -205,13 +212,16 @@ type SearchResult = {
       album: { name: string, id: string };
     }[];
   };
+  artists?: {
+    items: { name: string, id: string }[];
+  };
 };
 
-async function search(query: string, type: string, limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
+async function search(query: string, types: string[], limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
   const accessToken = await getAccessToken();
   const queryParams = new URLSearchParams();
   queryParams.append("q", query);
-  queryParams.append("type", type);
+  queryParams.append("type", types.join(","));
   queryParams.append("market", market);
   queryParams.append("limit", limit.toString());
   const url = `https://api.spotify.com/v1/search?${queryParams.toString()}`;
@@ -222,21 +232,29 @@ async function search(query: string, type: string, limit: number = 5, market: st
       }
     });
     if (response.ok) {
-      const result: SearchResult = await response.json();
-      if (result.error) {
-        return result;
+      const responseResult: SearchResult = await response.json();
+      if (responseResult.error) {
+        return responseResult;
       }
-      if (!result.tracks) {
+      if (!responseResult.tracks) {
         return { error: "No tracks found" };
       }
-      return {
-        tracks: { items: result.tracks.items.map(item => ({
+      const result: SearchResult = {};
+      if (responseResult.tracks) {
+        result.tracks = { items: responseResult.tracks.items.map(item => ({
           id: item.id,
           name: item.name,
           artists: item.artists.map(artist => ({ id: artist.id, name: artist.name })),
           album: { name: item.album.name, id: item.album.id }
-        }))}
-      };
+        }))};
+      }
+      if (responseResult.artists) {
+        result.artists = { items: responseResult.artists.items.map(item => ({
+          id: item.id,
+            name: item.name
+        }))};
+      }
+      return result;
     } else {
       return { error: `Spotify API error: ${response.status} ${response.statusText}` };
     }
@@ -269,6 +287,31 @@ async function playTracks(deviceId: string, trackIds: string[]) {
   }
 }
 
+async function playTopTracks(deviceId: string, artist: string) {
+  const result = await search(artist, ["artist"], 1);
+  if (result.error) {
+    return result;
+  }
+  if (!result.artists) {
+    return { error: "No artist found" };
+  }
+  const accessToken = await getAccessToken();
+  const artistId = result.artists.items[0].id;
+  const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+    const tracks: {tracks: {id: string}[]} = await response.json();
+    const trackIds = tracks.tracks.map((track) => track.id);
+    return playTracks(deviceId, trackIds);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
 async function pausePlayback(deviceId: string) {
   const accessToken = await getAccessToken();
   try {
@@ -289,78 +332,78 @@ async function pausePlayback(deviceId: string) {
   }
 }
 
-async function addToFavorites(trackIds: string[]) {
-  if (!trackIds) {
-    return { result: "no track is currently playing" };
-  }
-  const accessToken = await getAccessToken();
-  try {
-    const queryParams = new URLSearchParams();
-    queryParams.append("ids", trackIds.join(","));
-    const response = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${queryParams.toString()}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-    });
-    if (response.ok) {
-      return { result: "track(s) added to favorites" };
-    } else {
-      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
-    }
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "unknown error" };
-  }
-}
-
-async function removedFromFavorites(trackIds: string) {
-  if (!trackId) {
-    return { result: "no track is currently playing" };
-  }
-  const accessToken = await getAccessToken();
-  try {
-    const response = await fetch(`https://api.spotify.com/v1/me/tracks`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        ids: trackIds
-      })
-    });
-    if (response.ok) {
-      return { result: "track(s) removed from favorites" };
-    } else {
-      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
-    }
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "unknown error" };
-  }
-}
-
-async function isContainedInFavorites(trackIds: string[]) {
-  const accessToken = await getAccessToken();
-  const queryParams = new URLSearchParams();
-  queryParams.append("ids", trackIds.join(","));
-  const url = `https://api.spotify.com'/v1/me/tracks/contains'?${queryParams.toString()}`;
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`
-      }
-    });
-    if (response.ok) {
-      return await response.json();
-    } else {
-      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
-    }
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "unknown error" };
-  }
-}
-
+// async function addToFavorites(trackIds: string[]) {
+//   if (!trackIds) {
+//     return { result: "no track is currently playing" };
+//   }
+//   const accessToken = await getAccessToken();
+//   try {
+//     const queryParams = new URLSearchParams();
+//     queryParams.append("ids", trackIds.join(","));
+//     const response = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${queryParams.toString()}`, {
+//       method: 'PUT',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${accessToken}`
+//       },
+//     });
+//     if (response.ok) {
+//       return { result: "track(s) added to favorites" };
+//     } else {
+//       return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+//     }
+//   } catch (error) {
+//     return { error: error instanceof Error ? error.message : "unknown error" };
+//   }
+// }
+//
+// async function removedFromFavorites(trackIds: string[]) {
+//   if (!trackIds) {
+//     return { result: "no track is currently playing" };
+//   }
+//   const accessToken = await getAccessToken();
+//   try {
+//     const response = await fetch(`https://api.spotify.com/v1/me/tracks`, {
+//       method: 'DELETE',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${accessToken}`
+//       },
+//       body: JSON.stringify({
+//         ids: trackIds
+//       })
+//     });
+//     if (response.ok) {
+//       return { result: "track(s) removed from favorites" };
+//     } else {
+//       return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+//     }
+//   } catch (error) {
+//     return { error: error instanceof Error ? error.message : "unknown error" };
+//   }
+// }
+//
+// async function isContainedInFavorites(trackIds: string[]) {
+//   const accessToken = await getAccessToken();
+//   const queryParams = new URLSearchParams();
+//   queryParams.append("ids", trackIds.join(","));
+//   const url = `https://api.spotify.com'/v1/me/tracks/contains'?${queryParams.toString()}`;
+//   try {
+//     const response = await fetch(url, {
+//       headers: {
+//         "Authorization": `Bearer ${accessToken}`
+//       }
+//     });
+//     if (response.ok) {
+//       return await response.json();
+//     } else {
+//       return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+//     }
+//   } catch (error) {
+//     return { error: error instanceof Error ? error.message : "unknown error" };
+//   }
+// }
+//
 async function skipNext(deviceId: string) {
   const accessToken = await getAccessToken();
   try {
@@ -534,13 +577,6 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     return () => clearInterval(interval);
   }, [accessToken]);
   
-  useEffect(() => {
-    if (!accessToken) return;
-    search("Peter Fox", "track", 5).then(json => {
-      console.log("Search result", json);
-    });
-  }, [accessToken]);
-  
   return (
     <SpotifyContext.Provider
       value={{
@@ -548,7 +584,9 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         deviceId,
         player: spotifyPlayer,
         playerState,
+        search,
         playTracks,
+        playTopTracks,
         pausePlayback,
         skipNext,
         skipPrevious,
