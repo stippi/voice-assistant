@@ -8,7 +8,7 @@ import useGoogleContext from "../hooks/useGoogleContext.tsx";
 import {KeyboardArrowDown} from "@mui/icons-material";
 import AlarmIcon from '@mui/icons-material/Alarm';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import RadioIcon from '@mui/icons-material/Radio';
+import HeadphonesIcon from '@mui/icons-material/Headphones';
 import {Box, ListItemButton} from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import {Settings} from "../contexts/SettingsContext.tsx";
@@ -143,7 +143,7 @@ export function Dashboard() {
   const {timers} = useAppContext();
   const {upcomingEvents} = useGoogleContext();
   const {settings} = useSettings();
-  const {playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious, markAsFavorite} = useSpotifyContext();
+  const {playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || upcomingEvents.length > 0;
@@ -177,7 +177,7 @@ export function Dashboard() {
             <Timers/>
           </CollapsibleList>
         )}
-        {settings.enableSpotify && (
+        {settings.enableSpotify && playerState.trackId && (
           <MediaControlCard
             title={playerState.name}
             artist={playerState.artists.join(", ")}
@@ -191,9 +191,45 @@ export function Dashboard() {
                 await pausePlayback(deviceId);
               }
             }}
-            markFavorite={async () => markAsFavorite(playerState.trackId)}
+            markFavorite={async () => {}}
             playing={!playerState.paused}
           />
+        )}
+        {settings.enableSpotify && !playerState.trackId && (
+          <Paper elevation={1} style={{display: "flex"}}>
+            <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
+              <Box
+                sx={{paddingTop: 0, paddingBottom: 0}}
+              >
+                <ListItemButton
+                  className="listItemGrid"
+                  onMouseDown={(e) => e.preventDefault()}
+                  style={{paddingTop: 16, paddingBottom: 16}}
+                >
+                  <ListItemIcon style={{marginTop: 0}}>
+                   <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Music"
+                    primaryTypographyProps={{
+                      fontSize: 15,
+                      fontWeight: 'medium',
+                      lineHeight: '20px',
+                      mb: '2px',
+                    }}
+                    secondary="No music is currently streaming"
+                    secondaryTypographyProps={{
+                      noWrap: true,
+                      fontSize: 12,
+                      lineHeight: '16px',
+                      color: 'rgba(0,0,0,0.5)',
+                    }}
+                    sx={{ my: 0 }}
+                  />
+                </ListItemButton>
+              </Box>
+            </DashboardList>
+          </Paper>
         )}
       </div>
     </ThemeProvider>
