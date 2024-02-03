@@ -31,11 +31,12 @@ export type SpotifyContextType = {
   deviceId: string;
   player: Spotify.Player | null;
   playerState: SpotifyPlayerState;
+//  search: (query: string, type: string, market?: string, limit?: number) => Promise<never>;
   playTracks: (deviceId: string, trackIds: string[]) => Promise<{ result?: string, error?: string }>;
   pausePlayback: (deviceId: string) => Promise<{ result?: string, error?: string }>;
   skipNext: (deviceId: string) => Promise<{ result?: string, error?: string }>;
   skipPrevious: (deviceId: string) => Promise<{ result?: string, error?: string }>;
-  markAsFavorite: (trackId: string) => Promise<{ result?: string, error?: string }>;
+ // markAsFavorite: (trackId: string) => Promise<{ result?: string, error?: string }>;
 };
 
 export const SpotifyContext = createContext<SpotifyContextType>({
@@ -50,11 +51,12 @@ export const SpotifyContext = createContext<SpotifyContextType>({
     albumName: "",
     coverImageUrl: "",
   },
+//  search: search,
   playTracks: playTracks,
   pausePlayback: pausePlayback,
   skipNext: skipNext,
   skipPrevious: skipPrevious,
-  markAsFavorite: markAsFavorite,
+//  markAsFavorite: markAsFavorite,
 });
 
 interface Props {
@@ -114,48 +116,46 @@ async function getToken(code: string) {
       code_verifier: codeVerifier,
     }),
   });
-  
+  if (!response.ok) {
+    throw new Error(`Failed to exchange code to access token. HTTP status: ${response.status}`);
+  }
   return await response.json();
 }
 
-function runLoginFlow() {
+async function runLoginFlow() {
   // On page load, try to fetch auth code from current browser search URL
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
-  
-  // If we find a code, we're in a callback, do a token exchange
-  if (code) {
-    console.log("Found code in URL, exchanging for token");
-    getToken(code).then(json => {
-      console.log("Received access token set", json);
-      const newTokenSet: TokenSet = {
-        accessToken: json.access_token,
-        refreshToken: json.refresh_token,
-        expires: Date.now() + json.expires_in * 1000,
-      };
-      localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
-      //setAccessToken(newTokenSet.accessToken);
-      
-      // Remove code from URL so we can refresh correctly.
-      const url = new URL(window.location.href);
-      url.searchParams.delete("code");
-      
-      const updatedUrl = url.search ? url.href : url.href.replace('?', '');
-      window.history.replaceState({}, document.title, updatedUrl);
-    });
-  } else {
+  if (!code) {
     console.log("No code found in URL, redirecting to Spotify authorize");
-    redirectToSpotifyAuthorize().then(() => {
-      console.log("Redirected to Spotify authorize");
-    });
+    await redirectToSpotifyAuthorize();
+    return "";
   }
+  // If we find a code, we're in a callback, do a token exchange
+  console.log("Found code in URL, exchanging for token");
+  const json = await getToken(code);
+  console.log("Received access token set", json);
+  const newTokenSet: TokenSet = {
+    accessToken: json.access_token,
+    refreshToken: json.refresh_token,
+    expires: Date.now() + json.expires_in * 1000,
+  };
+  localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
+  
+  // Remove code from URL so we can refresh correctly.
+  const url = new URL(window.location.href);
+  url.searchParams.delete("code");
+  
+  const updatedUrl = url.search ? url.href : url.href.replace('?', '');
+  window.history.replaceState({}, document.title, updatedUrl);
+  
+  return newTokenSet.accessToken;
 }
 
 async function getAccessToken() {
   const spotifyTokenSet = localStorage.getItem("spotify-token-set");
   if (!spotifyTokenSet) {
-    runLoginFlow();
-    return "";
+    return await runLoginFlow();
   }
   const tokenSet: TokenSet = JSON.parse(spotifyTokenSet);
   if (tokenSet.expires > Date.now()) {
@@ -174,8 +174,8 @@ async function getAccessToken() {
     }),
   });
   if (!response.ok) {
-    runLoginFlow();
-    return "";
+    // If we failed to refresh the token, re-run the login flow
+    return await runLoginFlow();
   }
   const json = await response.json();
   const newTokenSet: TokenSet = {
@@ -185,6 +185,56 @@ async function getAccessToken() {
   };
   localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
   return newTokenSet.accessToken;
+}
+
+type SearchResult = {
+  error?: string;
+  tracks?: {
+    items: {
+      id: string;
+      name: string;
+      artists: { name: string, id: string }[];
+      album: { name: string, id: string };
+    }[];
+  };
+};
+
+async function search(query: string, type: string, limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
+  const accessToken = await getAccessToken();
+  const queryParams = new URLSearchParams();
+  queryParams.append("q", query);
+  queryParams.append("type", type);
+  queryParams.append("market", market);
+  queryParams.append("limit", limit.toString());
+  const url = `https://api.spotify.com/v1/search?${queryParams.toString()}`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+    if (response.ok) {
+      const result: SearchResult = await response.json();
+      if (result.error) {
+        return result;
+      }
+      if (!result.tracks) {
+        return { error: "No tracks found" };
+      }
+      return {
+        tracks: { items: result.tracks.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          artists: item.artists.map(artist => ({ id: artist.id, name: artist.name })),
+          album: { name: item.album.name, id: item.album.id }
+        }))}
+      };
+    } else {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
 }
 
 async function playTracks(deviceId: string, trackIds: string[]) {
@@ -231,13 +281,15 @@ async function pausePlayback(deviceId: string) {
   }
 }
 
-async function markAsFavorite(trackId: string) {
-  if (!trackId) {
+async function addToFavorites(trackIds: string[]) {
+  if (!trackIds) {
     return { result: "no track is currently playing" };
   }
   const accessToken = await getAccessToken();
   try {
-    const response = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${trackId}`, {
+    const queryParams = new URLSearchParams();
+    queryParams.append("ids", trackIds.join(","));
+    const response = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${queryParams.toString()}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -245,7 +297,54 @@ async function markAsFavorite(trackId: string) {
       },
     });
     if (response.ok) {
-      return { result: "track marked as favorite" };
+      return { result: "track(s) added to favorites" };
+    } else {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function removedFromFavorites(trackIds: string) {
+  if (!trackId) {
+    return { result: "no track is currently playing" };
+  }
+  const accessToken = await getAccessToken();
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/me/tracks`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        ids: trackIds
+      })
+    });
+    if (response.ok) {
+      return { result: "track(s) removed from favorites" };
+    } else {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function isContainedInFavorites(trackIds: string[]) {
+  const accessToken = await getAccessToken();
+  const queryParams = new URLSearchParams();
+  queryParams.append("ids", trackIds.join(","));
+  const url = `https://api.spotify.com'/v1/me/tracks/contains'?${queryParams.toString()}`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+    if (response.ok) {
+      return await response.json();
     } else {
       return { error: `Spotify API error: ${response.status} ${response.statusText}` };
     }
@@ -313,130 +412,65 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       setAccessToken("");
       return;
     }
-    
-    const runLoginFlow = () => {
-      // On page load, try to fetch auth code from current browser search URL
-      const args = new URLSearchParams(window.location.search);
-      const code = args.get('code');
-      
-      // If we find a code, we're in a callback, do a token exchange
-      if (code) {
-        console.log("Found code in URL, exchanging for token");
-        getToken(code).then(json => {
-          console.log("Received access token set", json);
-          const newTokenSet: TokenSet = {
-            accessToken: json.access_token,
-            refreshToken: json.refresh_token,
-            expires: Date.now() + json.expires_in * 1000,
-          };
-          localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
-          setAccessToken(newTokenSet.accessToken);
-          
-          // Remove code from URL so we can refresh correctly.
-          const url = new URL(window.location.href);
-          url.searchParams.delete("code");
-          
-          const updatedUrl = url.search ? url.href : url.href.replace('?', '');
-          window.history.replaceState({}, document.title, updatedUrl);
-        });
-      } else {
-        console.log("No code found in URL, redirecting to Spotify authorize");
-        redirectToSpotifyAuthorize().then(() => {
-          console.log("Redirected to Spotify authorize");
-        });
-      }
-    }
-
-    const spotifyTokenSet = localStorage.getItem("spotify-token-set");
-    if (spotifyTokenSet) {
-      const tokenSet: TokenSet = JSON.parse(spotifyTokenSet);
-      // TODO: Take care of refreshing the access token periodically
-      if (tokenSet.expires > Date.now()) {
-        setAccessToken(tokenSet.accessToken);
-      } else {
-        fetch(tokenEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: new URLSearchParams({
-            client_id: SpotifyClientId,
-            grant_type: 'refresh_token',
-            refresh_token: tokenSet.refreshToken
-          }),
-        }).then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        }).then(json => {
-          const newTokenSet: TokenSet = {
-            accessToken: json.access_token,
-            refreshToken: tokenSet.refreshToken,
-            expires: Date.now() + json.expires_in * 1000,
-          };
-          localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
-          setAccessToken(newTokenSet.accessToken);
-        }).catch(error => {
-          console.error("Error refreshing Spotify token", error);
-          runLoginFlow();
-        })
-      }
-    } else {
-      runLoginFlow();
-    }
+    getAccessToken().then(token => setAccessToken(token));
   }, [enableSpotify]);
   
+  const playerRef = React.useRef<Spotify.Player | null>(null);
+  
   useEffect(() => {
-    if (!accessToken) return;
+    if (!enableSpotify) return;
     
-    console.log("Got access token. Loading Spotify Web Playback SDK");
-
+    const readyListener = ({ device_id }: { device_id: string }) => {
+      setDeviceId(device_id);
+      console.log('Ready with Device ID', device_id);
+    };
+    const notReadyListener = ({ device_id }: { device_id: string }) => {
+      setDeviceId("");
+      console.log('Device ID has gone offline', device_id);
+    };
+    const initializationErrorListener = ({ message }: { message: string }) => {
+      console.error(message);
+    };
+    const authenticationErrorListener = ({ message }: { message: string }) => {
+      console.error(message);
+    };
+    const accountErrorListener = ({ message }: { message: string }) => {
+      console.error(message);
+    }
+    const playerStateChangedListener = ({ paused, track_window: { current_track }}: Spotify.PlaybackState) => {
+      setPlayerState({
+        paused: paused,
+        trackId: current_track.id || "",
+        name: current_track.name,
+        artists: current_track.artists.map(artist => artist.name),
+        albumName: current_track.album.name,
+        coverImageUrl: current_track.album.images[0].url,
+      });
+    }
+    
     window.onSpotifyWebPlaybackSDKReady = () => {
-      const player = new Spotify.Player({
-        name: 'Web Playback SDK Quick Start Player',
-        getOAuthToken: cb => { cb(accessToken); },
-        volume: 0.5
-      });
-      
-      // Ready
-      player.addListener('ready', ({ device_id }) => {
-        setDeviceId(device_id);
-        console.log('Ready with Device ID', device_id);
-      });
-      
-      // Not Ready
-      player.addListener('not_ready', ({ device_id }) => {
-        setDeviceId("");
-        console.log('Device ID has gone offline', device_id);
-      });
-      
-      player.addListener('initialization_error', ({ message }) => {
-        console.error(message);
-      });
-      
-      player.addListener('authentication_error', ({ message }) => {
-        console.error(message);
-      });
-      
-      player.addListener('account_error', ({ message }) => {
-        console.error(message);
-      });
-      
-      player.addListener('player_state_changed', ({ paused, track_window: { current_track }}) => {
-        setPlayerState({
-          paused: paused,
-          trackId: current_track.id || "",
-          name: current_track.name,
-          artists: current_track.artists.map(artist => artist.name),
-          albumName: current_track.album.name,
-          coverImageUrl: current_track.album.images[0].url,
+      if (!playerRef.current) {
+        console.log("Creating Spotify Player");
+        playerRef.current = new Spotify.Player({
+          name: 'Web Playback SDK Quick Start Player',
+          getOAuthToken: cb => {
+            getAccessToken().then(accessToken => cb(accessToken));
+          },
+          volume: 0.5
         });
-      });
+      }
       
-      player.connect().then(r => {
+      // Attach listeners
+      playerRef.current.addListener('ready', readyListener);
+      playerRef.current.addListener('not_ready', notReadyListener);
+      playerRef.current.addListener('initialization_error', initializationErrorListener);
+      playerRef.current.addListener('authentication_error', authenticationErrorListener);
+      playerRef.current.addListener('account_error', accountErrorListener);
+      playerRef.current.addListener('player_state_changed', playerStateChangedListener);
+      
+      playerRef.current.connect().then(r => {
         console.log("Spotify Player connected", r);
-        setPlayer(player);
+        setPlayer(playerRef.current);
       });
     }
     
@@ -444,8 +478,39 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     document.body.appendChild(apiScript);
 
     return () => {
+      if (playerRef.current) {
+        console.log("Disconnecting Spotify Player");
+        // Detach listeners
+        playerRef.current.removeListener('ready', readyListener);
+        playerRef.current.removeListener('not_ready', notReadyListener);
+        playerRef.current.removeListener('initialization_error', initializationErrorListener);
+        playerRef.current.removeListener('authentication_error', authenticationErrorListener);
+        playerRef.current.removeListener('account_error', accountErrorListener);
+        playerRef.current.removeListener('player_state_changed', playerStateChangedListener);
+        
+        playerRef.current.disconnect();
+      }
+      setPlayer(null);
+      window.onSpotifyWebPlaybackSDKReady = () => {};
       document.body.removeChild(apiScript);
     };
+  }, [enableSpotify]);
+  
+  // Refresh access token every 15 minutes
+  useEffect(() => {
+    if (!accessToken) return;
+    const interval = setInterval(async () => {
+      const newToken = await getAccessToken();
+      setAccessToken(newToken);
+    }, 1000 * 60 * 15);
+    return () => clearInterval(interval);
+  }, [accessToken]);
+  
+  useEffect(() => {
+    if (!accessToken) return;
+    search("Peter Fox", "track", 5).then(json => {
+      console.log("Search result", json);
+    });
   }, [accessToken]);
   
   return (
@@ -459,7 +524,6 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         pausePlayback,
         skipNext,
         skipPrevious,
-        markAsFavorite,
       }}>
       {children}
     </SpotifyContext.Provider>
