@@ -137,14 +137,14 @@ async function runLoginFlow() {
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
   if (!code) {
-    console.log("No code found in URL, redirecting to Spotify authorize");
+    console.log("no code found in URL, redirecting to Spotify authorize");
     return "";
   }
   // If we find a code, we're in a callback, do a token exchange
-  console.log("Found code in URL, exchanging for token");
+  console.log("found code in URL, exchanging for Spotify access token");
   try {
     const json = await getToken(code);
-    console.log("Received access token set", json);
+    console.log("received Spotify access token set");
     const newTokenSet: TokenSet = {
       accessToken: json.access_token,
       refreshToken: json.refresh_token,
@@ -477,11 +477,11 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     
     const readyListener = ({ device_id }: { device_id: string }) => {
       setDeviceId(device_id);
-      console.log('Ready with Device ID', device_id);
+      console.log('Spotify ready with device ID', device_id);
     };
     const notReadyListener = ({ device_id }: { device_id: string }) => {
       setDeviceId("");
-      console.log('Device ID has gone offline', device_id);
+      console.log('Spotify device ID has gone offline', device_id);
     };
     const initializationErrorListener = ({ message }: { message: string }) => {
       console.error(message);
@@ -520,9 +520,9 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     
     window.onSpotifyWebPlaybackSDKReady = () => {
       if (!playerRef.current) {
-        console.log("Creating Spotify Player");
+        console.log("creating Spotify player");
         playerRef.current = new Spotify.Player({
-          name: 'Web Playback SDK Quick Start Player',
+          name: 'Voice Assistant',
           getOAuthToken: cb => {
             getAccessToken().then(accessToken => cb(accessToken));
           },
