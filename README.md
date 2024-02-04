@@ -88,8 +88,10 @@ yarn run dev
 ## Ideas for Next Features
 
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
+- [ ] Create a persistent Spotify playlist for the Voice-Assistant with dynamic content.
+  This is necessary to allow jumping to a specific song in the playlist.
 - [ ] Make providing any keys besides the OpenAI key truly optional, also removing corresponding LLM function declarations
-- [ ] Allow chosing the model (downgrading to GPT-3.5 and potentially improving latency)
+- [ ] Allow choosing the model (downgrading to GPT-3.5 and potentially improving latency)
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
   - [x] Delete a single message button
