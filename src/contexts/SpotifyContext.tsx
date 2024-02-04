@@ -182,13 +182,13 @@ async function runLoginFlow() {
   }
 }
 
-async function getAccessToken() {
+async function getAccessToken(forceRefresh = false) {
   const spotifyTokenSet = localStorage.getItem("spotify-token-set");
   if (!spotifyTokenSet) {
     return await runLoginFlow();
   }
   const tokenSet: TokenSet = JSON.parse(spotifyTokenSet);
-  if (tokenSet.expires > Date.now()) {
+  if (!forceRefresh && tokenSet.expires > Date.now()) {
     return tokenSet.accessToken;
   }
   // Try to refresh the access token, it may fail if the refresh token has expired, too.
@@ -601,7 +601,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
   useEffect(() => {
     if (!accessToken) return;
     const interval = setInterval(async () => {
-      const newToken = await getAccessToken();
+      const newToken = await getAccessToken(true);
       setAccessToken(newToken);
     }, 1000 * 60 * 15);
     return () => clearInterval(interval);
