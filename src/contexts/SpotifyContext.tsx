@@ -17,6 +17,14 @@ const scopes = [
   'playlist-read-collaborative',
 ].join(' ');
 
+type Track = {
+  id: string;
+  name: string;
+  artists: string[];
+  album: string;
+  uiLink: string;
+};
+
 type SpotifyPlayerState = {
   paused: boolean;
   trackId: string;
@@ -24,10 +32,13 @@ type SpotifyPlayerState = {
   artists: string[];
   albumName: string;
   coverImageUrl: string;
+  uiLink: string,
   position: number,
   duration: number,
   canSkipPrevious: boolean,
   canSkipNext: boolean,
+  previousTracks: Track[],
+  nextTracks: Track[],
 };
 
 export type SpotifyContextType = {
@@ -55,10 +66,13 @@ export const SpotifyContext = createContext<SpotifyContextType>({
     artists: [],
     albumName: "",
     coverImageUrl: "",
+    uiLink: "",
     position: 0,
     duration: 0,
     canSkipPrevious: false,
     canSkipNext: false,
+    previousTracks: [],
+    nextTracks: [],
   },
   search: search,
   playTracks: playTracks,
@@ -454,10 +468,13 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     artists: [],
     albumName: "",
     coverImageUrl: "",
+    uiLink: "",
     position: 0,
     duration: 0,
     canSkipPrevious: false,
     canSkipNext: false,
+    previousTracks: [],
+    nextTracks: [],
   });
   
   useEffect(() => {
@@ -490,18 +507,33 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     const accountErrorListener = ({ message }: { message: string }) => {
       console.error(message);
     }
-    const playerStateChangedListener = ({ paused, disallows, track_window: { current_track }, position, duration }: Spotify.PlaybackState) => {
+    const playerStateChangedListener = ({paused, disallows, track_window: { current_track, previous_tracks, next_tracks }, position, duration }: Spotify.PlaybackState) => {
       setPlayerState({
         paused: paused,
         trackId: current_track.id || "",
         name: current_track.name,
         artists: current_track.artists.map(artist => artist.name),
         albumName: current_track.album.name,
+        uiLink: current_track.uri,
         coverImageUrl: current_track.album.images[0].url,
         duration: duration / 1000,
         position: position / 1000,
         canSkipPrevious: !disallows?.skipping_prev,
         canSkipNext: !disallows?.skipping_next,
+        previousTracks: previous_tracks.map(track => ({
+          id: track.id || "",
+          name: track.name,
+          artists: track.artists.map(artist => artist.name),
+          album: track.album.name,
+          uiLink: track.uri
+        })),
+        nextTracks: next_tracks.map(track => ({
+          id: track.id || "",
+          name: track.name,
+          artists: track.artists.map(artist => artist.name),
+          album: track.album.name,
+          uiLink: track.uri
+        })),
       });
     }
     
