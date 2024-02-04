@@ -980,7 +980,7 @@ async function pauseSpotifyPlayback(spotify: Spotify | undefined) {
   if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.playTracks(spotify.deviceId, []);
+  return await spotify.pausePlayback(spotify.deviceId);
 }
 
 async function skipSpotifyPlaybackNext(spotify: Spotify | undefined) {
