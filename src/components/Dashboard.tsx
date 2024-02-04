@@ -19,6 +19,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 //import MediaControlCard from "./MediaControlCard";
 import MusicControls from "./MusicControls";
 import useSpotifyContext from "../hooks/useSpotifyContext";
+import {MusicPlaylist} from "./MusicPlaylist.tsx";
+import ListItem from "@mui/material/ListItem";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
@@ -63,47 +65,79 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
         <Box
           sx={{
             paddingTop: 0,
-            paddingBottom: open ? 1 : 0
+            paddingBottom: open && !disableExpand ? 1 : 0
           }}
         >
-          <ListItemButton
-            className="listItemGrid"
-            onMouseDown={(e) => e.preventDefault()}
-            disabled={disableExpand}
-            onClick={() => setSettings({...settings, [settingsKey]: !open})}
-            sx={{
-              //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
-            }}
-            style={{
-              paddingTop: header ? 4 : 16,
-              paddingBottom: open ? 0 : header ? 4 : 16
-            }}
-          >
-            {icon ? (
-              <ListItemIcon style={{marginTop: 0}}>
-                {icon}
-              </ListItemIcon>
-            ) : (
-              <div />
-            )}
-            <ListItemText
-              primary={title}
-              primaryTypographyProps={{
-                fontSize: 15,
-                fontWeight: 'medium',
-                lineHeight: '20px',
-                mb: '2px',
+          {disableExpand ? (
+            <ListItem
+              className="listItemGrid"
+              style={{
+                paddingTop: header ? 4 : 16,
+                paddingBottom: header ? 4 : 16
               }}
-              secondary={!header ? secondaryTitle : null}
-              secondaryTypographyProps={{
-                noWrap: true,
-                fontSize: 12,
-                lineHeight: '16px',
-                color: open ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.5)',
+            >
+              {icon ? (
+                <ListItemIcon style={{marginTop: 0}}>
+                  {icon}
+                </ListItemIcon>
+              ) : (
+                <div />
+              )}
+              <ListItemText
+                primary={title}
+                primaryTypographyProps={{
+                  fontSize: 15,
+                  fontWeight: 'medium',
+                  lineHeight: '20px',
+                  mb: '2px',
+                }}
+                secondary={!header ? secondaryTitle : null}
+                secondaryTypographyProps={{
+                  noWrap: true,
+                  fontSize: 12,
+                  lineHeight: '16px',
+                  color: 'rgba(0,0,0,0.5)',
+                }}
+                sx={{ my: 0 }}
+              />
+            </ListItem>
+          ) : (
+            <ListItemButton
+              className="listItemGrid"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setSettings({...settings, [settingsKey]: !open})}
+              sx={{
+                //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
               }}
-              sx={{ my: 0 }}
-            />
-            {!disableExpand && (
+              style={{
+                paddingTop: header ? 4 : 16,
+                paddingBottom: open ? 0 : header ? 4 : 16
+              }}
+            >
+              {icon ? (
+                <ListItemIcon style={{marginTop: 0}}>
+                  {icon}
+                </ListItemIcon>
+              ) : (
+                <div />
+              )}
+              <ListItemText
+                primary={title}
+                primaryTypographyProps={{
+                  fontSize: 15,
+                  fontWeight: 'medium',
+                  lineHeight: '20px',
+                  mb: '2px',
+                }}
+                secondary={!header ? secondaryTitle : null}
+                secondaryTypographyProps={{
+                  noWrap: true,
+                  fontSize: 12,
+                  lineHeight: '16px',
+                  color: open ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.5)',
+                }}
+                sx={{ my: 0 }}
+              />
               <KeyboardArrowDown
                 sx={{
                   mr: -1,
@@ -112,8 +146,8 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
                   transition: '0.2s',
                 }}
               />
-            )}
-          </ListItemButton>
+            </ListItemButton>
+          )}
           {open && children}
         </Box>
       </DashboardList>
@@ -228,8 +262,10 @@ export function Dashboard() {
             )}
             title={playerState.trackId ? "Playlist" : "Music"}
             secondaryTitle={playerState.trackId ? "Show playlist" : "No music is currently streaming"}
-            settingsKey="showPlaylist">
-            <Timers/>
+            settingsKey="showPlaylist"
+            disableExpand={!playerState.trackId}
+          >
+            <MusicPlaylist/>
           </CollapsibleList>
         )}
       </div>
