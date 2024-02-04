@@ -90,6 +90,10 @@ yarn run dev
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
 - [ ] Create a persistent Spotify playlist for the Voice-Assistant with dynamic content.
   This is necessary to allow jumping to a specific song in the playlist.
+- [ ] Switch to redirect login flow for signing into Google, like with Spotify.
+  This allows to continuously fetch a new access token with the refresh token.
+- [ ] Indicate in tool results whether to send the result to the LLM to receive a response.
+  Some tool calls like starting music playback should skip the reply, as the result is obvious to the user.
 - [ ] Make providing any keys besides the OpenAI key truly optional, also removing corresponding LLM function declarations
 - [ ] Allow choosing the model (downgrading to GPT-3.5 and potentially improving latency)
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
