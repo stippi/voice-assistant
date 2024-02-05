@@ -42,7 +42,7 @@ function TimerItem({ timer, removeTimer }: Props) {
     >
       {timer.ringing === true && <SoundWaves />}
       <ListItemIcon sx={{ fontSize: 20 }}>
-        {timer.type === "countdown" ? <HourglassTopIcon /> : <AlarmIcon />}
+        {timer.type === "countdown" ? <HourglassTopIcon fontSize="inherit" /> : <AlarmIcon fontSize="inherit" />}
       </ListItemIcon>
       <ListItemText
         sx={{ my: 0 }}

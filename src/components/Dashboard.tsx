@@ -16,13 +16,17 @@ import useSettings from "../hooks/useSettings.tsx";
 import {Timers} from "./Timers.tsx";
 import {Events} from "./Events.tsx";
 import ListItemIcon from "@mui/material/ListItemIcon";
-//import MediaControlCard from "./MediaControlCard";
-import MusicControls from "./MusicControls";
+import {CurrentSong, PlaybackControls, PositionControls} from "./MusicControls";
 import useSpotifyContext from "../hooks/useSpotifyContext";
 import {MusicPlaylist} from "./MusicPlaylist.tsx";
 import ListItem from "@mui/material/ListItem";
+import IconButton from "@mui/material/IconButton";
+import Divider from "@mui/material/Divider";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
+  '& .MuiList-root': {
+    overflow: 'auto'
+  },
   '& .MuiListItemButton-root': {
     paddingLeft: 16,
     paddingRight: 16,
@@ -47,28 +51,78 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
     minWidth: 0,
     justifySelf: 'center',
   },
-  '& .MuiSvgIcon-root': {
-    fontSize: 20,
-    marginRight: 0,
-    justifySelf: 'center',
-  },
 });
 
 function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, children, disableExpand}: DashboardItemProps) {
   const {settings, setSettings} = useSettings();
   const open = settings[settingsKey];
 
+  const iconContent = () => {
+    if (icon) {
+      return (
+        <ListItemIcon style={{marginTop: 0}}>
+          {icon}
+        </ListItemIcon>
+      );
+    } else {
+      return <div />;
+    }
+  }
+  const titleContent = () => {
+    if (typeof title === 'string') {
+      return (
+        <ListItemText
+          primary={title}
+          primaryTypographyProps={{
+            fontSize: 15,
+            fontWeight: 'medium',
+            lineHeight: '20px',
+            mb: '2px',
+          }}
+          secondary={!header ? secondaryTitle : null}
+          secondaryTypographyProps={{
+            noWrap: true,
+            fontSize: 12,
+            lineHeight: '16px',
+            color: !disableExpand && open ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.5)',
+          }}
+          sx={{ my: 0 }}
+        />
+      );
+    } else {
+      return title;
+    }
+  }
+  const expandContent = () => {
+    if (!disableExpand) {
+      return (
+        <KeyboardArrowDown
+          sx={{
+            mr: -1,
+            color: 'rgba(0,0,0,1)',
+            transform: open ? 'rotate(-180deg)' : 'rotate(0)',
+            transition: '0.2s',
+            fontSize: 20,
+            marginRight: 0,
+            justifySelf: 'center',
+          }}
+        />
+      );
+    }
+  }
+  const toggleExpand = () => setSettings({...settings, [settingsKey]: !open});
+  
   return (
     <Paper elevation={1} style={{display: "flex", flexDirection: "column"}}>
       {header}
-      <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
+      <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%', overflowY: "auto"}}>
         <Box
           sx={{
             paddingTop: 0,
             paddingBottom: open && !disableExpand ? 1 : 0
           }}
         >
-          {disableExpand ? (
+          {disableExpand || typeof title !== "string" ? (
             <ListItem
               className="listItemGrid"
               style={{
@@ -76,36 +130,17 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
                 paddingBottom: header ? 4 : 16
               }}
             >
-              {icon ? (
-                <ListItemIcon style={{marginTop: 0}}>
-                  {icon}
-                </ListItemIcon>
-              ) : (
-                <div />
-              )}
-              <ListItemText
-                primary={title}
-                primaryTypographyProps={{
-                  fontSize: 15,
-                  fontWeight: 'medium',
-                  lineHeight: '20px',
-                  mb: '2px',
-                }}
-                secondary={!header ? secondaryTitle : null}
-                secondaryTypographyProps={{
-                  noWrap: true,
-                  fontSize: 12,
-                  lineHeight: '16px',
-                  color: 'rgba(0,0,0,0.5)',
-                }}
-                sx={{ my: 0 }}
-              />
+              {iconContent()}
+              {titleContent()}
+              <IconButton onClick={toggleExpand} style={{height: 32, width: 32}}>
+                {expandContent()}
+              </IconButton>
             </ListItem>
           ) : (
             <ListItemButton
               className="listItemGrid"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setSettings({...settings, [settingsKey]: !open})}
+              onClick={toggleExpand}
               sx={{
                 //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
               }}
@@ -114,38 +149,9 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
                 paddingBottom: open ? 0 : header ? 4 : 16
               }}
             >
-              {icon ? (
-                <ListItemIcon style={{marginTop: 0}}>
-                  {icon}
-                </ListItemIcon>
-              ) : (
-                <div />
-              )}
-              <ListItemText
-                primary={title}
-                primaryTypographyProps={{
-                  fontSize: 15,
-                  fontWeight: 'medium',
-                  lineHeight: '20px',
-                  mb: '2px',
-                }}
-                secondary={!header ? secondaryTitle : null}
-                secondaryTypographyProps={{
-                  noWrap: true,
-                  fontSize: 12,
-                  lineHeight: '16px',
-                  color: open ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.5)',
-                }}
-                sx={{ my: 0 }}
-              />
-              <KeyboardArrowDown
-                sx={{
-                  mr: -1,
-                  //opacity: 0,
-                  transform: open ? 'rotate(-180deg)' : 'rotate(0)',
-                  transition: '0.2s',
-                }}
-              />
+              {iconContent()}
+              {titleContent()}
+              {expandContent()}
             </ListItemButton>
           )}
           {open && children}
@@ -158,7 +164,7 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
 interface DashboardItemProps {
   icon?: React.ReactNode;
   header?: React.ReactNode;
-  title: string;
+  title: string | React.ReactNode;
   secondaryTitle: string;
   settingsKey: keyof Settings;
   children: React.ReactNode;
@@ -228,11 +234,31 @@ export function Dashboard() {
         {settings.enableSpotify && (
           <CollapsibleList
             header={playerState.trackId && (
-              <MusicControls
-                title={playerState.name}
-                artist={playerState.artists.join(", ")}
-                albumTitle={playerState.albumName}
-                albumCoverUrl={playerState.coverImageUrl}
+              <Box sx={{paddingLeft: 2, paddingRight: 2, paddingTop: 2}}>
+                <CurrentSong
+                  title={playerState.name}
+                  artist={playerState.artists.join(", ")}
+                  albumTitle={playerState.albumName}
+                  albumCoverUrl={playerState.coverImageUrl}
+                />
+                <PositionControls
+                  position={playerState.position}
+                  duration={playerState.duration}
+                  setPosition={async (value: number) => {
+                    if (player) {
+                      await player.seek(value * 1000);
+                    }
+                  }}
+                />
+              </Box>
+            )}
+            icon={playerState.trackId ? (
+              <div />
+              ) : (
+              <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
+            )}
+            title={!playerState.trackId ? "Music" : (
+              <PlaybackControls
                 skipPrevious={async () => skipPrevious(deviceId)}
                 skipNext={async () => skipNext(deviceId)}
                 canSkipPrevious={playerState.canSkipPrevious}
@@ -244,27 +270,14 @@ export function Dashboard() {
                     await pausePlayback(deviceId);
                   }
                 }}
-                markFavorite={async () => {}}
                 playing={!playerState.paused}
-                position={playerState.position}
-                duration={playerState.duration}
-                setPosition={async (value: number) => {
-                  if (player) {
-                    await player.seek(value * 1000);
-                  }
-                }}
               />
             )}
-            icon={playerState.trackId ? (
-              <HeadphonesIcon/>
-              ) : (
-              <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
-            )}
-            title={playerState.trackId ? "Playlist" : "Music"}
             secondaryTitle={playerState.trackId ? "Show playlist" : "No music is currently streaming"}
             settingsKey="showPlaylist"
             disableExpand={!playerState.trackId}
           >
+            <Divider />
             <MusicPlaylist/>
           </CollapsibleList>
         )}
