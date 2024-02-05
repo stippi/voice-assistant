@@ -115,7 +115,7 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
   return (
     <Paper elevation={1} style={{display: "flex", flexDirection: "column"}}>
       {header}
-      <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%', overflowY: "auto"}}>
+      <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
         <Box
           sx={{
             paddingTop: 0,
