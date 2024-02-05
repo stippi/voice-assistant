@@ -1,8 +1,9 @@
 import React, {createContext, ReactNode, useEffect, useState} from 'react';
 import {SpotifyClientId} from "../secrets";
 import {createScript} from "../utils/createScript";
+import {LoginFlow} from "../utils/loginFlow.ts";
 
-const redirectUrl = "http://localhost:5173"; // your redirect URL - must be localhost URL and/or HTTPS
+const redirectUrl = "http://localhost:5173/spotify-callback"; // your redirect URL - must be localhost URL and/or HTTPS
 
 const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
@@ -15,7 +16,7 @@ const scopes = [
   'streaming',
   'playlist-read-private',
   'playlist-read-collaborative',
-].join(' ');
+];
 
 type Track = {
   id: string;
@@ -88,134 +89,15 @@ interface Props {
   enableSpotify: boolean
 }
 
-type TokenSet = {
-  accessToken: string;
-  refreshToken: string;
-  expires: number;
-};
-
-async function redirectToSpotifyAuthorize() {
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const randomValues = crypto.getRandomValues(new Uint8Array(64));
-  const codeVerifier = randomValues.reduce((acc, x) => acc + possible[x % possible.length], "");
-  const data = new TextEncoder().encode(codeVerifier);
-  const hashed = await crypto.subtle.digest('SHA-256', data);
-  
-  const codeChallengeBase64 = btoa(String.fromCharCode(...new Uint8Array(hashed)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-  
-  window.localStorage.setItem('spotify-code-verifier', codeVerifier);
-  
-  const authUrl = new URL(authorizationEndpoint)
-  const params = {
-    response_type: 'code',
-    client_id: SpotifyClientId,
-    scope: scopes,
-    code_challenge_method: 'S256',
-    code_challenge: codeChallengeBase64,
-    redirect_uri: redirectUrl,
-  };
-  
-  authUrl.search = new URLSearchParams(params).toString();
-  // Redirect the user to the authorization server for login
-  window.location.href = authUrl.toString();
-}
-
-// Spotify API Calls
-async function getToken(code: string) {
-  const codeVerifier = localStorage.getItem('spotify-code-verifier') || "";
-  
-  const response = await fetch(tokenEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: SpotifyClientId,
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: redirectUrl,
-      code_verifier: codeVerifier,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to exchange code to access token. HTTP status: ${response.status}`);
-  }
-  return await response.json();
-}
-
-async function runLoginFlow() {
-  // On page load, try to fetch auth code from current browser search URL
-  const args = new URLSearchParams(window.location.search);
-  const code = args.get('code');
-  if (!code) {
-    console.log("no code found in URL, redirecting to Spotify authorize");
-    await redirectToSpotifyAuthorize();
-    return "";
-  }
-  // If we find a code, we're in a callback, do a token exchange
-  console.log("found code in URL, exchanging for Spotify access token");
-  try {
-    const json = await getToken(code);
-    console.log("received Spotify access token set");
-    const newTokenSet: TokenSet = {
-      accessToken: json.access_token,
-      refreshToken: json.refresh_token,
-      expires: Date.now() + json.expires_in * 1000,
-    };
-    localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
-    
-    // Remove code from URL so we can refresh correctly.
-    const url = new URL(window.location.href);
-    url.searchParams.delete("code");
-    
-    const updatedUrl = url.search ? url.href : url.href.replace('?', '');
-    window.history.replaceState({}, document.title, updatedUrl);
-    
-    return newTokenSet.accessToken;
-  } catch (error) {
-    console.error("Failed to exchange code for token", error);
-    await redirectToSpotifyAuthorize();
-    return "";
-  }
-}
-
-async function getAccessToken(forceRefresh = false) {
-  const spotifyTokenSet = localStorage.getItem("spotify-token-set");
-  if (!spotifyTokenSet) {
-    return await runLoginFlow();
-  }
-  const tokenSet: TokenSet = JSON.parse(spotifyTokenSet);
-  if (!forceRefresh && tokenSet.expires > Date.now()) {
-    return tokenSet.accessToken;
-  }
-  // Try to refresh the access token, it may fail if the refresh token has expired, too.
-  const response = await fetch(tokenEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: new URLSearchParams({
-      client_id: SpotifyClientId,
-      grant_type: 'refresh_token',
-      refresh_token: tokenSet.refreshToken
-    }),
-  });
-  if (!response.ok) {
-    // If we failed to refresh the token, re-run the login flow
-    return await runLoginFlow();
-  }
-  const json = await response.json();
-  const newTokenSet: TokenSet = {
-    accessToken: json.access_token,
-    refreshToken: json.refresh_token,
-    expires: Date.now() + json.expires_in * 1000,
-  };
-  localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
-  return newTokenSet.accessToken;
-}
+const loginFlow = new LoginFlow(
+  redirectUrl,
+  authorizationEndpoint,
+  tokenEndpoint,
+  "/spotify-callback",
+  SpotifyClientId,
+  scopes,
+  "spotify"
+);
 
 export type SearchResult = {
   error?: string;
@@ -233,7 +115,7 @@ export type SearchResult = {
 };
 
 async function search(query: string, types: string[], limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
-  const accessToken = await getAccessToken();
+  const accessToken = await loginFlow.getAccessToken();
   const queryParams = new URLSearchParams();
   queryParams.append("q", query);
   queryParams.append("type", types.join(","));
@@ -276,7 +158,7 @@ async function search(query: string, types: string[], limit: number = 5, market:
 }
 
 async function playTracks(deviceId: string, trackIds: string[]) {
-  const accessToken = await getAccessToken();
+  const accessToken = await loginFlow.getAccessToken();
   try {
     const options: RequestInit = {
       method: 'PUT',
@@ -307,7 +189,7 @@ async function playTopTracks(deviceId: string, artist: string) {
   if (!result.artists) {
     return { error: "No artist found" };
   }
-  const accessToken = await getAccessToken();
+  const accessToken = await loginFlow.getAccessToken();
   const artistId = result.artists.items[0].id;
   const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
   try {
@@ -325,7 +207,7 @@ async function playTopTracks(deviceId: string, artist: string) {
 }
 
 async function pausePlayback(deviceId: string) {
-  const accessToken = await getAccessToken();
+  const accessToken = await loginFlow.getAccessToken();
   try {
     const response = await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
       method: 'PUT',
@@ -417,7 +299,7 @@ async function pausePlayback(deviceId: string) {
 // }
 //
 async function skipNext(deviceId: string) {
-  const accessToken = await getAccessToken();
+  const accessToken = await loginFlow.getAccessToken();
   try {
     const response = await fetch(`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`, {
       method: 'POST',
@@ -437,7 +319,7 @@ async function skipNext(deviceId: string) {
 }
 
 async function skipPrevious(deviceId: string) {
-  const accessToken = await getAccessToken();
+  const accessToken = await loginFlow.getAccessToken();
   try {
     const response = await fetch(`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`, {
       method: 'POST',
@@ -482,7 +364,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       setAccessToken("");
       return;
     }
-    getAccessToken().then(token => setAccessToken(token));
+    loginFlow.getAccessToken().then(token => setAccessToken(token));
   }, [enableSpotify]);
   
   const playerRef = React.useRef<Spotify.Player | null>(null);
@@ -554,7 +436,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         playerRef.current = new Spotify.Player({
           name: 'Voice Assistant',
           getOAuthToken: cb => {
-            getAccessToken().then(accessToken => cb(accessToken));
+            loginFlow.getAccessToken().then(accessToken => cb(accessToken));
           },
           volume: 0.5
         });
@@ -601,7 +483,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
   useEffect(() => {
     if (!accessToken) return;
     const interval = setInterval(async () => {
-      const newToken = await getAccessToken(true);
+      const newToken = await loginFlow.getAccessToken(true);
       setAccessToken(newToken);
     }, 1000 * 60 * 15);
     return () => clearInterval(interval);
