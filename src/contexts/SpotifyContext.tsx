@@ -210,7 +210,7 @@ async function getAccessToken(forceRefresh = false) {
   const json = await response.json();
   const newTokenSet: TokenSet = {
     accessToken: json.access_token,
-    refreshToken: tokenSet.refreshToken,
+    refreshToken: json.refresh_token,
     expires: Date.now() + json.expires_in * 1000,
   };
   localStorage.setItem("spotify-token-set", JSON.stringify(newTokenSet));
