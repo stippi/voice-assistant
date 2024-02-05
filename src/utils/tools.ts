@@ -404,20 +404,21 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "find_on_spotify",
-      description: "Find tracks, artists, albums or playlists on Spotify",
+      name: "find_songs_on_spotify",
+      //description: "Find tracks, artists, albums or playlists on Spotify",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string" },
-          types: {
-            type: "array",
-            items: { type: "string" },
-            description: "Types to search across. Valid types are: 'track', 'artist'." //, 'album', 'playlist', 'show', and 'episode'.
-          },
+          // types: {
+          //   type: "array",
+          //   items: { type: "string" },
+          //   description: "Types to search across. Valid types are: 'track', 'artist'." //, 'album', 'playlist', 'show', and 'episode'.
+          // },
           limit: { type: "integer", description: "The maximum number of items to return" }
         },
-        required: ["query", "types"]
+        //required: ["query", "types"]
+        required: ["query"]
       }
     }
   },
@@ -528,8 +529,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await playOnSpotify(appContext.spotify, args.trackIds);
       case 'play_artist_top_tracks_on_spotify':
         return await playOnSpotifyArtist(appContext.spotify, args.artistName);
-      case 'find_on_spotify':
-        return await findOnSpotify(appContext.spotify, args.query, args.types, args.limit);
+      case 'find_songs_on_spotify':
+        return await findOnSpotify(appContext.spotify, args.query, ["track"], args.limit);
       case 'resume_spotify_playback':
         return await playOnSpotify(appContext.spotify, []);
       case 'pause_spotify_playback':
