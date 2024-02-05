@@ -74,12 +74,25 @@ interface TextWithTooltipProps extends TypographyProps {
   text: string;
 }
 
-export default function MediaControls({
-  title, artist, albumTitle, albumCoverUrl,
-  playing, togglePlay,
-  canSkipPrevious, canSkipNext, skipNext, skipPrevious,
-  duration, position, setPosition
-}: Props) {
+export function CurrentSong({ artist, title, albumTitle, albumCoverUrl}: CurrentSongProps) {
+  return (
+    <Box sx={{display: 'flex', alignItems: 'center'}}>
+      <CoverImage>
+        <img
+          alt="can't win - Chilling Sunday"
+          src={albumCoverUrl}
+        />
+      </CoverImage>
+      <Box sx={{ml: 1.5, minWidth: 0}}>
+        <TextWithTooltip text={artist} variant="caption" color="text.secondary" fontWeight={500} />
+        <TextWithTooltip text={title} fontWeight={700}/>
+        <TextWithTooltip text={albumTitle} noWrap variant="subtitle2" color="text.secondary" letterSpacing={-0.25} />
+      </Box>
+    </Box>
+  );
+}
+
+export function PositionControls({position, duration, setPosition}: PositionProps) {
   const theme = useTheme();
   
   function formatDuration(value: number) {
@@ -87,24 +100,8 @@ export default function MediaControls({
     const secondLeft = Math.floor(value - minute * 60);
     return `${minute}:${secondLeft < 10 ? `0${secondLeft}` : secondLeft}`;
   }
-  
-  // const lightIconColor =
-  //   theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
   return (
-    <Box sx={{padding: 2}}>
-      <Box sx={{display: 'flex', alignItems: 'center'}}>
-        <CoverImage>
-          <img
-            alt="can't win - Chilling Sunday"
-            src={albumCoverUrl}
-          />
-        </CoverImage>
-        <Box sx={{ml: 1.5, minWidth: 0}}>
-          <TextWithTooltip text={artist} variant="caption" color="text.secondary" fontWeight={500} />
-          <TextWithTooltip text={title} fontWeight={700}/>
-          <TextWithTooltip text={albumTitle} noWrap variant="subtitle2" color="text.secondary" letterSpacing={-0.25} />
-        </Box>
-      </Box>
+    <>
       <Slider
         aria-label="time-indicator"
         size="small"
@@ -151,31 +148,73 @@ export default function MediaControls({
         <TinyText>{formatDuration(position)}</TinyText>
         <TinyText>-{formatDuration(duration - position)}</TinyText>
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mt: -1,
-        }}
+    </>
+  );
+}
+
+export function PlaybackControls({
+  playing, togglePlay,
+  canSkipPrevious, canSkipNext, skipNext, skipPrevious
+}: PlaybackProps) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mt: -1,
+      }}
+    >
+      <IconButton
+        aria-label="previous song"
+        disabled={!canSkipPrevious}
+        onClick={skipPrevious}
+        style={{fontSize: 28}}
       >
-        <IconButton aria-label="previous song" disabled={!canSkipPrevious} onClick={skipPrevious}>
-          <SkipPreviousRounded fontSize="medium"/>
-        </IconButton>
-        <IconButton
-          aria-label={playing ? 'pause' : 'play'}
-          onClick={togglePlay}
-        >
-          {playing ? (
-            <PauseRounded fontSize="large"/>
-          ) : (
-            <PlayArrowRounded fontSize="large"/>
-          )}
-        </IconButton>
-        <IconButton aria-label="next song" disabled={!canSkipNext} onClick={skipNext}>
-          <SkipNextRounded fontSize="medium"/>
-        </IconButton>
-      </Box>
+        <SkipPreviousRounded fontSize="inherit"/>
+      </IconButton>
+      <IconButton
+        aria-label={playing ? 'pause' : 'play'}
+        onClick={togglePlay}
+        style={{fontSize: 32}}
+      >
+        {playing ? (
+          <PauseRounded fontSize="inherit"/>
+        ) : (
+          <PlayArrowRounded fontSize="inherit"/>
+        )}
+      </IconButton>
+      <IconButton
+        aria-label="next song"
+        disabled={!canSkipNext}
+        onClick={skipNext}
+        style={{fontSize: 28}}
+      >
+        <SkipNextRounded fontSize="inherit"/>
+      </IconButton>
+    </Box>
+  );
+}
+
+export function MusicControls({
+  title, artist, albumTitle, albumCoverUrl,
+  playing, togglePlay,
+  canSkipPrevious, canSkipNext, skipNext, skipPrevious,
+  duration, position, setPosition
+}: Props) {
+  return (
+    <Box sx={{padding: 2}}>
+      <CurrentSong
+        title={title}
+        artist={artist}
+        albumTitle={albumTitle}
+        albumCoverUrl={albumCoverUrl}
+      />
+      <PositionControls
+        position={position}
+        duration={duration}
+        setPosition={setPosition}
+      />
       {/*<Stack spacing={2} direction="row" sx={{mb: 1, px: 1}} alignItems="center">*/}
       {/*  <VolumeDownRounded htmlColor={lightIconColor}/>*/}
       {/*  <Slider*/}
@@ -201,23 +240,40 @@ export default function MediaControls({
       {/*  />*/}
       {/*  <VolumeUpRounded htmlColor={lightIconColor}/>*/}
       {/*</Stack>*/}
+      <PlaybackControls
+        playing={playing}
+        togglePlay={togglePlay}
+        canSkipPrevious={canSkipPrevious}
+        canSkipNext={canSkipNext}
+        skipPrevious={skipPrevious}
+        skipNext={skipNext}
+      />
     </Box>
   );
 }
 
-interface Props {
+interface CurrentSongProps {
   title: string,
   artist: string,
   albumTitle: string;
   albumCoverUrl: string,
+}
+
+interface PlaybackProps {
   skipPrevious: () => void,
   canSkipPrevious: boolean,
   skipNext: () => void,
   canSkipNext: boolean,
   togglePlay: () => void,
-  markFavorite: () => void,
   playing: boolean,
+}
+
+interface PositionProps {
   position: number,
   duration: number,
   setPosition: (value: number) => void,
+}
+
+interface Props extends PositionProps, PlaybackProps, CurrentSongProps {
+  markFavorite: () => void,
 }
