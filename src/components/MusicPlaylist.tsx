@@ -25,7 +25,7 @@ function PlaylistItem({icon, artists, title}: PlaylistItemProps) {
           mb: '2px',
           noWrap: true,
         }}
-        secondary={artists.join(',')}
+        secondary={artists.join(', ')}
         secondaryTypographyProps={{
           fontSize: 12,
           lineHeight: '16px',
