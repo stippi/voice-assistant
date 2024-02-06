@@ -4,6 +4,18 @@ Start a spoken ChatGPT conversation by activation word in your browser.
 
 This project was bootstrapped using `npm create vite@latest ./ -- --template react-ts`.
 
+## About
+
+The rough idea for this project is to have a voice-activated assistant similar to Amazon Alexa or Siri, but backed by a Large Language Model.
+It is currently implemented as a website running purely in your browser.
+It uses OpenAI's GPT-4 Turbo model configured with several tools (a.k.a. "functions") that allow it to integrate with a range of APIs.
+To use these APIs, secrets must be provided, see below.
+The most "sophisticated" integrations are for Google and Spotify.
+
+Generally, you can just ask the Assistant what it can do for you. ;-)
+
+Eventually, it would be nice to host the website in a native application that is less restricted than a Browser.
+
 ## Running Locally
 
 Create a file named `secrets.ts` in the `src` directory with the following contents:
@@ -15,7 +27,7 @@ export const OpenAiConfig = {
   dangerouslyAllowBrowser: true
 };
 
-// Theoretically optional, but untested if missing:
+// Theoretically optional. Must be exported, but can be empty.
 export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
 
 export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
@@ -24,6 +36,7 @@ export const NewsApiOrgKey = "<Your newsapi.org API key>";
 
 export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
+export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
 ```
@@ -36,7 +49,9 @@ You can now manually initiate a payment via "Buy credits" on the [billing overvi
 The API key for `openweathermap.org` can be for the free tier.
 
 Similarly, the API key for `picovoice.ai` is free to obtain for personal use.
-It just comes with a rate limit. 
+It just comes with a rate limit.
+Not providing the PicoVoiceAccessKey will most likely break wake-word detection.
+In theory, the Browser Speach Recognition API is used as a fallback, but it hasn't been tested in a while.
 
 To get an API key for the Google APIs, you need create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
 
