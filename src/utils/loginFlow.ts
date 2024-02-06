@@ -7,7 +7,9 @@ type TokenSet = {
 export class LoginFlow {
   redirectUrl: string;
   authorizationEndpoint: string;
+  additionalParams: Record<string, string>;
   tokenEndpoint: string;
+  additionalTokenParams: Record<string, string>;
   callbackPath: string;
   clientId: string;
   scopes: string[];
@@ -16,7 +18,9 @@ export class LoginFlow {
   constructor(
     redirectUrl: string,
     authorizationEndpoint: string,
+    additionalParams: Record<string, string>,
     tokenEndpoint: string,
+    additionalTokenParams: Record<string, string>,
     callbackPath: string,
     clientId: string,
     scopes: string[],
@@ -24,7 +28,9 @@ export class LoginFlow {
   ) {
     this.redirectUrl = redirectUrl;
     this.authorizationEndpoint = authorizationEndpoint;
+    this.additionalParams = additionalParams;
     this.tokenEndpoint = tokenEndpoint;
+    this.additionalTokenParams = additionalTokenParams;
     this.callbackPath = callbackPath;
     this.clientId = clientId;
     this.scopes = scopes;
@@ -54,6 +60,7 @@ export class LoginFlow {
     window.localStorage.setItem(this.codeVerifierKey(), codeVerifier);
     
     const params = {
+      ...this.additionalParams,
       response_type: 'code',
       client_id: this.clientId,
       scope: this.scopes.join(' '),
@@ -78,6 +85,7 @@ export class LoginFlow {
       },
       body: new URLSearchParams({
         client_id: this.clientId,
+        ...this.additionalTokenParams,
         grant_type: 'authorization_code',
         code: code,
         redirect_uri: this.redirectUrl,
@@ -127,7 +135,7 @@ export class LoginFlow {
       return newTokenSet.accessToken;
     } catch (error) {
       console.error("Failed to exchange code for token", error);
-      await this.redirectToAuthorize();
+      //await this.redirectToAuthorize();
       return "";
     }
   }

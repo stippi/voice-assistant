@@ -1,6 +1,7 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
-import {GoogleClientId, GoogleApiKey} from "../secrets.ts";
+import {GoogleClientId, GoogleApiKey, GoogleClientSecret} from "../secrets.ts";
 import {createScript} from "../utils/createScript.ts";
+import {LoginFlow} from "../utils/loginFlow.ts";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
@@ -19,10 +20,25 @@ interface Props {
   enableGoogle: boolean
 }
 
-type TokenSet = {
-  accessToken: string;
-  expires: number;
-};
+const loginFlow = new LoginFlow(
+  "http://localhost:5173/google-callback",
+  "https://accounts.google.com/o/oauth2/v2/auth",
+  {
+    "access_type": "offline",
+    "include_granted_scopes": "true"
+  },
+  "https://oauth2.googleapis.com/token",
+  {
+    "client_secret": GoogleClientSecret
+  },
+  "/google-callback",
+  GoogleClientId,
+  [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/contacts.readonly"
+  ],
+  "google"
+);
 
 export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children }) => {
   const [apiLoaded, setApiLoaded] = useState(false);
@@ -61,42 +77,15 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
   useEffect(() => {
     if (!apiLoaded) return;
     
-    const storedTokenSet = localStorage.getItem("google-token-set");
-    if (storedTokenSet) {
-      const tokenSet: TokenSet = JSON.parse(storedTokenSet);
-      if (tokenSet.expires > Date.now()) {
-        console.log("Using stored Google API access token");
-        gapi.client.setToken({access_token: tokenSet.accessToken});
-        setLoggedIn(true);
-      }
-    }
-    
-    const accountsScript = createScript("https://accounts.google.com/gsi/client", () => {
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GoogleClientId,
-        scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts.readonly",
-        prompt: "",
-        callback: (tokenResponse: google.accounts.oauth2.TokenResponse): void => {
-          console.log("Google API client logged in");
-          gapi.client.setToken(tokenResponse);
-          const tokenSet: TokenSet = {
-            accessToken: tokenResponse.access_token,
-            expires: Date.now() + Number.parseInt(tokenResponse.expires_in) * 1000,
-          }
-          localStorage.setItem("google-token-set", JSON.stringify(tokenSet));
-          setLoggedIn(true);
-        },
-      });
-      if (gapi.client.getToken() === null) {
-        console.log("Requesting Google API access token");
-        tokenClient.requestAccessToken({ prompt: "consent" });
-      }
+    loginFlow.getAccessToken().then(accessToken => {
+      gapi.client.setToken({access_token: accessToken});
+      setLoggedIn(true);
+    }).catch(() => {
+      gapi.client.setToken(null);
+      setLoggedIn(false);
     });
-
-    document.body.appendChild(accountsScript);
-
+    
     return () => {
-      document.body.removeChild(accountsScript);
     }
   }, [apiLoaded]);
   
@@ -117,9 +106,19 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
   
   const [upcomingEvents, setUpcomingEvents] = useState<gapi.client.calendar.Event[]>([]);
   useEffect(() => {
-    if (loggedIn) {
-      fetchUpcomingEvents();
-    }
+    if (!loggedIn) return;
+    fetchUpcomingEvents();
+    const interval = setInterval(async () => {
+      loginFlow.getAccessToken().then(accessToken => {
+        gapi.client.setToken({access_token: accessToken});
+        setLoggedIn(true);
+        fetchUpcomingEvents();
+      }).catch(() => {
+        gapi.client.setToken(null);
+        setLoggedIn(false);
+      });
+    }, 1000 * 60 * 15);
+    return () => clearInterval(interval);
   }, [loggedIn]);
   
   useEffect(() => {
