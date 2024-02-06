@@ -77,7 +77,9 @@ interface Props {
 const loginFlow = new LoginFlow(
   "http://localhost:5173/spotify-callback",
   "https://accounts.spotify.com/authorize",
+  {},
   "https://accounts.spotify.com/api/token",
+  {},
   "/spotify-callback",
   SpotifyClientId,
   [
