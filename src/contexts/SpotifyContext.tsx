@@ -3,21 +3,6 @@ import {SpotifyClientId} from "../secrets";
 import {createScript} from "../utils/createScript";
 import {LoginFlow} from "../utils/loginFlow.ts";
 
-const redirectUrl = "http://localhost:5173/spotify-callback"; // your redirect URL - must be localhost URL and/or HTTPS
-
-const authorizationEndpoint = "https://accounts.spotify.com/authorize";
-const tokenEndpoint = "https://accounts.spotify.com/api/token";
-const scopes = [
-  'user-read-private',
-  'user-read-email',
-  'user-read-playback-state',
-  'user-modify-playback-state',
-  'user-library-modify',
-  'streaming',
-  'playlist-read-private',
-  'playlist-read-collaborative',
-];
-
 type Track = {
   id: string;
   name: string;
@@ -90,12 +75,21 @@ interface Props {
 }
 
 const loginFlow = new LoginFlow(
-  redirectUrl,
-  authorizationEndpoint,
-  tokenEndpoint,
+  "http://localhost:5173/spotify-callback",
+  "https://accounts.spotify.com/authorize",
+  "https://accounts.spotify.com/api/token",
   "/spotify-callback",
   SpotifyClientId,
-  scopes,
+  [
+    'user-read-private',
+    'user-read-email',
+    'user-read-playback-state',
+    'user-modify-playback-state',
+    'user-library-modify',
+    'streaming',
+    'playlist-read-private',
+    'playlist-read-collaborative',
+  ],
   "spotify"
 );
 
@@ -197,7 +191,10 @@ async function playTopTracks(deviceId: string, artist: string) {
       headers: {
         "Authorization": `Bearer ${accessToken}`
       }
-    });
+    })
+    if (!response.ok) {
+      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    }
     const tracks: {tracks: {id: string}[]} = await response.json();
     const trackIds = tracks.tracks.map((track) => track.id);
     return playTracks(deviceId, trackIds);
