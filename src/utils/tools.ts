@@ -390,35 +390,34 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "play_artist_top_tracks_on_spotify",
-      description: "Start streaming top songs of an artist on Spotify Player.",
+      name: "find_artist_and_play_top_songs_on_spotify",
+      description: "Searches for 'query' on Spotify and plays top songs of the found artist.",
       parameters: {
         type: "object",
         properties: {
-          artistName: { type: "string" },
+          query: { type: "string", description: "Artist name or query." },
         },
-        required: ["artistName"]
+        required: ["query"]
       }
     }
   },
   {
     type: "function",
     function: {
-      name: "find_songs_on_spotify",
-      //description: "Find tracks, artists, albums or playlists on Spotify",
+      name: "find_on_spotify",
+      description: "Find tracks, artists, albums or playlists on Spotify",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string" },
-          // types: {
-          //   type: "array",
-          //   items: { type: "string" },
-          //   description: "Types to search across. Valid types are: 'track', 'artist'." //, 'album', 'playlist', 'show', and 'episode'.
-          // },
+          types: {
+            type: "array",
+            items: { type: "string" },
+            description: "Types to search across. Valid types are: 'track', 'artist', 'album', 'playlist', 'show', and 'episode'."
+          },
           limit: { type: "integer", description: "The maximum number of items to return" }
         },
-        //required: ["query", "types"]
-        required: ["query"]
+        required: ["query", "types"]
       }
     }
   },
@@ -527,10 +526,10 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
             : undefined);
       case 'play_tracks_on_spotify':
         return await playOnSpotify(appContext.spotify, args.trackIds);
-      case 'play_artist_top_tracks_on_spotify':
-        return await playOnSpotifyArtist(appContext.spotify, args.artistName);
-      case 'find_songs_on_spotify':
-        return await findOnSpotify(appContext.spotify, args.query, ["track"], args.limit);
+      case 'find_artist_and_play_top_songs_on_spotify':
+        return await playOnSpotifyArtist(appContext.spotify, args.query);
+      case 'find_on_spotify':
+        return await findOnSpotify(appContext.spotify, args.query, args.types, args.limit);
       case 'resume_spotify_playback':
         return await playOnSpotify(appContext.spotify, []);
       case 'pause_spotify_playback':
