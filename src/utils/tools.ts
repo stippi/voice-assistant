@@ -3,7 +3,7 @@ import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
 import {OpenWeatherMapApiKey, NewsApiOrgKey, GoogleApiKey} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
-import {addIsoDurationToDate} from "./timeFormat";
+import {addIsoDurationToDate, formatTimestamp} from "./timeFormat";
 import {AppContextType, Spotify} from "../contexts/AppContext.tsx";
 import OpenAI from "openai";
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
@@ -548,13 +548,58 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
 }
 
 async function getCurrentWeather(lat: number, lon: number) {
-  const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
-  return await response.json();
+  try {
+    const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
+    if (!response.ok) {
+      return { error: `HTTP request failed with status ${response.status}` };
+    }
+    const result = await response.json();
+    return {
+      result: {
+        weather: result.weather[0].description,
+        temperature: Math.round(result.main.temp - 273.15),
+        temperature_feels_like: Math.round(result.main.feels_like - 273.15),
+        humidity: result.main.humidity,
+        wind_speed: result.wind.speed,
+        wind_direction: result.wind.deg
+      }
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
 }
 
 async function getWeatherForecast(lat: number, lon: number) {
-  const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
-  return await response.json();
+  try {
+    const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`);
+    if (!response.ok) {
+      return { error: `HTTP request failed with status ${response.status}` };
+    }
+    const result = await response.json();
+    type ForecastEntry = {
+      dt_txt: string,
+      weather: { description: string }[],
+      main: { temp: number, feels_like: number, humidity: number },
+      wind: { speed: number, deg: number, gust?: number }
+    }
+    return {
+      result: {
+        sunrise: formatTimestamp(result.city.sunrise),
+        sunset: formatTimestamp(result.city.sunset),
+        forecast: result.list.map((entry: ForecastEntry) => ({
+          time: entry.dt_txt,
+          weather: entry.weather[0].description,
+          temperature: Math.round(entry.main.temp - 273.15),
+          temperature_feels_like: Math.round(entry.main.feels_like - 273.15),
+          humidity: entry.main.humidity,
+          wind_speed: entry.wind.speed,
+          wind_direction: entry.wind.deg
+        }))
+      }
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
 }
 
 async function getTopNews(language: string, country: string, category: string, query: string, sortBy: string) {
