@@ -108,6 +108,18 @@ export type SearchResult = {
   artists?: {
     items: { name: string, id: string }[];
   };
+  albums?: {
+    items: { name: string, id: string }[];
+  };
+  playlists?: {
+    items: { name: string, id: string }[];
+  };
+  shows?: {
+    items: { name: string, id: string }[];
+  };
+  episodes?: {
+    items: { name: string, id: string }[];
+  };
 };
 
 async function search(query: string, types: string[], limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
@@ -140,6 +152,30 @@ async function search(query: string, types: string[], limit: number = 5, market:
       }
       if (responseResult.artists) {
         result.artists = { items: responseResult.artists.items.map(item => ({
+          id: item.id,
+          name: item.name
+        }))};
+      }
+      if (responseResult.albums) {
+        result.albums = { items: responseResult.albums.items.map(item => ({
+          id: item.id,
+          name: item.name
+        }))};
+      }
+      if (responseResult.playlists) {
+        result.playlists = { items: responseResult.playlists.items.map(item => ({
+          id: item.id,
+          name: item.name
+        }))};
+      }
+      if (responseResult.shows) {
+        result.shows = { items: responseResult.shows.items.map(item => ({
+          id: item.id,
+          name: item.name
+        }))};
+      }
+      if (responseResult.episodes) {
+        result.episodes = { items: responseResult.episodes.items.map(item => ({
           id: item.id,
           name: item.name
         }))};
@@ -449,9 +485,13 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       playerRef.current.addListener('account_error', accountErrorListener);
       playerRef.current.addListener('player_state_changed', playerStateChangedListener);
       
-      playerRef.current.connect().then(r => {
-        console.log("Spotify Player connected", r);
-        setPlayer(playerRef.current);
+      playerRef.current.connect().then(result => {
+        if (result) {
+          setPlayer(playerRef.current);
+        } else {
+          console.error("Spotify player could not connect");
+          setPlayer(null);
+        }
       });
     }
     

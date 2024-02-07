@@ -45,12 +45,21 @@ export class LoginFlow {
     return `${this.storagePrefix}-token-set`;
   }
   
-  async redirectToAuthorize() {
+  private stateKey() {
+    return `${this.storagePrefix}-state`;
+  }
+  
+  private getRandomString(length: number): string {
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const randomValues = crypto.getRandomValues(new Uint8Array(64));
-    const codeVerifier = randomValues.reduce((acc, x) => acc + possible[x % possible.length], "");
+    const randomValues = crypto.getRandomValues(new Uint8Array(length));
+    return randomValues.reduce((acc, x) => acc + possible[x % possible.length], "");
+  }
+  
+  async redirectToAuthorize() {
+    const codeVerifier = this.getRandomString(64);
     const data = new TextEncoder().encode(codeVerifier);
     const hashed = await crypto.subtle.digest('SHA-256', data);
+    const state = this.getRandomString(16)
     
     const codeChallengeBase64 = btoa(String.fromCharCode(...new Uint8Array(hashed)))
       .replace(/=/g, '')
@@ -58,6 +67,7 @@ export class LoginFlow {
       .replace(/\//g, '_');
     
     window.localStorage.setItem(this.codeVerifierKey(), codeVerifier);
+    window.localStorage.setItem(this.stateKey(), state);
     
     const params = {
       ...this.additionalParams,
@@ -66,6 +76,7 @@ export class LoginFlow {
       scope: this.scopes.join(' '),
       code_challenge_method: 'S256',
       code_challenge: codeChallengeBase64,
+      state: state,
       redirect_uri: this.redirectUrl,
     };
     
@@ -107,6 +118,14 @@ export class LoginFlow {
       await this.redirectToAuthorize();
       return "";
     }
+    const state = args.get('state');
+    const storedState = window.localStorage.getItem(this.stateKey());
+    window.localStorage.removeItem(this.stateKey());
+    if (!storedState || state !== storedState) {
+      console.log(`state mismatch: ${state} !== ${storedState}`);
+      await this.redirectToAuthorize();
+      return "";
+    }
     if (window.location.pathname !== this.callbackPath) {
       console.log(`code found in URL, but not on ${this.callbackPath}`);
       // TODO: Would redirecting here interrupt another login flow?
@@ -124,9 +143,9 @@ export class LoginFlow {
       };
       localStorage.setItem(this.tokenSetKey(), JSON.stringify(newTokenSet));
       
-      // Remove code and callback path from URL so that we can refresh correctly.
+      // Remove query and callback path from URL so that we can refresh correctly.
       const url = new URL(window.location.href);
-      url.searchParams.delete("code");
+      url.search = "";
       url.pathname = "";
       
       const updatedUrl = url.search ? url.href : url.href.replace('?', '');
@@ -134,8 +153,8 @@ export class LoginFlow {
       
       return newTokenSet.accessToken;
     } catch (error) {
-      console.error("Failed to exchange code for token", error);
-      //await this.redirectToAuthorize();
+      console.error(`failed to exchange ${this.storagePrefix} code for token`, error);
+      await this.redirectToAuthorize();
       return "";
     }
   }
@@ -168,7 +187,7 @@ export class LoginFlow {
     const json = await response.json();
     const newTokenSet: TokenSet = {
       accessToken: json.access_token,
-      refreshToken: json.refresh_token,
+      refreshToken: json.refresh_token || tokenSet.refreshToken,
       expires: Date.now() + json.expires_in * 1000,
     };
     localStorage.setItem(this.tokenSetKey(), JSON.stringify(newTokenSet));
