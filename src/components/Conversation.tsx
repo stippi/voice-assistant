@@ -14,7 +14,7 @@ function showInline(toolCalls: ChatCompletionMessageToolCall[] | undefined): boo
   return toolCalls.some(showToolCallInChat);
 }
 
-export function Conversation({chat, deleteMessage}: Props) {
+export const Conversation = React.memo(({chat, deleteMessage}: Props) => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
   const messageCountRef = React.useRef(0);
   React.useEffect(() => {
@@ -46,7 +46,7 @@ export function Conversation({chat, deleteMessage}: Props) {
       ))
     }
   </div>
-}
+});
 
 interface Props {
   chat: Message[] | undefined

@@ -16,7 +16,7 @@ const theme = createTheme({
   }
 });
 
-export function MessageBar({ sendMessage, stopResponding, responding, respondingRef, awaitSpokenResponse }: Props) {
+export const MessageBar = React.memo(({ sendMessage, stopResponding, responding, respondingRef, awaitSpokenResponse }: Props) => {
   
   const [message, setMessage] = React.useState("");
   const defaultPlaceHolder = "Type to chat";
@@ -89,7 +89,7 @@ export function MessageBar({ sendMessage, stopResponding, responding, responding
       </ThemeProvider>
     </div>
   );
-}
+});
 
 interface Props {
   sendMessage: (message: string, audible: boolean) => void;

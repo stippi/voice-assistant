@@ -193,11 +193,64 @@ const theme = createTheme({
   }
 });
 
+function MusicList() {
+  const {player, playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
+  return (
+    <CollapsibleList
+      header={playerState.trackId && (
+        <Box sx={{paddingLeft: 2, paddingRight: 2, paddingTop: 2}}>
+          <CurrentSong
+            title={playerState.name}
+            artist={playerState.artists.join(", ")}
+            albumTitle={playerState.albumName}
+            albumCoverUrl={playerState.coverImageUrl}
+          />
+          <PositionControls
+            position={playerState.position}
+            duration={playerState.duration}
+            setPosition={async (value: number) => {
+              if (player) {
+                await player.seek(value * 1000);
+              }
+            }}
+          />
+        </Box>
+      )}
+      icon={playerState.trackId ? (
+        <div />
+      ) : (
+        <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
+      )}
+      title={!playerState.trackId ? "Music" : (
+        <PlaybackControls
+          skipPrevious={async () => skipPrevious(deviceId)}
+          skipNext={async () => skipNext(deviceId)}
+          canSkipPrevious={playerState.canSkipPrevious}
+          canSkipNext={playerState.canSkipNext}
+          togglePlay={async () => {
+            if (playerState.paused) {
+              await playTracks(deviceId, []);
+            } else {
+              await pausePlayback(deviceId);
+            }
+          }}
+          playing={!playerState.paused}
+        />
+      )}
+      secondaryTitle={playerState.trackId ? "Show playlist" : "No music is currently streaming"}
+      settingsKey="showPlaylist"
+      disableExpand={!playerState.trackId}
+    >
+      <Divider />
+      <MusicPlaylist/>
+    </CollapsibleList>
+  );
+}
+
 export function Dashboard() {
   const {timers} = useAppContext();
   const {upcomingEvents} = useGoogleContext();
   const {settings} = useSettings();
-  const {player, playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || upcomingEvents.length > 0;
@@ -231,56 +284,7 @@ export function Dashboard() {
             <Timers/>
           </CollapsibleList>
         )}
-        {settings.enableSpotify && (
-          <CollapsibleList
-            header={playerState.trackId && (
-              <Box sx={{paddingLeft: 2, paddingRight: 2, paddingTop: 2}}>
-                <CurrentSong
-                  title={playerState.name}
-                  artist={playerState.artists.join(", ")}
-                  albumTitle={playerState.albumName}
-                  albumCoverUrl={playerState.coverImageUrl}
-                />
-                <PositionControls
-                  position={playerState.position}
-                  duration={playerState.duration}
-                  setPosition={async (value: number) => {
-                    if (player) {
-                      await player.seek(value * 1000);
-                    }
-                  }}
-                />
-              </Box>
-            )}
-            icon={playerState.trackId ? (
-              <div />
-              ) : (
-              <HeadphonesIcon style={{color: "#00ce41", fontSize: "1.5rem"}}/>
-            )}
-            title={!playerState.trackId ? "Music" : (
-              <PlaybackControls
-                skipPrevious={async () => skipPrevious(deviceId)}
-                skipNext={async () => skipNext(deviceId)}
-                canSkipPrevious={playerState.canSkipPrevious}
-                canSkipNext={playerState.canSkipNext}
-                togglePlay={async () => {
-                  if (playerState.paused) {
-                    await playTracks(deviceId, []);
-                  } else {
-                    await pausePlayback(deviceId);
-                  }
-                }}
-                playing={!playerState.paused}
-              />
-            )}
-            secondaryTitle={playerState.trackId ? "Show playlist" : "No music is currently streaming"}
-            settingsKey="showPlaylist"
-            disableExpand={!playerState.trackId}
-          >
-            <Divider />
-            <MusicPlaylist/>
-          </CollapsibleList>
-        )}
+        {settings.enableSpotify && <MusicList/>}
       </div>
     </ThemeProvider>
   );

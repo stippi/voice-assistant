@@ -3,8 +3,7 @@ import useSpotifyContext from "../hooks/useSpotifyContext";
 import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
 import { ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 
-function PlaylistItem({icon, artists, title}: PlaylistItemProps) {
-  
+const PlaylistItem = React.memo(({icon, artists, title}: PlaylistItemProps) => {
   return (
     <ListItemButton
       alignItems={"flex-start"}
@@ -34,7 +33,7 @@ function PlaylistItem({icon, artists, title}: PlaylistItemProps) {
       />
     </ListItemButton>
   );
-}
+});
 
 interface PlaylistItemProps {
   icon?: React.ReactNode;
