@@ -10,7 +10,7 @@ import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
 import PauseRounded from '@mui/icons-material/PauseRounded';
 //import VolumeUpRounded from '@mui/icons-material/VolumeUpRounded';
 //import VolumeDownRounded from '@mui/icons-material/VolumeDownRounded';
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Tooltip from "@mui/material/Tooltip";
 
 const CoverImage = styled('div')({
@@ -74,7 +74,7 @@ interface TextWithTooltipProps extends TypographyProps {
   text: string;
 }
 
-export function CurrentSong({ artist, title, albumTitle, albumCoverUrl}: CurrentSongProps) {
+export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl}: CurrentSongProps) => {
   return (
     <Box sx={{display: 'flex', alignItems: 'center'}}>
       <CoverImage>
@@ -90,7 +90,7 @@ export function CurrentSong({ artist, title, albumTitle, albumCoverUrl}: Current
       </Box>
     </Box>
   );
-}
+});
 
 export function PositionControls({position, duration, setPosition}: PositionProps) {
   const theme = useTheme();
@@ -152,10 +152,10 @@ export function PositionControls({position, duration, setPosition}: PositionProp
   );
 }
 
-export function PlaybackControls({
+export const PlaybackControls = React.memo(({
   playing, togglePlay,
   canSkipPrevious, canSkipNext, skipNext, skipPrevious
-}: PlaybackProps) {
+}: PlaybackProps) => {
   return (
     <Box
       sx={{
@@ -194,7 +194,7 @@ export function PlaybackControls({
       </IconButton>
     </Box>
   );
-}
+});
 
 export function MusicControls({
   title, artist, albumTitle, albumCoverUrl,

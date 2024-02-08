@@ -122,8 +122,24 @@ export type SearchResult = {
   };
 };
 
-async function search(query: string, types: string[], limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
+async function callApi<T>(url: string, options: RequestInit = {}, expectResponse = true): Promise<T> {
   const accessToken = await loginFlow.getAccessToken();
+  options.headers = {
+    ...options.headers,
+    "Authorization": `Bearer ${accessToken}`
+  }
+  const response = await fetch(url, options);
+  if (response.ok) {
+    if (!expectResponse) {
+      return {} as T
+    }
+    return await response.json();
+  } else {
+    throw new Error(`Spotify API error: ${response.status} ${response.statusText}`);
+  }
+}
+
+async function search(query: string, types: string[], limit: number = 5, market: string = "from_token"): Promise<SearchResult> {
   const queryParams = new URLSearchParams();
   queryParams.append("q", query);
   queryParams.append("type", types.join(","));
@@ -131,83 +147,68 @@ async function search(query: string, types: string[], limit: number = 5, market:
   queryParams.append("limit", limit.toString());
   const url = `https://api.spotify.com/v1/search?${queryParams.toString()}`;
   try {
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`
-      }
-    });
-    if (response.ok) {
-      const responseResult: SearchResult = await response.json();
-      if (responseResult.error) {
-        return responseResult;
-      }
-      const result: SearchResult = {};
-      if (responseResult.tracks) {
-        result.tracks = { items: responseResult.tracks.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          artists: item.artists.map(artist => ({ id: artist.id, name: artist.name })),
-          album: { name: item.album.name, id: item.album.id }
-        }))};
-      }
-      if (responseResult.artists) {
-        result.artists = { items: responseResult.artists.items.map(item => ({
-          id: item.id,
-          name: item.name
-        }))};
-      }
-      if (responseResult.albums) {
-        result.albums = { items: responseResult.albums.items.map(item => ({
-          id: item.id,
-          name: item.name
-        }))};
-      }
-      if (responseResult.playlists) {
-        result.playlists = { items: responseResult.playlists.items.map(item => ({
-          id: item.id,
-          name: item.name
-        }))};
-      }
-      if (responseResult.shows) {
-        result.shows = { items: responseResult.shows.items.map(item => ({
-          id: item.id,
-          name: item.name
-        }))};
-      }
-      if (responseResult.episodes) {
-        result.episodes = { items: responseResult.episodes.items.map(item => ({
-          id: item.id,
-          name: item.name
-        }))};
-      }
-      return result;
-    } else {
-      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
+    const response = await callApi<SearchResult>(url);
+    if (response.error) {
+      return response;
     }
+    const result: SearchResult = {};
+    if (response.tracks) {
+      result.tracks = { items: response.tracks.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        artists: item.artists.map(artist => ({ id: artist.id, name: artist.name })),
+        album: { name: item.album.name, id: item.album.id }
+      }))};
+    }
+    if (response.artists) {
+      result.artists = { items: response.artists.items.map(item => ({
+        id: item.id,
+        name: item.name
+      }))};
+    }
+    if (response.albums) {
+      result.albums = { items: response.albums.items.map(item => ({
+        id: item.id,
+        name: item.name
+      }))};
+    }
+    if (response.playlists) {
+      result.playlists = { items: response.playlists.items.map(item => ({
+        id: item.id,
+        name: item.name
+      }))};
+    }
+    if (response.shows) {
+      result.shows = { items: response.shows.items.map(item => ({
+        id: item.id,
+        name: item.name
+      }))};
+    }
+    if (response.episodes) {
+      result.episodes = { items: response.episodes.items.map(item => ({
+        id: item.id,
+        name: item.name
+      }))};
+    }
+    return result;
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
 }
 
 async function playTracks(deviceId: string, trackIds: string[]) {
-  const accessToken = await loginFlow.getAccessToken();
   try {
     const options: RequestInit = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
       },
     }
     if (trackIds.length > 0) {
       options.body = JSON.stringify({ uris: trackIds.map(id => `spotify:track:${id}`) });
     }
-    const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, options);
-    if (response.ok) {
-      return { result: "playback started" };
-    } else {
-      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
-    }
+    await callApi<void>(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, options, false);
+    return { result: "playback started" };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
@@ -221,20 +222,11 @@ async function playTopTracks(deviceId: string, artist: string) {
   if (!result.artists) {
     return { error: "No artist found" };
   }
-  const accessToken = await loginFlow.getAccessToken();
-  const artistId = result.artists.items[0].id;
-  const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
   try {
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`
-      }
-    })
-    if (!response.ok) {
-      return { error: `Spotify API error: ${response.status} ${response.statusText}` };
-    }
-    const tracks: {tracks: {id: string}[]} = await response.json();
-    const trackIds = tracks.tracks.map((track) => track.id);
+    const artistId = result.artists.items[0].id;
+    const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
+    const response = await callApi<{tracks: {id: string}[]}>(url);
+    const trackIds = response.tracks.map((track) => track.id);
     return playTracks(deviceId, trackIds);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
@@ -460,7 +452,9 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         if (!state) {
           return;
         }
-        setPlayerState(current => ({ ...current, position: state.position / 1000, duration: state.duration / 1000}))
+        if (!state.paused) {
+          setPlayerState(current => ({...current, position: state.position / 1000, duration: state.duration / 1000}))
+        }
       });
     };
     const positionInterval = window.setInterval(updatePosition, 1000);
