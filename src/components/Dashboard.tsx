@@ -253,17 +253,17 @@ export function Dashboard() {
   const {settings} = useSettings();
   
   React.useEffect(() => {
-    const showDashboard = timers.length > 0 || upcomingEvents.length > 0;
+    const showDashboard = timers.length > 0 || upcomingEvents.length > 0 || settings.enableSpotify;
     document.documentElement.style.setProperty('--timer-width', showDashboard ? '230px' : '0');
 
-  }, [timers, upcomingEvents]);
+  }, [timers, upcomingEvents, settings.enableSpotify]);
   
   return (
     <ThemeProvider theme={theme}>
       <div
         className="dashboard"
         style={{
-            display: timers.length > 0 || (settings.enableGoogle && upcomingEvents.length > 0) ? "flex" : "none"
+            display: timers.length > 0 || (settings.enableGoogle && upcomingEvents.length > 0) || settings.enableSpotify ? "flex" : "none"
         }}
       >
         {settings.enableGoogle && upcomingEvents.length > 0 && (
