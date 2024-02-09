@@ -9,6 +9,7 @@
       "dom"
     ],
     "module": "ESNext",
+    "skipLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
