@@ -18,10 +18,6 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/directions-api/, '')
       }
-    },
-    headers: {
-      "Cross-Origin-Opener-Policy": "restrict-properties",
-      "Cross-Origin-Embedder-Policy": "unsafe-none"
     }
   }
 })
