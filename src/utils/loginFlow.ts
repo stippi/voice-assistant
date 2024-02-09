@@ -175,6 +175,7 @@ export class LoginFlow {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
+        ...this.additionalTokenParams,
         client_id: this.clientId,
         grant_type: 'refresh_token',
         refresh_token: tokenSet.refreshToken
@@ -182,6 +183,7 @@ export class LoginFlow {
     });
     if (!response.ok) {
       // If we failed to refresh the token, re-run the login flow
+      console.error("failed to refresh token!")
       return await this.runLoginFlow();
     }
     const json = await response.json();
