@@ -4,7 +4,6 @@ import ListItemText from "@mui/material/ListItemText";
 import ListItem from "@mui/material/ListItem";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {IconButton} from "@mui/material";
-import React from "react";
 
 interface MonthDivider {
   type: 'month';
