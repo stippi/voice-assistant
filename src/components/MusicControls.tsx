@@ -84,7 +84,7 @@ export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUr
         />
       </CoverImage>
       <Box sx={{ml: 1.5, minWidth: 0}}>
-        <TextWithTooltip text={artist} variant="caption" color="text.secondary" fontWeight={500} />
+        <TextWithTooltip text={artist} variant="subtitle2" color="text.secondary" fontWeight={500} fontSize="12px" />
         <TextWithTooltip text={title} fontWeight={700}/>
         <TextWithTooltip text={albumTitle} noWrap variant="subtitle2" color="text.secondary" letterSpacing={-0.25} />
       </Box>
