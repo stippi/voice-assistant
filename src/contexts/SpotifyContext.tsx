@@ -365,6 +365,29 @@ async function skipPrevious(deviceId: string) {
   }
 }
 
+async function getDevices() {
+  try {
+    const options: RequestInit = {
+      method: 'GET'
+    }
+
+    type DevicesResponse = {
+      "devices" : {
+        "id" : string,
+        "is_active" : boolean,
+        "is_private_session": boolean,
+        "is_restricted" : boolean,
+        "name" : string,
+        "type" : string,
+        "volume_percent" : number
+      }[]
+    }
+
+    return await callApi<DevicesResponse>(`https://api.spotify.com/v1/me/player/devices`, options, true);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
 
 export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, children }) => {
   const [accessToken, setAccessToken] = useState("");
@@ -522,6 +545,34 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     return () => clearInterval(interval);
   }, [accessToken]);
   
+  // Attempt to re-connect the player after inactivity
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        getDevices().then(result => console.log("devices", result));
+        if (playerRef.current) {
+          console.log('attempting to reconnect the Spotify player');
+          playerRef.current.disconnect();
+          playerRef.current.connect().then(success => {
+            if (success) {
+              console.log('Spotify Player reconnected successfully');
+              setPlayer(playerRef.current);
+            } else {
+              console.error('failed to reconnect Spotify Player');
+              setPlayer(null);
+            }
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   return (
     <SpotifyContext.Provider
       value={{
