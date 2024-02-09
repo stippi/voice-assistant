@@ -110,6 +110,13 @@
   font-style: italic;
 }
 
+@font-face {
+  font-family: KomikaAxis;
+  src: url(assets/fonts/komika-axis/KOMIKAX.ttf) format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

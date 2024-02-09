@@ -7,9 +7,16 @@ import DoneIcon from '@mui/icons-material/Done';
 import EditIcon from '@mui/icons-material/Edit';
 import {ChatInfo} from "../model/chat.ts";
 
-const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onMouseLeave, isSelected }: ItemProps) => {
+const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, isSelected }: ItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentName, setCurrentName] = useState(chat.name);
+  const [ hovered, setHovered ] = React.useState(false);
+  const onMouseEnter = () => {
+    setHovered(true);
+  };
+  const onMouseLeave = () => {
+    setHovered(false);
+  };
   
   useEffect(() => {
     if (!isSelected) {
@@ -31,21 +38,37 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
   return (
     <ListItem
       disablePadding
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       secondaryAction={
         isEditing ? (
           <IconButton edge="end" aria-label="done" size="small" onClick={doneRenaming}>
             <DoneIcon fontSize="inherit"/>
           </IconButton>
         ) : isSelected ? (
-          <>
+          <div
+            style={{
+              opacity: hovered ? 1 : 0,
+              transition: 'opacity 0.2s ease-in-out',
+              backgroundColor: 'inherit',
+            }}
+          >
             <IconButton edge="end" aria-label="rename" size="small" onClick={() => setIsEditing(true)}>
               <EditIcon fontSize="inherit"/>
             </IconButton>
-            <IconButton edge="end" aria-label="delete" size="small" onClick={onDelete}>
+            <IconButton
+              edge="end" aria-label="delete" size="small" onClick={onDelete}
+              style={{
+                opacity: hovered ? 1 : 0,
+                transition: 'opacity 0.2s ease-in-out'
+              }}
+            >
               <DeleteIcon fontSize="inherit"/>
             </IconButton>
-          </>
-        ) : (<></>)
+          </div>
+        ) : (
+          <></>
+        )
       }
     >
       {isEditing ? (
@@ -64,8 +87,6 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, onMouseEnter, onM
         <ListItemButton
           disableRipple
           selected={isSelected}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
           onClick={onClick}
         >
           <ListItemText
@@ -89,23 +110,11 @@ interface ItemProps {
   onClick: () => void;
   onRename: (newName: string) => void;
   onDelete: () => void;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-  isHovered: boolean;
   isSelected: boolean;
 }
 
 export function ChatSelection() {
   const { chats, setCurrentChat, currentChatID, renameChat, deleteChat} = useChats();
-  const [ hoveredChat, setHoveredChat ] = React.useState("");
-  
-  const handleMouseEnter = (chatID: string) => {
-    setHoveredChat(chatID);
-  };
-  
-  const handleMouseLeave = () => {
-    setHoveredChat("");
-  };
   
   const sortedChats = chats.sort((a, b) => {
     return b.lastUpdated - a.lastUpdated;
@@ -120,9 +129,6 @@ export function ChatSelection() {
           onClick={() => setCurrentChat(chat.id)}
           onRename={(newName: string) => renameChat(chat.id, newName)}
           onDelete={() => deleteChat(chat.id)}
-          onMouseEnter={() => handleMouseEnter(chat.id)}
-          onMouseLeave={handleMouseLeave}
-          isHovered={chat.id === hoveredChat}
           isSelected={chat.id === currentChatID}
         />
       ))}

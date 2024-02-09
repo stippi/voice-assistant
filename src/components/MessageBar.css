@@ -64,7 +64,7 @@
 }
 
 .window-focused .textContainer:focus-within {
-    border-color: #007bff;
+    border-color: rgb(58,166,255);
 /*    border-color: #ffb700; */
     box-shadow:
             0 3px 5px rgba(0, 0, 0, 0.1);
