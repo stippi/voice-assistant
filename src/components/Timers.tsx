@@ -34,8 +34,21 @@ function TimerItem({ timer, removeTimer }: Props) {
   
   return (
     <ListItem
+      sx={{
+        '&:hover .MuiIconButton-root': {
+          opacity: 1,
+        },
+      }}
       secondaryAction={
-        <IconButton aria-label="delete" size="small" onClick={removeTimer}>
+        <IconButton
+          aria-label="delete"
+          size="small"
+          onClick={removeTimer}
+          sx={{
+            opacity: 0,
+            transition: 'opacity 0.2s ease-in-out',
+          }}
+        >
           <DeleteIcon fontSize="inherit"/>
         </IconButton>
       }

@@ -95,25 +95,25 @@ function Event({monthDay, weekday, summary, startTime, endTime, uiLink}: EventPr
     window.open(uiLink, '_blank');
   }
   
-  const [ hovered, setHovered ] = React.useState(false);
-  const handleMouseEnter = () => {
-    setHovered(true);
-  };
-  const handleMouseLeave = () => {
-    setHovered(false);
-  };
-  
   return (
     <ListItem
       alignItems={"flex-start"}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      sx={{
+        '&:hover .MuiIconButton-root': {
+          opacity: 1,
+        },
+      }}
       secondaryAction={
-        <IconButton aria-label="open event" size="small" onClick={openEvent}>
-          <OpenInNewIcon fontSize="inherit" style={{
-            opacity: hovered ? 1 : 0,
+        <IconButton
+          aria-label="open event"
+          size="small"
+          onClick={openEvent}
+          sx={{
+            opacity: 0,
             transition: 'opacity 0.2s ease-in-out',
-          }}/>
+          }}
+        >
+          <OpenInNewIcon fontSize="inherit" />
         </IconButton>
       }
     >
