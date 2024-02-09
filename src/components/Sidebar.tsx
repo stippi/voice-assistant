@@ -17,11 +17,12 @@ import useChats from "../hooks/useChats";
 import './Sidebar.css'
 import {ChatSelection} from "./ChatSelection.tsx";
 import {AssistantSettings} from "./AssistantSettings.tsx";
+import {RiRobot2Fill} from "react-icons/ri";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
-    paddingLeft: 24,
-    paddingRight: 24,
+    paddingLeft: 16,
+    paddingRight: 16,
   },
   '& .MuiListItemIcon-root': {
     minWidth: 0,
@@ -85,13 +86,13 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: 'rgb(102, 157, 246)'
+      main: 'rgb(58,166,255)'
     },
     text: {
       primary: 'rgb(235, 235, 241)',
     },
     background: {
-      paper: 'rgb(5, 30, 52)'
+      paper: 'rgb(14,32,49)'
     },
   }
 });
@@ -125,13 +126,25 @@ export function Sidebar() {
         }}
         >
           <SidebarList component="nav" disablePadding>
-            <ListItem>
-              <ListItemIcon sx={{ fontSize: 20 }}>🤖</ListItemIcon>
+            <ListItem
+              sx={{
+                color: 'rgb(255,143,16)',
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  color: 'inherit',
+                  fontSize: 20
+                }}
+              >
+                <RiRobot2Fill />
+              </ListItemIcon>
               <ListItemText
                 sx={{ my: 0 }}
                 primary="Voice Assistant"
                 primaryTypographyProps={{
-                  fontSize: 20,
+                  fontFamily: "KomikaAxis",
+                  fontSize: 17,
                   fontWeight: 'medium',
                   letterSpacing: 0,
                 }}
