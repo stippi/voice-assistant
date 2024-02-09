@@ -241,7 +241,7 @@ function MusicList() {
       settingsKey="showPlaylist"
       disableExpand={!playerState.trackId}
     >
-      <Divider />
+      {playerState.trackId && <Divider />}
       <MusicPlaylist/>
     </CollapsibleList>
   );
