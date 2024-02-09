@@ -26,7 +26,7 @@ const SidebarList = styled(List)<{ component?: React.ElementType }>({
   },
   '& .MuiListItemIcon-root': {
     minWidth: 0,
-    marginRight: 16,
+    marginRight: 12,
   },
   '& .MuiSvgIcon-root': {
     fontSize: 20,
@@ -63,7 +63,12 @@ const theme = createTheme({
     },
     MuiInputBase: {
       styleOverrides: {
+        root: {
+          paddingLeft: '16px!important'
+        },
         input: {
+          paddingTop: '8px',
+          paddingBottom: '8px',
           fontSize: '14px'
         }
       }
@@ -128,7 +133,7 @@ export function Sidebar() {
           <SidebarList component="nav" disablePadding>
             <ListItem
               sx={{
-                color: 'rgb(255,143,16)',
+                color: 'rgb(255, 143, 16)',
               }}
             >
               <ListItemIcon
@@ -140,12 +145,16 @@ export function Sidebar() {
                 <RiRobot2Fill />
               </ListItemIcon>
               <ListItemText
-                sx={{ my: 0 }}
+                sx={{
+                  my: 0,
+                  textShadow: '0 0 8px rgba(255, 143, 16, 0.2)'
+              }}
                 primary="Voice Assistant"
                 primaryTypographyProps={{
                   fontFamily: "KomikaAxis",
-                  fontSize: 17,
+                  fontSize: 18,
                   fontWeight: 'medium',
+                  paddingBottom: '3px',
                   letterSpacing: 0,
                 }}
               />
