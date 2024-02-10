@@ -367,10 +367,6 @@ async function skipPrevious(deviceId: string) {
 
 async function getDevices() {
   try {
-    const options: RequestInit = {
-      method: 'GET'
-    }
-
     type DevicesResponse = {
       "devices" : {
         "id" : string,
@@ -383,7 +379,7 @@ async function getDevices() {
       }[]
     }
 
-    return await callApi<DevicesResponse>(`https://api.spotify.com/v1/me/player/devices`, options, true);
+    return await callApi<DevicesResponse>(`https://api.spotify.com/v1/me/player/devices`);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
