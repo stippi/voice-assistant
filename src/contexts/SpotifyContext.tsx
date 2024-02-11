@@ -11,7 +11,7 @@ type Track = {
   uiLink: string;
 };
 
-type SpotifyPlayerState = {
+export type SpotifyPlayerState = {
   paused: boolean;
   trackId: string;
   name: string;
@@ -572,6 +572,31 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
   //     }
   //   }
   // }, [connected, spotifyPlayer, idleTime]);
+  
+  useEffect(() => {
+    // Reduce the volume while the user is speaking
+    let volume = 0.5;
+    if (spotifyPlayer) {
+      spotifyPlayer.getVolume().then(v => volume = v);
+    }
+    const reduceVolume = async () => {
+      if (spotifyPlayer) {
+        volume = await spotifyPlayer.getVolume();
+        await spotifyPlayer.setVolume(0.075);
+      }
+    };
+    const restoreVolume = async () => {
+      if (spotifyPlayer) {
+        await spotifyPlayer.setVolume(volume);
+      }
+    };
+    document.addEventListener("reduce-volume", reduceVolume);
+    document.addEventListener("restore-volume", restoreVolume);
+    return () => {
+      document.removeEventListener("reduce-volume", reduceVolume);
+      document.removeEventListener("restore-volume", restoreVolume);
+    }
+  }, [spotifyPlayer]);
   
   const performConnected = React.useCallback(async (deviceId: string, callback: () => Promise<Result>) => {
     if (deviceId === ourDeviceId) {

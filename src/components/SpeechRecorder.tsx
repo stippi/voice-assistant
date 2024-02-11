@@ -193,6 +193,8 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   const startConversation = useCallback(() => {
     setConversationOpen(true);
     playSound('activation');
+    // Send the "reduce-volume" custom event
+    document.dispatchEvent(new CustomEvent('reduce-volume'));
     if (settingsRef.current.useWhisper) {
       startRecording();
     } else {
@@ -202,6 +204,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   
   const stopConversation = useCallback(() => {
     setConversationOpen(false);
+    document.dispatchEvent(new CustomEvent('restore-volume'));
     if (recordingStartedRef.current) {
       stopRecording();
     } else {
@@ -382,7 +385,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     ).then(() => {
       console.log('Porcupine initialized');
     }).catch((error) => {
-      console.error('Faileed to initialize Porcupine', error);
+      console.error('failed to initialize Porcupine', error);
     });
     
     CobraWorker.create(
@@ -392,7 +395,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       console.log('Cobra initialized');
       cobra.current = cobraWorker;
     }).catch((error) => {
-      console.error('Faileed to initialize Cobra', error);
+      console.error('failed to initialize Cobra', error);
     });
     
     return () => {
@@ -400,13 +403,13 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         cobra.current.release().then(() => {
           console.log('Cobra released');
         }).catch((error) => {
-          console.error('Failed to release Cobra', error);
+          console.error('failed to release Cobra', error);
         });
       }
       release().then(() => {
         console.log('Porcupine released');
       }).catch((error) => {
-        console.error('Failed to release Porcupine', error);
+        console.error('failed to release Porcupine', error);
       });
     }
   }, [init, release, voiceProbabilityCallback, settings.triggerWord])
