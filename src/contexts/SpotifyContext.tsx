@@ -196,7 +196,9 @@ async function search(query: string, types: string[], limit: number = 5, market:
   }
 }
 
-async function playTracks(deviceId: string, trackIds: string[]) {
+type Result = { result: string } | { error: string };
+
+async function playTracks(deviceId: string, trackIds: string[]): Promise<Result> {
   try {
     const options: RequestInit = {
       method: 'PUT',
@@ -214,10 +216,10 @@ async function playTracks(deviceId: string, trackIds: string[]) {
   }
 }
 
-async function playTopTracks(deviceId: string, artist: string) {
+async function playTopTracks(deviceId: string, artist: string): Promise<Result> {
   const result = await search(artist, ["artist"], 1);
   if (result.error) {
-    return result;
+    return { error: result.error };
   }
   if (!result.artists) {
     return { error: "No artist found" };
@@ -233,7 +235,7 @@ async function playTopTracks(deviceId: string, artist: string) {
   }
 }
 
-async function pausePlayback(deviceId: string) {
+async function pausePlayback(deviceId: string): Promise<Result> {
   const accessToken = await loginFlow.getAccessToken();
   try {
     const response = await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
@@ -325,7 +327,7 @@ async function pausePlayback(deviceId: string) {
 //   }
 // }
 //
-async function skipNext(deviceId: string) {
+async function skipNext(deviceId: string): Promise<Result> {
   const accessToken = await loginFlow.getAccessToken();
   try {
     const response = await fetch(`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`, {
@@ -345,7 +347,7 @@ async function skipNext(deviceId: string) {
   }
 }
 
-async function skipPrevious(deviceId: string) {
+async function skipPrevious(deviceId: string): Promise<Result> {
   const accessToken = await loginFlow.getAccessToken();
   try {
     const response = await fetch(`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`, {
@@ -365,29 +367,29 @@ async function skipPrevious(deviceId: string) {
   }
 }
 
-async function getDevices() {
-  try {
-    type DevicesResponse = {
-      "devices" : {
-        "id" : string,
-        "is_active" : boolean,
-        "is_private_session": boolean,
-        "is_restricted" : boolean,
-        "name" : string,
-        "type" : string,
-        "volume_percent" : number
-      }[]
-    }
-
-    return await callApi<DevicesResponse>(`https://api.spotify.com/v1/me/player/devices`);
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "unknown error" };
-  }
-}
+// async function getDevices() {
+//   try {
+//     type DevicesResponse = {
+//       "devices" : {
+//         "id" : string,
+//         "is_active" : boolean,
+//         "is_private_session": boolean,
+//         "is_restricted" : boolean,
+//         "name" : string,
+//         "type" : string,
+//         "volume_percent" : number
+//       }[]
+//     }
+//
+//     return await callApi<DevicesResponse>(`https://api.spotify.com/v1/me/player/devices`);
+//   } catch (error) {
+//     return { error: error instanceof Error ? error.message : "unknown error" };
+//   }
+// }
 
 export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, children }) => {
   const [accessToken, setAccessToken] = useState("");
-  const [deviceId, setDeviceId] = useState("");
+  const [ourDeviceId, setDeviceId] = useState("");
   const [spotifyPlayer, setPlayer] = React.useState<Spotify.Player | null>(null);
   const [playerState, setPlayerState] = useState<SpotifyPlayerState>({
     paused: true,
@@ -404,6 +406,8 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     previousTracks: [],
     nextTracks: [],
   });
+  //const [idleTime, setIdleTime] = useState(0);
+  const [connected, setConnected] = useState(false);
   
   useEffect(() => {
     if (!enableSpotify) {
@@ -469,10 +473,20 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       if (!playerRef.current) return;
       playerRef.current.getCurrentState().then(state => {
         if (!state) {
+          setConnected(connected => {
+            if (connected) {
+              console.log("lost connection to Spotify player");
+            }
+            return false;
+          });
           return;
         }
+        setConnected(true);
         if (!state.paused) {
           setPlayerState(current => ({...current, position: state.position / 1000, duration: state.duration / 1000}))
+          //setIdleTime(0);
+        } else {
+          //setIdleTime(current => current + 1);
         }
       });
     };
@@ -540,48 +554,88 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     }, 1000 * 60 * 15);
     return () => clearInterval(interval);
   }, [accessToken]);
+
+  // Disconnect Spotify player after 20 seconds of inactivity
+  // useEffect(() => {
+  //   if (connected && idleTime > 20) {
+  //     if (spotifyPlayer) {
+  //       console.log("disconnecting idle Spotify player");
+  //       spotifyPlayer.disconnect();
+  //       setIdleTime(0);
+  //     }
+  //   }
+  // }, [connected, spotifyPlayer, idleTime]);
   
-  // Attempt to re-connect the player after inactivity
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        getDevices().then(result => console.log("devices", result));
-        if (playerRef.current) {
-          console.log('attempting to reconnect the Spotify player');
-          playerRef.current.disconnect();
-          playerRef.current.connect().then(success => {
-            if (success) {
-              console.log('Spotify Player reconnected successfully');
-              setPlayer(playerRef.current);
-            } else {
-              console.error('failed to reconnect Spotify Player');
-              setPlayer(null);
-            }
-          });
-        }
+  const performConnected = React.useCallback(async (deviceId: string, callback: () => Promise<Result>) => {
+    if (deviceId === ourDeviceId) {
+      if (!spotifyPlayer) {
+        return { error: "Spotify player not ready" };
       }
-    };
+      if (!connected) {
+        console.log("connecting Spotify player");
+        if (!(await spotifyPlayer.connect())) {
+          return { error: "Spotify player could not connect" };
+        }
+        // TODO: Now we may have a new device ID, but the caller past the old one
+      }
+    }
+    return callback();
+  }, [spotifyPlayer, connected, ourDeviceId]);
+  
+  const playTracksConnected = React.useCallback(async (deviceId: string, trackIds: string[]): Promise<Result> => {
+    return performConnected(deviceId, async () => playTracks(deviceId, trackIds));
+  }, [performConnected]);
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+  const playTopTracksConnected = React.useCallback(async (deviceId: string, artist: string): Promise<Result> => {
+    return performConnected(deviceId, async () => playTopTracks(deviceId, artist));
+  }, [performConnected]);
+  
+  const pausePlaybackConnected = React.useCallback(async (deviceId: string): Promise<Result> => {
+    if (deviceId === ourDeviceId) {
+      if (!spotifyPlayer) {
+        return { error: "Spotify player not ready" };
+      }
+      await spotifyPlayer.pause();
+      return { result: "playback paused" };
+    }
+    return pausePlayback(deviceId);
+  }, [spotifyPlayer, ourDeviceId]);
 
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
+  const skipNextConnected = React.useCallback(async (deviceId: string): Promise<Result> => {
+    if (deviceId === ourDeviceId) {
+      if (!spotifyPlayer) {
+        return { error: "Spotify player not ready" };
+      }
+      await spotifyPlayer.nextTrack();
+      return { result: "playing next track" };
+    }
+    return skipNext(deviceId);
+  }, [spotifyPlayer, ourDeviceId]);
+  
+  const skipPreviousConnected = React.useCallback(async (deviceId: string): Promise<Result> => {
+    if (deviceId === ourDeviceId) {
+      if (!spotifyPlayer) {
+        return { error: "Spotify player not ready" };
+      }
+      await spotifyPlayer.previousTrack();
+      return { result: "playing previous track" };
+    }
+    return skipPrevious(deviceId);
+  }, [spotifyPlayer, ourDeviceId]);
+  
   return (
     <SpotifyContext.Provider
       value={{
         accessToken,
-        deviceId,
+        deviceId: ourDeviceId,
         player: spotifyPlayer,
         playerState,
         search,
-        playTracks,
-        playTopTracks,
-        pausePlayback,
-        skipNext,
-        skipPrevious,
+        playTracks: playTracksConnected,
+        playTopTracks: playTopTracksConnected,
+        pausePlayback: pausePlaybackConnected,
+        skipNext: skipNextConnected,
+        skipPrevious: skipPreviousConnected,
       }}>
       {children}
     </SpotifyContext.Provider>
