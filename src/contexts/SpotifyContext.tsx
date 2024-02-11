@@ -439,6 +439,9 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     const accountErrorListener = ({ message }: { message: string }) => {
       console.error(message);
     }
+    const playbackErrorListener = ({ message }: { message: string }) => {
+      console.error(message);
+    }
     const playerStateChangedListener = ({paused, disallows, track_window: { current_track, previous_tracks, next_tracks }, position, duration }: Spotify.PlaybackState) => {
       setPlayerState({
         paused: paused,
@@ -497,8 +500,8 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         console.log("creating Spotify player");
         playerRef.current = new Spotify.Player({
           name: 'Voice Assistant',
-          getOAuthToken: cb => {
-            loginFlow.getAccessToken().then(accessToken => cb(accessToken));
+          getOAuthToken: callback => {
+            loginFlow.getAccessToken().then(accessToken => callback(accessToken));
           },
           volume: 0.5
         });
@@ -511,6 +514,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       playerRef.current.addListener('authentication_error', authenticationErrorListener);
       playerRef.current.addListener('account_error', accountErrorListener);
       playerRef.current.addListener('player_state_changed', playerStateChangedListener);
+      playerRef.current.addListener('playback_error', playbackErrorListener);
       
       playerRef.current.connect().then(result => {
         if (result) {
@@ -522,8 +526,12 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       });
     }
     
-    const apiScript = createScript("https://sdk.scdn.co/spotify-player.js", () => {});
-    document.body.appendChild(apiScript);
+    if (!playerRef.current) {
+      const apiScript = createScript("https://sdk.scdn.co/spotify-player.js", () => {});
+      document.body.appendChild(apiScript);
+    } else {
+      window.onSpotifyWebPlaybackSDKReady();
+    }
 
     return () => {
       clearInterval(positionInterval);
@@ -536,12 +544,11 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         playerRef.current.removeListener('authentication_error', authenticationErrorListener);
         playerRef.current.removeListener('account_error', accountErrorListener);
         playerRef.current.removeListener('player_state_changed', playerStateChangedListener);
+        playerRef.current.removeListener('playback_error', playbackErrorListener);
         
         playerRef.current.disconnect();
       }
       setPlayer(null);
-      window.onSpotifyWebPlaybackSDKReady = () => {};
-      document.body.removeChild(apiScript);
     };
   }, [enableSpotify]);
   
