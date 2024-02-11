@@ -36,6 +36,7 @@ async function streamChatCompletion(
 ) {
   let audioEndedPromise: Promise<unknown> | null = null;
   let currentAudio: HTMLAudioElement | null = null;
+  let firstAudio = true;
   
   const playSentence = async (sentence: string) => {
     if (responseCancelledRef.current) {
@@ -67,6 +68,11 @@ async function streamChatCompletion(
       }
     }
     
+    if (firstAudio) {
+      firstAudio = false;
+      document.dispatchEvent(new CustomEvent('reduce-volume'));
+    }
+ 
     const audio = new Audio(url);
     currentAudio = audio;
     audioEndedPromise = new Promise<void>((resolve) => {
@@ -212,14 +218,18 @@ async function streamChatCompletionLoop(
   let tries = 0
   responseLevelRef.current++;
   while (tries < 4) {
+    let playbackState: Spotify.PlaybackState | null = null;
+    if (appContextRef.current.spotify) {
+      playbackState = await appContextRef.current.spotify.player.getCurrentState();
+    }
     const systemMessage = generateSystemMessage(
-      audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location);
+      audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location, playbackState);
     const stream = openai.beta.chat.completions.stream({
       messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: model,
       stream: true,
       tools: tools,
-    })
+    });
     await streamChatCompletion(
       currentMessages, setMessages, stream, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
@@ -330,6 +340,7 @@ export default function VoiceAssistant() {
               }
               if (responseLevelRef.current === 0) {
                 console.log("audio finished");
+                document.dispatchEvent(new CustomEvent('restore-volume'));
                 setResponding(false);
                 respondingRef.current = false;
                 cancelAudioRef.current = () => {};

@@ -9,6 +9,16 @@ function generateLocationSentence(location: GeoLocation |  undefined) {
   return `- The current location is ${location.city}, ${location.region}, ${location.country}. Latitude: ${location.latitude}, Longitude: ${location.longitude}.`;
 }
 
+function generateSpotifyPlaybackState(state: Spotify.PlaybackState | null) {
+  if (!state || state.paused) {
+    return "- No music is currently playing.";
+  }
+  const track = state.track_window.current_track;
+  return `- The currently playing music is '${track.name}' (trackId: ${track.id}) by ` +
+    `${track.artists.map(artist => `${artist.name} (artistId: ${artist.uri.replace("spotify:artist:", "")})`).join(", ")}. ` +
+    `The album is ${track.album.name} (albumId: ${track.album.uri.replace("spotify:album:", "")}).`;
+}
+
 function generateTimersSection(timers: Timer[]) {
   return `${timers.length > 0 ? `You have ${timers.length} active timer${timers.length > 1 ? 's' : ''}:\n${timers.map(timer => `- ID: ${timer.id}, title '${timer.title}' at ${timer.time}`).join('\n')}\n` : ''}`;
 }
@@ -37,7 +47,13 @@ const personalities = {
   zen: "You are an endlessly patient, helpful and wise assistant."
 }
 
-export default function generateSystemMessage(optimizeForVoiceOutput: boolean, personality: Personality, timers: Timer[], location: GeoLocation | undefined) {
+export default function generateSystemMessage(
+  optimizeForVoiceOutput: boolean,
+  personality: Personality,
+  timers: Timer[],
+  location: GeoLocation | undefined,
+  playbackState: Spotify.PlaybackState | null
+) {
   const voiceOptimization = optimizeForVoiceOutput ? `Note, the user's last message was transcribed from their speech and may be incomplete or garbled.
 If you think that is the case, just ask the user to clarify.
 Your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. It is capable of processing any language, so reply in the user's language.
@@ -60,6 +76,7 @@ When finding a track on Spotify, always start playing the first result instead o
 You have access to some realtime data as provided below:
 - The current time and date is ${currentTimeAndDate}.
 ${generateLocationSentence(location)}\n
+${generateSpotifyPlaybackState(playbackState)}\n
 ${generateTimersSection(timers)}\n
 ${restoreMemory()}`
   };
