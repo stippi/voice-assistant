@@ -143,6 +143,7 @@ export function PositionControls({position, duration, setPosition}: PositionProp
           alignItems: 'center',
           justifyContent: 'space-between',
           mt: -2,
+          marginBottom: -0.75,
         }}
       >
         <TinyText>{formatDuration(position)}</TinyText>
