@@ -377,7 +377,8 @@ export const tools: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "play_on_spotify",
-      description: "Start playing tracks, an album, artist or a playlist on Spotify.",
+      description: "Start playing tracks, an album, artist or a playlist on Spotify. " +
+        "Calling this function replaces the current playlist!",
       parameters: {
         type: "object",
         properties: {
@@ -392,7 +393,9 @@ export const tools: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "find_artists_and_play_top_songs_on_spotify",
-      description: "Searches for 'queries' on Spotify and plays top songs of the found artist(s). The songs from different artists are mixed randomly.",
+      description: "Searches for 'queries' on Spotify and plays top songs of the found artist(s). " +
+        "Calling this function replaces the current playlist! " +
+        "Pass multiple artists to one tool invocation to play a mix of top songs from different artists.",
       parameters: {
         type: "object",
         properties: {
