@@ -16,34 +16,6 @@
     background-color: transparent;
 }
 
-.chat-item {
-    position: relative;
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-
-    margin: 0 1rem;
-    border-radius: 0.5rem;
-
-    font-size: smaller;
-
-    cursor: pointer;
-
-    transition: background-color 0.2s ease-in-out;
-}
-
-.chat-item:hover {
-    background-color: #e5e5e5;
-}
-
-.active-chat-item {
-    background-color: #efefef;
-}
-
-.active-chat-item:hover {
-    background-color: #efefef;
-}
-
 .chat-buttons {
     position: absolute;
     border-radius: 0.5rem;

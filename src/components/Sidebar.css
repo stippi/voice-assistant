@@ -20,27 +20,6 @@
     transition: min-width 0.3s ease-in-out, max-width 0.3s ease-in-out;
 }
 
-.chat-item {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-
-    margin: 0 1rem;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-
-    font-size: smaller;
-
-    cursor: pointer;
-
-    transition: background-color 0.2s ease-in-out;
-}
-
-.chat-item:hover {
-    background-color: #e5e5e5;
-}
-
-
 .sidebar-toggle {
     position: absolute;
     top: 0;
