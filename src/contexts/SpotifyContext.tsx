@@ -3,7 +3,7 @@ import {createScript} from "../utils/createScript";
 import {
   loginFlow,
   search,
-  playTracks,
+  play,
   playTopTracks,
   pausePlayback,
   skipNext,
@@ -42,8 +42,8 @@ export type SpotifyContextType = {
   player: Spotify.Player | null;
   playerState: SpotifyPlayerState;
   search: (query: string, types: string[], limit?: number, market?: string) => Promise<SearchResult>;
-  playTracks: (deviceId: string, trackIds: string[]) => Promise<{ result?: string, error?: string }>;
-  playTopTracks: (deviceId: string, artist: string) => Promise<{ result?: string, error?: string }>;
+  play: (deviceId: string, trackIds: string[], contextUri?: string) => Promise<{ result?: string, error?: string }>;
+  playTopTracks: (deviceId: string, artists: string[]) => Promise<{ result?: string, error?: string }>;
   pausePlayback: (deviceId: string) => Promise<{ result?: string, error?: string }>;
   skipNext: (deviceId: string) => Promise<{ result?: string, error?: string }>;
   skipPrevious: (deviceId: string) => Promise<{ result?: string, error?: string }>;
@@ -70,7 +70,7 @@ export const SpotifyContext = createContext<SpotifyContextType>({
     nextTracks: [],
   },
   search: search,
-  playTracks: playTracks,
+  play: play,
   playTopTracks: playTopTracks,
   pausePlayback: pausePlayback,
   skipNext: skipNext,
@@ -310,12 +310,12 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
     return callback();
   }, [spotifyPlayer, connected, ourDeviceId]);
   
-  const playTracksConnected = React.useCallback(async (deviceId: string, trackIds: string[]): Promise<Result> => {
-    return performConnected(deviceId, async () => playTracks(deviceId, trackIds));
+  const playConnected = React.useCallback(async (deviceId: string, trackIds: string[], contextUri?: string): Promise<Result> => {
+    return performConnected(deviceId, async () => play(deviceId, trackIds, contextUri));
   }, [performConnected]);
 
-  const playTopTracksConnected = React.useCallback(async (deviceId: string, artist: string): Promise<Result> => {
-    return performConnected(deviceId, async () => playTopTracks(deviceId, artist));
+  const playTopTracksConnected = React.useCallback(async (deviceId: string, artists: string[]): Promise<Result> => {
+    return performConnected(deviceId, async () => playTopTracks(deviceId, artists));
   }, [performConnected]);
   
   const pausePlaybackConnected = React.useCallback(async (deviceId: string): Promise<Result> => {
@@ -359,7 +359,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
         player: spotifyPlayer,
         playerState,
         search,
-        playTracks: playTracksConnected,
+        play: playConnected,
         playTopTracks: playTopTracksConnected,
         pausePlayback: pausePlaybackConnected,
         skipNext: skipNextConnected,
