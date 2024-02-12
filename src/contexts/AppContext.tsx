@@ -1,16 +1,16 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {Timer} from "../model/timer";
-import {GeoLocation} from "../model/location.ts";
-import useLocation from "../hooks/useLocation.tsx";
-import {SearchResult} from "./SpotifyContext.tsx";
+import {GeoLocation} from "../model/location";
+import useLocation from "../hooks/useLocation";
+import {SearchResult} from "../services/spotify";
 
 export type Spotify = {
   player: Spotify.Player;
   accessToken: string;
   deviceId: string;
   search: (query: string, types: string[], limit?: number, market?: string) => Promise<SearchResult>;
-  playTracks: (deviceId: string, trackIds: string[]) => Promise<{ result?: string, error?: string }>;
-  playTopTracks: (deviceId: string, artistId: string) => Promise<{ result?: string, error?: string }>;
+  play: (deviceId: string, trackIds: string[], contextUri?: string) => Promise<{ result?: string, error?: string }>;
+  playTopTracks: (deviceId: string, artists: string[]) => Promise<{ result?: string, error?: string }>;
   pausePlayback: (deviceId: string) => Promise<{ result?: string, error?: string }>;
 };
 

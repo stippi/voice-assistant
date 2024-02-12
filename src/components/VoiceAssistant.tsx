@@ -285,14 +285,14 @@ export default function VoiceAssistant() {
         accessToken: spotifyContext.accessToken,
         deviceId: spotifyContext.deviceId,
         search: spotifyContext.search,
-        playTracks: spotifyContext.playTracks,
+        play: spotifyContext.play,
         playTopTracks: spotifyContext.playTopTracks,
         pausePlayback: spotifyContext.pausePlayback,
       });
     } else {
       appContextRef.current.setSpotify(undefined);
     }
-  }, [spotifyContext.player, spotifyContext.accessToken, spotifyContext.deviceId, spotifyContext.search, spotifyContext.playTracks, spotifyContext.playTopTracks, spotifyContext.pausePlayback]);
+  }, [spotifyContext.player, spotifyContext.accessToken, spotifyContext.deviceId, spotifyContext.search, spotifyContext.play, spotifyContext.playTopTracks, spotifyContext.pausePlayback]);
   
   const sendMessage = React.useCallback((message: string, audible: boolean) => {
     console.log(`sendMessage("${message}", ${audible})`);

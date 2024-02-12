@@ -1,5 +1,6 @@
 import {LoginFlow} from "../utils/loginFlow.ts";
 import {SpotifyClientId} from "../secrets.ts";
+import {randomizeArray} from "../utils/randomizeArray.ts";
 
 export const loginFlow = new LoginFlow(
   "http://localhost:5173/spotify-callback",
@@ -125,7 +126,7 @@ export async function search(query: string, types: string[], limit: number = 5, 
 
 export type Result = { result: string } | { error: string };
 
-export async function playTracks(deviceId: string, trackIds: string[]): Promise<Result> {
+export async function play(deviceId: string, trackIds: string[], contextUri?: string): Promise<Result> {
   try {
     const options: RequestInit = {
       method: 'PUT',
@@ -135,6 +136,8 @@ export async function playTracks(deviceId: string, trackIds: string[]): Promise<
     }
     if (trackIds.length > 0) {
       options.body = JSON.stringify({ uris: trackIds.map(id => `spotify:track:${id}`) });
+    } else if (contextUri) {
+      options.body = JSON.stringify({ context_uri: contextUri });
     }
     await callApi<void>(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, options, false);
     return { result: "playback started" };
@@ -143,20 +146,26 @@ export async function playTracks(deviceId: string, trackIds: string[]): Promise<
   }
 }
 
-export async function playTopTracks(deviceId: string, artist: string): Promise<Result> {
-  const result = await search(artist, ["artist"], 1);
-  if (result.error) {
-    return { error: result.error };
-  }
-  if (!result.artists) {
-    return { error: "No artist found" };
-  }
+export async function playTopTracks(deviceId: string, artists: string[]): Promise<Result> {
   try {
-    const artistId = result.artists.items[0].id;
-    const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
-    const response = await callApi<{tracks: {id: string}[]}>(url);
-    const trackIds = response.tracks.map((track) => track.id);
-    return playTracks(deviceId, trackIds);
+    const trackIds: string[] = [];
+    for (const artist of artists) {
+      const result = await search(artist, ["artist"], 1);
+      if (result.error) {
+        console.warn(`failed to find artist ${artist}`, result.error);
+        continue;
+      }
+      if (!result.artists) {
+        console.warn(`Did not find artist id for ${artist}`);
+        continue;
+      }
+      const artistId = result.artists.items[0].id;
+      const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?limit=20&market=from_token`;
+      const response = await callApi<{tracks: {id: string}[]}>(url);
+      trackIds.push(...response.tracks.map((track) => track.id));
+    }
+    randomizeArray(trackIds);
+    return play(deviceId, trackIds);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }

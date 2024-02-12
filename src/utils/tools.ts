@@ -376,28 +376,29 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "play_tracks_on_spotify",
-      description: "Start streaming tracks on Spotify Player.",
+      name: "play_on_spotify",
+      description: "Start playing tracks, an album, artist or a playlist on Spotify.",
       parameters: {
         type: "object",
         properties: {
-          trackIds: { type: "array", items: { type: "string" }, description: "An array of track IDs" },
+          trackIds: { type: "array", items: { type: "string" }, description: "Optional. An array of track IDs" },
+          contextUri: { type: "string", description: "Optional. The Spotify URI of an album, artist, or playlist." }
         },
-        required: ["trackIds"]
+        required: []
       }
     }
   },
   {
     type: "function",
     function: {
-      name: "find_artist_and_play_top_songs_on_spotify",
-      description: "Searches for 'query' on Spotify and plays top songs of the found artist.",
+      name: "find_artists_and_play_top_songs_on_spotify",
+      description: "Searches for 'queries' on Spotify and plays top songs of the found artist(s). The songs from different artists are mixed randomly.",
       parameters: {
         type: "object",
         properties: {
-          query: { type: "string", description: "Artist name or query." },
+          queries: { type: "array", items: { type: "string" }, description: "One or more queries to find artists by." },
         },
-        required: ["query"]
+        required: ["queries"]
       }
     }
   },
@@ -524,10 +525,10 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
           args.mode || args.routingPreference ?
             { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
             : undefined);
-      case 'play_tracks_on_spotify':
-        return await playOnSpotify(appContext.spotify, args.trackIds);
-      case 'find_artist_and_play_top_songs_on_spotify':
-        return await playOnSpotifyArtist(appContext.spotify, args.query);
+      case 'play_on_spotify':
+        return await playOnSpotify(appContext.spotify, args.trackIds || [], args.contextUri);
+      case 'find_artists_and_play_top_songs_on_spotify':
+        return await playTopTracksOnSpotify(appContext.spotify, args.queries);
       case 'find_on_spotify':
         return await findOnSpotify(appContext.spotify, args.query, args.types, args.limit);
       case 'resume_spotify_playback':
@@ -1007,18 +1008,18 @@ async function findOnSpotify(spotify: Spotify | undefined, query: string, types:
   return await spotify.search(query, types, limit);
 }
 
-async function playOnSpotify(spotify: Spotify | undefined, trackIds: string[]) {
+async function playOnSpotify(spotify: Spotify | undefined, trackIds: string[], contextUri?: string) {
   if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.playTracks(spotify.deviceId, trackIds);
+  return await spotify.play(spotify.deviceId, trackIds, contextUri);
 }
 
-async function playOnSpotifyArtist(spotify: Spotify | undefined, artist: string) {
+async function playTopTracksOnSpotify(spotify: Spotify | undefined, artists: string[]) {
   if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.playTopTracks(spotify.deviceId, artist);
+  return await spotify.playTopTracks(spotify.deviceId, artists);
 }
 
 async function pauseSpotifyPlayback(spotify: Spotify | undefined) {
