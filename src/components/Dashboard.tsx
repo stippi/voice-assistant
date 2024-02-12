@@ -194,7 +194,7 @@ const theme = createTheme({
 });
 
 function MusicList() {
-  const {player, playerState, deviceId, playTracks, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
+  const {player, playerState, deviceId, play, pausePlayback, skipNext, skipPrevious} = useSpotifyContext();
   return (
     <CollapsibleList
       header={playerState.trackId && (
@@ -229,7 +229,7 @@ function MusicList() {
           canSkipNext={playerState.canSkipNext}
           togglePlay={async () => {
             if (playerState.paused) {
-              await playTracks(deviceId, []);
+              await play(deviceId, []);
             } else {
               await pausePlayback(deviceId);
             }

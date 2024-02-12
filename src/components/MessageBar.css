@@ -2,7 +2,7 @@
     position: fixed;
     bottom: 0;
     left: var(--sidebar-width);
-    right: var(--timer-width);
+    right: var(--dashboard-width);
 
     padding-bottom: 4rem;
 

@@ -1,7 +1,7 @@
 .messages {
     margin-left: var(--sidebar-width);
-    margin-right: var(--timer-width);
-    width: calc(100% - var(--sidebar-width) - var(--timer-width));
+    margin-right: var(--dashboard-width);
+    width: calc(100% - var(--sidebar-width) - var(--dashboard-width));
     transition:
             margin-left 0.3s ease-in-out,
             width 0.3s ease-in-out,
