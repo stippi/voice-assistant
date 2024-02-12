@@ -254,7 +254,7 @@ export function Dashboard() {
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || upcomingEvents.length > 0 || settings.enableSpotify;
-    document.documentElement.style.setProperty('--timer-width', showDashboard ? '230px' : '0');
+    document.documentElement.style.setProperty('--dashboard-width', showDashboard ? '230px' : '0');
 
   }, [timers, upcomingEvents, settings.enableSpotify]);
   
