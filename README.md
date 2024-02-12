@@ -43,15 +43,16 @@ export const SpotifyClientId = "<Your Spotify Client ID>";
 
 :bulb: **This file is ignored by git.**
 
-In order to use the GPT-4 model, your `platform.openai.com` account must have billing information and one successful payment.
-You can now manually initiate a payment via "Buy credits" on the [billing overview page](https://platform.openai.com/account/billing/overview).
+In order to use the GPT-4 model, your [platform.openai.com](https://platform.openai.com/) account must have billing information and one successful payment.
+If your account was never charged, yet, you can manually initiate a payment via "Buy credits" on the [billing overview page](https://platform.openai.com/account/billing/overview).
+This will "unlock" the GPT-4 models.
 
-The API key for `openweathermap.org` can be for the free tier.
+The API key for [openweathermap.org](https://openweathermap.org/) can be for the free tier.
 
-Similarly, the API key for `picovoice.ai` is free to obtain for personal use.
+Similarly, the API key for [picovoice.ai](https://picovoice.ai) is free to obtain for personal use.
 It just comes with a rate limit.
 Not providing the PicoVoiceAccessKey will most likely break wake-word detection.
-In theory, the Browser Speach Recognition API is used as a fallback, but it hasn't been tested in a while.
+In theory, the Browser Speech Recognition API is used as a fallback, but it hasn't been tested in a while.
 
 To get an API key for the Google APIs, you need create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
 
@@ -71,7 +72,7 @@ A number of things need to be configured in your cloud project:
 
 - Create an `OAuth 2.0-Client-ID`:
   - Add both `http://localhost:5173` and `http://localhost` to the authorized Javascript origins.
-  - Add both `http://localhost:5173` and `http://localhost` to the authorized redirection URIs (not entirely sure if this is indeed necessary).
+  - Add `http://localhost:5173/google-callback` to the authorized redirection URIs.
 - *Edit* the `OAuth Consent Screen`:
   - Set the start page to `http://localhost:5173` (not sure if this is indeed needed.)
   - Configure the scopes and include `https://www.googleapis.com/auth/calendar` and `https://www.googleapis.com/auth/contacts.readonly`.
@@ -84,7 +85,7 @@ For the optional Spotify integration (enabled in the Assistant Settings via the 
 To get a client ID, you need to register an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
 
 As website, specify `http://localhost:5173`.
-As redirect URL, also specify `http://localhost:5173`.
+As redirect URL, also specify `http://localhost:5173/spotify-callback`.
 
 When enabling the Spotify integration, you will be redirected to a Spotify login page where you also need to give Voice Assistant (or however you named your app in the Spotify developer dashboard) the requested permissions.
 In addition, the embedded playback streaming capabilities work only for Spotify Premium users, since the Web Playback SDK requires a Premium account.
