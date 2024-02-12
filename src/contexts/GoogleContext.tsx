@@ -100,7 +100,6 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
       orderBy: "startTime",
     }).then((response) => {
       const events = response.result.items;
-      console.log("Upcoming events:", events);
       setUpcomingEvents(events);
     });
   }
