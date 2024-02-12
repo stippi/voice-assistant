@@ -97,7 +97,7 @@ const theme = createTheme({
       primary: 'rgb(235, 235, 241)',
     },
     background: {
-      paper: 'rgb(14,32,49)'
+      paper: 'rgb(10, 30, 49)'
     },
   }
 });
