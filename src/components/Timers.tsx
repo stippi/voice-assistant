@@ -53,9 +53,9 @@ function TimerItem({ timer, removeTimer }: Props) {
         </IconButton>
       }
     >
-      {timer.ringing === true && <SoundWaves />}
-      <ListItemIcon sx={{ fontSize: 20 }}>
+      <ListItemIcon sx={{ fontSize: 20, position: "relative" }}>
         {timer.type === "countdown" ? <HourglassTopIcon fontSize="inherit" /> : <AlarmIcon fontSize="inherit" />}
+        {timer.ringing === true && <SoundWaves />}
       </ListItemIcon>
       <ListItemText
         sx={{ my: 0 }}

@@ -132,9 +132,11 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
             >
               {iconContent()}
               {titleContent()}
-              <IconButton onClick={toggleExpand} style={{height: 32, width: 32}}>
-                {expandContent()}
-              </IconButton>
+              {!disableExpand && (
+                <IconButton onClick={toggleExpand} style={{height: 32, width: 32}}>
+                  {expandContent()}
+                </IconButton>)
+              }
             </ListItem>
           ) : (
             <ListItemButton
@@ -269,7 +271,7 @@ export function Dashboard() {
         {settings.enableGoogle && upcomingEvents.length > 0 && (
           <CollapsibleList
             icon={<CalendarMonthIcon style={{color: "#00c4ff", fontSize: "1.5rem"}}/>}
-            title="Events"
+            title="Calendar"
             secondaryTitle="Show upcoming events"
             settingsKey="showUpcomingEvents">
             <Events/>
