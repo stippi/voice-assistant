@@ -37,6 +37,7 @@ export const NewsApiOrgKey = "<Your newsapi.org API key>";
 export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
 export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
+export const GoogleCustomSearchEngineId = "<ID of your custom google search engine configured for global search>";
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
 ```
@@ -60,6 +61,7 @@ To get an API key for the Google APIs, you need create a "project" in the [Googl
 - Places API (New)
 - Routes API
 - Directions API
+- Custom Search API (you need to create a custom search engine)
 - Calendar API (if you plan to activate the Google Integration, see below)
 - People API (if you plan to activate the Google Integration, see below)
 
