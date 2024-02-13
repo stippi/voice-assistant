@@ -1,6 +1,6 @@
 // @ts-expect-error - The import works, no idea why the IDE complains
 import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
-import {OpenWeatherMapApiKey, NewsApiOrgKey, GoogleApiKey} from "../secrets";
+import {OpenWeatherMapApiKey, NewsApiOrgKey, GoogleApiKey, GoogleCustomSearchEngineId} from "../secrets";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {addIsoDurationToDate, formatTimestamp} from "./timeFormat";
@@ -105,6 +105,21 @@ export const tools: ChatCompletionTool[] = [
           sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
         },
         required: ["language"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_custom_search",
+      description: "Use only to query for information you don't already know",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          maxResults: { type: "number" }
+        },
+        required: ["query"]
       }
     }
   },
@@ -492,6 +507,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await getTopNews(args.language, args.country, args.category, args.query, args.sortBy);
       case 'get_news':
          return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
+      case 'google_custom_search':
+        return await googleCustomSearch(args.query, args.maxResults)
       case 'get_places_info':
         return await getPlacesInfo(args.query, args.fields, args.latitude, args.longitude, args.radius, args.maxResults);
       case 'add_alarm':
@@ -662,6 +679,58 @@ async function getNews(language: string, country: string, query: string, sources
   console.log(`Fetching news (everything) from ${url}`);
   const response = await fetch(url);
   return await response.json();
+}
+
+// async function searchKnowledgeGraph(query: string, limit: number = 1) {
+//   const queryParams = new URLSearchParams();
+//   queryParams.append("key", GoogleApiKey);
+//   queryParams.append("query", query);
+//   queryParams.append("indent", "true");
+//   queryParams.append("limit", limit.toString());
+//   const url = `https://kgsearch.googleapis.com/v1/entities:search?${queryParams.toString()}`;
+//   try {
+//     const response = await fetch(url);
+//     if (!response.ok) {
+//       return { error: `HTTP request failed with status ${response.status}` };
+//     }
+//     return await response.json();
+//   } catch (error) {
+//     return { error: error instanceof Error ? error.message : "unknown error" };
+//   }
+// }
+
+async function googleCustomSearch(query: string, maxResults: number = 1) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("key", GoogleApiKey);
+  queryParams.append("cx", GoogleCustomSearchEngineId);
+  queryParams.append("q", query);
+  queryParams.append("gl", navigator.language.substring(0, 2));
+  queryParams.append("num", maxResults.toString());
+//  queryParams.append("hl", navigator.language.substring(0, 2));
+  const url = `https://customsearch.googleapis.com/customsearch/v1?${queryParams.toString()}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return { error: `HTTP request failed with status ${response.status}` };
+    }
+    type SearchResult = {
+      title: string,
+      link: string,
+      snippet: string,
+      pagemap: { cse_image: { src: string }[] }
+    }
+    const result = await response.json();
+    return {
+      result: result.items.map((item: SearchResult) => ({
+        title: item.title,
+        link: item.link,
+        snippet: item.snippet,
+        imageLink: item.pagemap?.cse_image?.[0]?.src
+      }))
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
 }
 
 async function getPlacesInfo(query: string, fields: string[], lat: number, lng: number, radius: number = 10000, maxResults = 5) {
