@@ -266,9 +266,30 @@ export const tools: ChatCompletionTool[] = [
           description: { type: "string", description: "Optional description of the event" },
           startTime: { type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'" },
           timeZone:  { type: "string", description: "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)" },
-          duration: { type: "string", description: "Duration in minutes" }
+          duration: { type: "string", description: "Duration in minutes" },
+          recurrence: { type: "array", items: { type: "string" }, description: "Optional recurrence rules in RRULE format" },
+          reminders: { type: "array", items: {
+              type: "object",
+              properties: { minutes: { type: "integer" }, method: { type: "string", enum: ["popup", "email"] } }
+            },
+            description: "Optional reminders in minutes before the event" }
         },
         required: ["summary", "startTime", "timeZone", "duration"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_google_calendar_event",
+      description: "Delete an event from the user's calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
+          eventId: { type: "string", description: "The ID of the event to delete" },
+        },
+        required: ["eventId"]
       }
     }
   },
@@ -518,7 +539,9 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'remove_timer':
         return await removeTimer(args.id, appContext);
       case 'add_google_calendar_event':
-        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration);
+        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration, args.reccurence, args.reminders);
+      case 'delete_google_calendar_event':
+        return await deleteCalendarEvent(args.calendarId, args.eventId);
       case 'list_google_calendar_events':
         return await listCalendarEvents(args.calendarId, args.query, args.timeMin, args.timeMax, args.maxResults, args.singleEvents, args.orderBy, args.showDeleted);
       case 'list_google_contacts':
@@ -896,7 +919,7 @@ async function removeTimer(id: string, appContext: AppContextType) {
   return { result: "timer removed" };
 }
 
-async function createCalendarEvent(calendarId: string = "primary", summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number) {
+async function createCalendarEvent(calendarId: string = "primary", summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number, recurrence?: string[], reminders?: { minutes: number, method: string }[]) {
   if (!gapi) {
     return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
   }
@@ -916,16 +939,51 @@ async function createCalendarEvent(calendarId: string = "primary", summary: stri
       timeZone: timeZone,
     },
   };
+  if (recurrence) {
+    event.recurrence = recurrence;
+  }
+  if (reminders) {
+    event.reminders = {
+      useDefault: false,
+      overrides: reminders.map(reminder => ({
+        minutes: reminder.minutes,
+        method: reminder.method
+      }))
+    }
+  }
   try {
-    const result = await gapi.client.calendar.events.insert({
+    const request = await gapi.client.calendar.events.insert({
       calendarId: calendarId,
       resource: event,
       //@ts-expect-error the @types/gapi.calendar package is not up-to-date (https://developers.google.com/calendar/api/v3/reference/events/insert)
       sendUpdates: "all",
       conferenceDataVersion: 1,
     });
-    window.dispatchEvent(new CustomEvent('refresh-upcoming-events', { detail: {} }));
-    return result;
+    window.dispatchEvent(new CustomEvent('refresh-upcoming-events'));
+    return {
+      result: request.result
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function deleteCalendarEvent(calendarId: string = "primary", eventId: string) {
+  if (!gapi) {
+    return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
+  }
+  if (!gapi.client.getToken()) {
+    return { error: "User is not signed into Google account, or has not given Calendar access permissions" };
+  }
+  try {
+    const request = await gapi.client.calendar.events.delete({
+      calendarId: calendarId,
+      eventId: eventId,
+      //@ts-expect-error the @types/gapi.calendar package is not up-to-date (https://developers.google.com/calendar/api/v3/reference/events/delete)
+      sendUpdates: "all"
+    });
+    window.dispatchEvent(new CustomEvent('refresh-upcoming-events'));
+    return request.status === 204 ? { result: "event deleted" } : { error: "unknown error" };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
@@ -938,7 +996,7 @@ async function listCalendarEvents(calendarId: string = "primary", query: string,
   if (!gapi.client.getToken()) {
     return { error: "User is not signed into Google account, or has not given Calendar access permissions" };
   }
-  const request: gapi.client.calendar.EventsListParameters = {
+  const parameters: gapi.client.calendar.EventsListParameters = {
     calendarId: calendarId,
     q: query,
     timeMin: timeMin,
@@ -950,7 +1008,10 @@ async function listCalendarEvents(calendarId: string = "primary", query: string,
     showDeleted: showDeleted,
   };
   try {
-    return await gapi.client.calendar.events.list(request);
+    const request = await gapi.client.calendar.events.list(parameters);
+    return {
+      result: request.result.items
+    }
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
