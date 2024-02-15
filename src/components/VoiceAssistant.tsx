@@ -21,7 +21,7 @@ import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
-const model = "gpt-4-turbo-preview";//"mistral";
+const model = OpenAiConfig.baseURL === "http://localhost:8080/v1" ? "mistral" : "gpt-4-turbo-preview";
 
 async function streamChatCompletion(
   currentMessages: Message[],
