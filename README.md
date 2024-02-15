@@ -26,6 +26,12 @@ export const OpenAiConfig = {
   apiKey: "<Your platform.openai.com API key>",
   dangerouslyAllowBrowser: true
 };
+// When running LocalAI, use the following configuration:
+// export const OpenAiConfig = {
+//   apiKey: '<ignored>',
+//   dangerouslyAllowBrowser: true,
+//   baseURL: 'http://localhost:8080/v1'
+// };
 
 // Theoretically optional. Must be exported, but can be empty.
 export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
@@ -91,6 +97,17 @@ As redirect URL, also specify `http://localhost:5173/spotify-callback`.
 
 When enabling the Spotify integration, you will be redirected to a Spotify login page where you also need to give Voice Assistant (or however you named your app in the Spotify developer dashboard) the requested permissions.
 In addition, the embedded playback streaming capabilities work only for Spotify Premium users, since the Web Playback SDK requires a Premium account.
+
+### LocalAI
+
+[LocalAI](https://github.com/mudler/LocalAI) is a project that allows you to run various LLMs locally.
+It provides a REST API that can be used (mostly) as a drop-in replacement for OpenAI's API.
+When you configure a `baseURL` in `OpenAiConfig`, the Assistant will use this URL to send requests to the LocalAI server.
+It will also automatically provide a model name of `mistral`.
+This doesn't have to be actual LLM you use, but it must be the name under which it is exposed.
+See the [LocalAI documentation](https://localai.io/docs/getting-started/manual/) for more information.
+
+:construction: At the moment, function calls (which provide a lot of the integrations of this Voice Assistant), are not yet provided in a compatible way by LocalAI.
 
 ### Starting the Vite Dev Server
 
