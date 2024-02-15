@@ -21,7 +21,7 @@ import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
 
-const model = "gpt-4-turbo-preview";
+const model = "gpt-4-turbo-preview";//"mistral";
 
 async function streamChatCompletion(
   currentMessages: Message[],
@@ -303,6 +303,8 @@ export default function VoiceAssistant() {
     console.log("started responding");
     setResponding(true);
     respondingRef.current = true;
+    responseLevelRef.current = 0;
+    
     responseCancelledRef.current = false;
     if (message === "") {
       console.log("inserted pending user message");
@@ -326,6 +328,8 @@ export default function VoiceAssistant() {
           }
         })
         .catch(error => {
+          responseLevelRef.current = 0;
+          respondingRef.current = false;
           console.error('Failed to stream chat completion', error);
           setMessages(appendMessage(currentMessages, {role: "user", content: message}));
         })
