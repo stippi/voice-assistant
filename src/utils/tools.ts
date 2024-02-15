@@ -539,7 +539,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'remove_timer':
         return await removeTimer(args.id, appContext);
       case 'add_google_calendar_event':
-        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration, args.reccurence, args.reminders);
+        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration, args.recurrence, args.reminders);
       case 'delete_google_calendar_event':
         return await deleteCalendarEvent(args.calendarId, args.eventId);
       case 'list_google_calendar_events':
