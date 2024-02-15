@@ -10,7 +10,7 @@ import {
   skipPrevious,
   SearchResult,
   Result
-} from "../services/spotify";
+} from "../integrations/spotify";
 
 type Track = {
   id: string;

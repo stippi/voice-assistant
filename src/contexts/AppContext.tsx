@@ -2,7 +2,7 @@ import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {Timer} from "../model/timer";
 import {GeoLocation} from "../model/location";
 import useLocation from "../hooks/useLocation";
-import {SearchResult} from "../services/spotify";
+import {SearchResult} from "../integrations/spotify";
 
 export type Spotify = {
   player: Spotify.Player;
