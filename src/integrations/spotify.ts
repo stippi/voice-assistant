@@ -23,30 +23,37 @@ export const loginFlow = new LoginFlow(
   "spotify"
 );
 
+type Item = {
+  id: string;
+  name: string;
+};
+
+type TrackItem = {
+  id: string;
+  name: string;
+  artists: Item[];
+  album: Item;
+};
+
 export type SearchResult = {
   error?: string;
   tracks?: {
-    items: {
-      id: string;
-      name: string;
-      artists: { name: string, id: string }[];
-      album: { name: string, id: string };
-    }[];
+    items: TrackItem[];
   };
   artists?: {
-    items: { name: string, id: string }[];
+    items: Item[];
   };
   albums?: {
-    items: { name: string, id: string }[];
+    items: Item[];
   };
   playlists?: {
-    items: { name: string, id: string }[];
+    items: Item[];
   };
   shows?: {
-    items: { name: string, id: string }[];
+    items: Item[];
   };
   episodes?: {
-    items: { name: string, id: string }[];
+    items: Item[];
   };
 };
 
