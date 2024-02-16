@@ -36,7 +36,6 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
   const [currentChat, setChat] = useState<Chat | null>(null);
   
   useEffect(() => {
-    console.log("loading chats and currentChatID");
     indexDbGet<ChatInfo[]>("chats").then((chatsFromDb) => {
       setChats(chatsFromDb || []);
       return indexDbGet<string>("currentChatID");
@@ -44,11 +43,9 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
       if (currentChatIDFromDb) {
         setCurrentChatID(currentChatIDFromDb);
       }
-      console.log(`currentChatID: ${currentChatIDFromDb}`);
     }).catch((error) => {
       console.error("An error occurred while loading chats or currentChatID", error);
     }).finally(() => {
-      console.log("finished loading chats and currentChatID");
       setLoading(false);
     });
   }, []);
@@ -56,7 +53,6 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
   useEffect(() => {
     if (currentChatID) {
       indexDbGet<Chat>(currentChatID).then((chat) => {
-        console.log(`switching to chat ${currentChatID}`);
         setChat(chat);
       });
     }
@@ -84,7 +80,6 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
       messages: messages,
     }
     await indexDbPut(newChatID, newChat);
-    console.log(`switching to new chat ${newChatID}`);
     setChats((prevChats) => [...prevChats, newChatInfo]);
     await setCurrentChat(newChatID);
     return newChatID;
@@ -130,7 +125,6 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     // TODO: Should use an atomic transaction here
     await indexDbPut("chats", newChats);
     await indexDbDelete(chatID);
-    console.log(`deleted chat ${chatID}`);
     setChats(newChats);
     
     if (index < chats.length) {
