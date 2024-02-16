@@ -3,7 +3,6 @@ import {SpotifyClientId} from "../secrets.ts";
 import {randomizeArray} from "../utils/randomizeArray.ts";
 
 export const loginFlow = new LoginFlow(
-  "http://localhost:5173/spotify-callback",
   "https://accounts.spotify.com/authorize",
   {},
   "https://accounts.spotify.com/api/token",

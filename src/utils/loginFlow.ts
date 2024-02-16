@@ -16,7 +16,6 @@ export class LoginFlow {
   storagePrefix: string;
   
   constructor(
-    redirectUrl: string,
     authorizationEndpoint: string,
     additionalParams: Record<string, string>,
     tokenEndpoint: string,
@@ -26,7 +25,7 @@ export class LoginFlow {
     scopes: string[],
     storagePrefix: string
   ) {
-    this.redirectUrl = redirectUrl;
+    this.redirectUrl = window.origin + callbackPath;
     this.authorizationEndpoint = authorizationEndpoint;
     this.additionalParams = additionalParams;
     this.tokenEndpoint = tokenEndpoint;
