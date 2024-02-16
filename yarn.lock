@@ -822,6 +822,13 @@
   dependencies:
     "@picovoice/web-utils" "=1.3.1"
 
+"@picovoice/eagle-web@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@picovoice/eagle-web/-/eagle-web-1.0.0.tgz#3a55eae9360842622157c1f4c8a58de12ebbefb3"
+  integrity sha512-2mylTzNiCsY+z+pBfWIf1nRn/TZKAjh+t4Zf93epI2o5TQ0lW1vjM90zZUcKJ23tD6dL1HAUTrlY5Gb1aRV6Yg==
+  dependencies:
+    "@picovoice/web-utils" "=1.3.2"
+
 "@picovoice/porcupine-react@^3.0.3":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@picovoice/porcupine-react/-/porcupine-react-3.0.3.tgz#1739ca1f9bdfa73f327c6bf2ba8cef395643d71f"
@@ -842,6 +849,13 @@
   integrity sha512-jcDqdULtTm+yJrnHDjg64hARup+Z4wNkYuXHNx6EM8+qZkweBq9UA6XJrHAlUkPnlkso4JWjaIKhz3x8vZcd3g==
   dependencies:
     commander "^9.2.0"
+
+"@picovoice/web-utils@=1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@picovoice/web-utils/-/web-utils-1.3.2.tgz#9fe0a798a1f016fa8d8c28e48537466aa2854ca3"
+  integrity sha512-jDZn+kxVUyzM84kGVmq9hU6N60K2VH3sDevpZSw4CNDx3ppSz9Biz7aPHs+i16ssYJCxJweiJ44XhI+5Lo5ZjQ==
+  dependencies:
+    commander "^10.0.1"
 
 "@picovoice/web-voice-processor@^4.0.8":
   version "4.0.8"
@@ -876,11 +890,6 @@
   version "2.19.2"
   resolved "https://registry.yarnpkg.com/@react-google-maps/marker-clusterer/-/marker-clusterer-2.19.2.tgz#24d9fb9aa555bb063ba5fe82f80fcd7d48662184"
   integrity sha512-x9ibmsP0ZVqzyCo1Pitbw+4b6iEXRw/r1TCy3vOUR3eKrzWLnHYZMR325BkZW2r8fnuWE/V3Fp4QZOP9qYORCw==
-
-"@react-oauth/google@^0.12.1":
-  version "0.12.1"
-  resolved "https://registry.yarnpkg.com/@react-oauth/google/-/google-0.12.1.tgz#b76432c3a525e9afe076f787d2ded003fcc1bee9"
-  integrity sha512-qagsy22t+7UdkYAiT5ZhfM4StXi9PPNvw0zuwNmabrWyMKddczMtBIOARflbaIj+wHiQjnMAsZmzsUYuXeyoSg==
 
 "@rollup/rollup-android-arm-eabi@4.8.0":
   version "4.8.0"
@@ -1617,6 +1626,11 @@ comma-separated-tokens@^2.0.0:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/comma-separated-tokens/-/comma-separated-tokens-2.0.3.tgz#4e89c9458acb61bc8fef19f4529973b2392839ee"
   integrity sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==
+
+commander@^10.0.1:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-10.0.1.tgz#881ee46b4f77d1c1dccc5823433aa39b022cbe06"
+  integrity sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==
 
 commander@^8.3.0:
   version "8.3.0"
