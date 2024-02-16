@@ -140,6 +140,10 @@ export async function play(deviceId: string, trackIds: string[], contextUri?: st
         'Content-Type': 'application/json',
       },
     }
+    if (contextUri && contextUri.startsWith("spotify:track:")) {
+      // Be forgiving to the LLM and play the track if it's a track uri
+      trackIds.push(contextUri.substring("spotify:track:".length));
+    }
     if (trackIds.length > 0) {
       options.body = JSON.stringify({ uris: trackIds.map(id => `spotify:track:${id}`) });
     } else if (contextUri) {
