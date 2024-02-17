@@ -63,7 +63,7 @@ It just comes with a rate limit.
 Not providing the PicoVoiceAccessKey will most likely break wake-word detection.
 In theory, the Browser Speech Recognition API is used as a fallback, but it hasn't been tested in a while.
 
-To get an API key for the Google APIs, you need create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
+To get an API key for the Google APIs, you need to create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
 
 - Maps JavaScript API
 - Places API (New)
@@ -108,8 +108,6 @@ When you configure a `baseURL` in `OpenAiConfig`, the Assistant will use this UR
 It will also automatically provide a model name of `mistral`.
 This doesn't have to be actual LLM you use, but it must be the name under which it is exposed.
 See the [LocalAI documentation](https://localai.io/docs/getting-started/manual/) for more information.
-
-:construction: At the moment, function calls (which provide a lot of the integrations of this Voice Assistant), are not yet provided in a compatible way by LocalAI.
 
 ### Starting the Vite Dev Server
 
