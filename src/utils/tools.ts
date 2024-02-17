@@ -240,7 +240,7 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "remove_timer",
+      name: "delete_timer",
       description: "Cancel one of the active timers",
       parameters: {
         type: "object",
@@ -345,7 +345,7 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "memorize",
+      name: "add_memory_entry",
       description: "Store information to have it permanently available in future conversations",
       parameters: {
         type: "object",
@@ -536,7 +536,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await addTimer("alarm", args.time, args.title || "", appContext);
       case 'add_countdown':
         return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "", appContext);
-      case 'remove_timer':
+      case 'delete_timer':
         return await removeTimer(args.id, appContext);
       case 'add_google_calendar_event':
         return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration, args.recurrence, args.reminders);
@@ -548,7 +548,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await listContacts(args.query);
       case 'evaluate_expression':
         return await evaluateExpression(args.expression);
-      case 'memorize':
+      case 'add_memory_entry':
         return await memorize(args.category, args.information);
       case 'delete_memory_entry':
         return await deleteInformation(args.category, args.information);
@@ -916,7 +916,7 @@ async function addTimer(type: "countdown" | "alarm", time: string, title: string
 async function removeTimer(id: string, appContext: AppContextType) {
   console.log(`Removing timer: ${id}`);
   appContext.setTimers(appContext.timers.filter(timer => timer.id !== id))
-  return { result: "timer removed" };
+  return { result: "timer deleted" };
 }
 
 async function createCalendarEvent(calendarId: string = "primary", summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number, recurrence?: string[], reminders?: { minutes: number, method: string }[]) {
