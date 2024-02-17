@@ -6,6 +6,8 @@ This project was bootstrapped using `npm create vite@latest ./ -- --template rea
 
 ## About
 
+https://github.com/stippi/voice-assistant/assets/67784/bc1989e9-6595-4996-b1c3-8a136cdfc882
+
 The rough idea for this project is to have a voice-activated assistant similar to Amazon Alexa or Siri, but backed by a Large Language Model.
 It is currently implemented as a website running purely in your browser.
 It uses OpenAI's GPT-4 Turbo model configured with several tools (a.k.a. "functions") that allow it to integrate with a range of APIs.
