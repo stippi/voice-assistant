@@ -226,7 +226,7 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           duration: {
             type: "string",
-            description: "A duration in ISO 8601 format."
+            description: "A duration in ISO 8601 format such as 'PT5M'."
           },
           title: {
             type: "string",
