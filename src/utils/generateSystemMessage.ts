@@ -1,6 +1,8 @@
 import {GeoLocation} from "../model/location";
 import {Personality} from "../contexts/SettingsContext";
 import {Timer} from "../model/timer";
+// @ts-expect-error - The import works, no idea why the IDE complains
+import {ChatCompletionMessage} from "openai/resources";
 
 function generateLocationSentence(location: GeoLocation |  undefined) {
   if (!location) {
@@ -53,7 +55,7 @@ export default function generateSystemMessage(
   timers: Timer[],
   location: GeoLocation | undefined,
   playbackState: Spotify.PlaybackState | null
-) {
+): ChatCompletionMessage {
   const voiceOptimization = optimizeForVoiceOutput ? `Note, the user's last message was transcribed from their speech and may be incomplete or garbled.
 If you think that is the case, just ask the user to clarify.
 Your next reply (unless it is a tool invocation) will be processed by a text-to-speech engine. It is capable of processing any language, so reply in the user's language.
