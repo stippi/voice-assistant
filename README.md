@@ -35,6 +35,8 @@ export const OpenAiConfig = {
 //   baseURL: 'http://localhost:8080/v1'
 // };
 
+export const modelName = "gpt-4-turbo-preview";
+
 // Theoretically optional. Must be exported, but can be empty.
 export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
 
