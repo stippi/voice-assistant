@@ -4,8 +4,7 @@ type TokenSet = {
   expires: number;
 };
 
-export class LoginFlow {
-  redirectUrl: string;
+interface Options {
   authorizationEndpoint: string;
   additionalParams: Record<string, string>;
   tokenEndpoint: string;
@@ -14,38 +13,27 @@ export class LoginFlow {
   clientId: string;
   scopes: string[];
   storagePrefix: string;
+}
+
+export class LoginFlow {
+  options: Options;
+  redirectUrl: string;
   
-  constructor(
-    authorizationEndpoint: string,
-    additionalParams: Record<string, string>,
-    tokenEndpoint: string,
-    additionalTokenParams: Record<string, string>,
-    callbackPath: string,
-    clientId: string,
-    scopes: string[],
-    storagePrefix: string
-  ) {
-    this.redirectUrl = window.origin + callbackPath;
-    this.authorizationEndpoint = authorizationEndpoint;
-    this.additionalParams = additionalParams;
-    this.tokenEndpoint = tokenEndpoint;
-    this.additionalTokenParams = additionalTokenParams;
-    this.callbackPath = callbackPath;
-    this.clientId = clientId;
-    this.scopes = scopes;
-    this.storagePrefix = storagePrefix;
+  constructor(options: Options) {
+    this.options = options;
+    this.redirectUrl = window.origin + options.callbackPath;
   }
   
   private codeVerifierKey() {
-    return `${this.storagePrefix}-code-verifier`;
+    return `${this.options.storagePrefix}-code-verifier`;
   }
   
   private tokenSetKey() {
-    return `${this.storagePrefix}-token-set`;
+    return `${this.options.storagePrefix}-token-set`;
   }
   
   private stateKey() {
-    return `${this.storagePrefix}-state`;
+    return `${this.options.storagePrefix}-state`;
   }
   
   private getRandomString(length: number): string {
@@ -69,17 +57,17 @@ export class LoginFlow {
     window.localStorage.setItem(this.stateKey(), state);
     
     const params = {
-      ...this.additionalParams,
+      ...this.options.additionalParams,
       response_type: 'code',
-      client_id: this.clientId,
-      scope: this.scopes.join(' '),
+      client_id: this.options.clientId,
+      scope: this.options.scopes.join(' '),
       code_challenge_method: 'S256',
       code_challenge: codeChallengeBase64,
       state: state,
       redirect_uri: this.redirectUrl,
     };
     
-    const authUrl = new URL(this.authorizationEndpoint)
+    const authUrl = new URL(this.options.authorizationEndpoint)
     authUrl.search = new URLSearchParams(params).toString();
     // Redirect the user to the authorization server for login
     window.location.href = authUrl.toString();
@@ -88,14 +76,14 @@ export class LoginFlow {
   async getToken(code: string) {
     const codeVerifier = localStorage.getItem(this.codeVerifierKey()) || "";
     
-    const response = await fetch(this.tokenEndpoint, {
+    const response = await fetch(this.options.tokenEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: this.clientId,
-        ...this.additionalTokenParams,
+        client_id: this.options.clientId,
+        ...this.options.additionalTokenParams,
         grant_type: 'authorization_code',
         code: code,
         redirect_uri: this.redirectUrl,
@@ -113,7 +101,7 @@ export class LoginFlow {
     const args = new URLSearchParams(window.location.search);
     const code = args.get('code');
     if (!code) {
-      console.log(`no code found in URL, redirecting to ${this.storagePrefix} authorize`);
+      console.log(`no code found in URL, redirecting to ${this.options.storagePrefix} authorize`);
       await this.redirectToAuthorize();
       return "";
     }
@@ -125,16 +113,16 @@ export class LoginFlow {
       await this.redirectToAuthorize();
       return "";
     }
-    if (window.location.pathname !== this.callbackPath) {
-      console.log(`code found in URL, but not on ${this.callbackPath}`);
+    if (window.location.pathname !== this.options.callbackPath) {
+      console.log(`code found in URL, but not on ${this.options.callbackPath}`);
       // TODO: Would redirecting here interrupt another login flow?
       return "";
     }
     // If we find a code, we're in a callback, do a token exchange
-    console.log(`found code in URL, exchanging for ${this.storagePrefix} access token`);
+    console.log(`found code in URL, exchanging for ${this.options.storagePrefix} access token`);
     try {
       const json = await this.getToken(code);
-      console.log(`received ${this.storagePrefix} access token set`);
+      console.log(`received ${this.options.storagePrefix} access token set`);
       const newTokenSet: TokenSet = {
         accessToken: json.access_token,
         refreshToken: json.refresh_token,
@@ -152,7 +140,7 @@ export class LoginFlow {
       
       return newTokenSet.accessToken;
     } catch (error) {
-      console.error(`failed to exchange ${this.storagePrefix} code for token`, error);
+      console.error(`failed to exchange ${this.options.storagePrefix} code for token`, error);
       await this.redirectToAuthorize();
       return "";
     }
@@ -168,14 +156,14 @@ export class LoginFlow {
       return tokenSet.accessToken;
     }
     // Try to refresh the access token, it may fail if the refresh token has expired, too.
-    const response = await fetch(this.tokenEndpoint, {
+    const response = await fetch(this.options.tokenEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        ...this.additionalTokenParams,
-        client_id: this.clientId,
+        ...this.options.additionalTokenParams,
+        client_id: this.options.clientId,
         grant_type: 'refresh_token',
         refresh_token: tokenSet.refreshToken
       }),
