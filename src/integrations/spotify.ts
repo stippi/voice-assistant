@@ -2,14 +2,14 @@ import {LoginFlow} from "../utils/loginFlow.ts";
 import {SpotifyClientId} from "../secrets.ts";
 import {randomizeArray} from "../utils/randomizeArray.ts";
 
-export const loginFlow = new LoginFlow(
-  "https://accounts.spotify.com/authorize",
-  {},
-  "https://accounts.spotify.com/api/token",
-  {},
-  "/spotify-callback",
-  SpotifyClientId,
-  [
+export const loginFlow = new LoginFlow({
+  authorizationEndpoint: "https://accounts.spotify.com/authorize",
+  additionalParams: {},
+  tokenEndpoint: "https://accounts.spotify.com/api/token",
+  additionalTokenParams: {},
+  callbackPath: "/spotify-callback",
+  clientId: SpotifyClientId,
+  scopes: [
     'user-read-private',
     'user-read-email',
     'user-read-playback-state',
@@ -19,8 +19,8 @@ export const loginFlow = new LoginFlow(
     'playlist-read-private',
     'playlist-read-collaborative',
   ],
-  "spotify"
-);
+  storagePrefix: "spotify"
+});
 
 type Item = {
   id: string;
