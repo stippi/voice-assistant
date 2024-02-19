@@ -3,7 +3,7 @@ import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
 import OpenAI from "openai";
-import {OpenAiConfig} from "../secrets";
+import {modelName, OpenAiConfig} from "../secrets";
 import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
@@ -20,8 +20,6 @@ import {AppContextType} from "../contexts/AppContext.tsx";
 import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
 
 const openai = new OpenAI(OpenAiConfig);
-
-const model = OpenAiConfig.baseURL === "http://localhost:8080/v1" ? "mistral" : "gpt-4-turbo-preview";
 
 async function streamChatCompletion(
   currentMessages: Message[],
@@ -226,7 +224,7 @@ async function streamChatCompletionLoop(
       audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location, playbackState);
     const stream = openai.beta.chat.completions.stream({
       messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
-      model: model,
+      model: modelName,
       stream: true,
       tools: tools,
     });
