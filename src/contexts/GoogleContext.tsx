@@ -1,7 +1,7 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
-import {GoogleClientId, GoogleApiKey, GoogleClientSecret} from "../secrets.ts";
+import {GoogleApiKey} from "../secrets.ts";
 import {createScript} from "../utils/createScript.ts";
-import {LoginFlow} from "../utils/loginFlow.ts";
+import {loginFlow} from "../integrations/google.ts";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
@@ -19,26 +19,6 @@ interface Props {
   children: ReactNode
   enableGoogle: boolean
 }
-
-const loginFlow = new LoginFlow(
-  "https://accounts.google.com/o/oauth2/v2/auth",
-  {
-    "access_type": "offline",
-    "include_granted_scopes": "true",
-    "prompt": "consent",
-  },
-  "https://oauth2.googleapis.com/token",
-  {
-    "client_secret": GoogleClientSecret
-  },
-  "/google-callback",
-  GoogleClientId,
-  [
-    "https://www.googleapis.com/auth/calendar",
-    "https://www.googleapis.com/auth/contacts.readonly"
-  ],
-  "google"
-);
 
 export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children }) => {
   const [apiLoaded, setApiLoaded] = useState(false);
