@@ -256,6 +256,23 @@ export const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "calculate_time",
+      description: "Calculate a time based on a given time",
+      parameters: {
+        type: "object",
+        properties: {
+          baseTime: { type: "string", description: "The base time in the format 'YYYY-MM-DD HH:MM:SS'" },
+          operation: { type: "string", enum: ["add", "subtract"] },
+          value: { type: "number", description: "The duration value to add or subtract" },
+          unit: { type: "string", enum: [ "minutes" , "hours" , "days" ] }
+        },
+        required: ["date", "time", "duration"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "add_google_calendar_event",
       description: "Add an event to a user's calendar.",
       parameters: {
@@ -264,6 +281,8 @@ export const tools: ChatCompletionTool[] = [
           calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
           summary: { type: "string", description: "Summary of the event" },
           description: { type: "string", description: "Optional description of the event" },
+          location: { type: "string", description: "Optional location of the event" },
+          attendees: { type: "array", items: { type: "object", properties: { email: { type: "string" } } }, description: "Optional list of attendees" },
           startTime: { type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'" },
           timeZone:  { type: "string", description: "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)" },
           duration: { type: "string", description: "Duration in minutes" },
@@ -538,8 +557,10 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "", appContext);
       case 'delete_timer':
         return await removeTimer(args.id, appContext);
+      case 'calculate_time':
+        return calculateTime(args.baseTime, args.operation, args.value, args.unit);
       case 'add_google_calendar_event':
-        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.startTime, args.timeZone, args.duration, args.recurrence, args.reminders);
+        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.location, args.attendees, args.startTime, args.timeZone, args.duration, args.recurrence, args.reminders);
       case 'delete_google_calendar_event':
         return await deleteCalendarEvent(args.calendarId, args.eventId);
       case 'list_google_calendar_events':
@@ -703,24 +724,6 @@ async function getNews(language: string, country: string, query: string, sources
   const response = await fetch(url);
   return await response.json();
 }
-
-// async function searchKnowledgeGraph(query: string, limit: number = 1) {
-//   const queryParams = new URLSearchParams();
-//   queryParams.append("key", GoogleApiKey);
-//   queryParams.append("query", query);
-//   queryParams.append("indent", "true");
-//   queryParams.append("limit", limit.toString());
-//   const url = `https://kgsearch.googleapis.com/v1/entities:search?${queryParams.toString()}`;
-//   try {
-//     const response = await fetch(url);
-//     if (!response.ok) {
-//       return { error: `HTTP request failed with status ${response.status}` };
-//     }
-//     return await response.json();
-//   } catch (error) {
-//     return { error: error instanceof Error ? error.message : "unknown error" };
-//   }
-// }
 
 async function googleCustomSearch(query: string, maxResults: number = 1) {
   const queryParams = new URLSearchParams();
@@ -919,7 +922,27 @@ async function removeTimer(id: string, appContext: AppContextType) {
   return { result: "timer deleted" };
 }
 
-async function createCalendarEvent(calendarId: string = "primary", summary: string, description: string, startTime: string, timeZone: string, durationInMinutes: number, recurrence?: string[], reminders?: { minutes: number, method: string }[]) {
+async function calculateTime(baseTime: string, operation: "add" | "subtract", value: number, unit: "minutes" | "hours" | "days")  {
+  try {
+    const time = new Date(baseTime);
+    switch (unit) {
+      case 'minutes':
+        time.setMinutes(time.getMinutes() + (operation === 'add' ? value : -value));
+        break;
+      case 'hours':
+        time.setHours(time.getHours() + (operation === 'add' ? value : -value));
+        break;
+      case 'days':
+        time.setDate(time.getDate() + (operation === 'add' ? value : -value));
+        break;
+    }
+    return { result: time.toISOString() };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "unknown error" };
+  }
+}
+
+async function createCalendarEvent(calendarId: string = "primary", summary: string, description: string, location: string, attendees: { email: string}[], startTime: string, timeZone: string, durationInMinutes: number, recurrence?: string[], reminders?: { minutes: number, method: string }[]) {
   if (!gapi) {
     return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
   }
@@ -930,6 +953,8 @@ async function createCalendarEvent(calendarId: string = "primary", summary: stri
   const event: gapi.client.calendar.EventInput = {
     summary,
     description: description || "",
+    location: location || "",
+    attendees: attendees || [],
     start: {
       dateTime: start.toISOString(),
       timeZone: timeZone,
