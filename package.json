@@ -2,7 +2,9 @@
   "name": "voice-assistant",
   "private": true,
   "version": "0.0.0",
+  "license": "MIT",
   "type": "module",
+  "packageManager": "yarn@1.22.19",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
