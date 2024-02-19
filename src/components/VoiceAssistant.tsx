@@ -18,6 +18,7 @@ import useWindowFocus from "../hooks/useWindowFocus.tsx";
 import useAppContext from "../hooks/useAppContext.tsx";
 import {AppContextType} from "../contexts/AppContext.tsx";
 import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
+import {postGeminiRequest} from "../integrations/gemini.ts";
 
 const openai = new OpenAI(OpenAiConfig);
 
@@ -224,14 +225,17 @@ async function streamChatCompletionLoop(
     }
     const systemMessage = generateSystemMessage(
       audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location, playbackState);
-    const stream = openai.beta.chat.completions.stream({
-      messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
-      model: model,
-      stream: true,
-      tools: tools,
-    });
-    await streamChatCompletion(
-      currentMessages, setMessages, stream, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
+    
+    await postGeminiRequest(systemMessage, currentMessages, tools, setMessages, appContextRef);
+    
+    // const stream = openai.beta.chat.completions.stream({
+    //   messages: [systemMessage, ...currentMessages],
+    //   model: model,
+    //   stream: true,
+    //   tools: tools,
+    // });
+    // await streamChatCompletion(
+    //   currentMessages, setMessages, stream, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
