@@ -5,7 +5,7 @@ import {MessageCard} from "./MessageCard";
 import {Message} from "../model/message";
 import OpenAI from "openai";
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
-import {showToolCallInChat} from "../utils/tools.ts";
+import {showToolCallInChat} from "../integrations/tools.ts";
 
 function showInline(toolCalls: ChatCompletionMessageToolCall[] | undefined): boolean {
   if (!Array.isArray(toolCalls)) {

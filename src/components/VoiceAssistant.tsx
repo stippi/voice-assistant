@@ -7,7 +7,7 @@ import {modelName, useTools, OpenAiConfig} from "../secrets";
 import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
-import {tools, callFunction} from "../utils/tools";
+import {getTools, callFunction} from "../integrations/tools";
 import {Settings as SettingsType} from "../contexts/SettingsContext";
 import useChats from "../hooks/useChats";
 import useSettings from "../hooks/useSettings";
@@ -226,7 +226,7 @@ async function streamChatCompletionLoop(
       messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: modelName,
       stream: true,
-      tools: useTools ? tools : undefined,
+      tools: useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined,
     });
     await streamChatCompletion(
       currentMessages, setMessages, stream, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
