@@ -19,6 +19,9 @@ export type Settings = {
   
   enableGoogle: boolean;
   enableSpotify: boolean;
+  enableNewsApiOrg: boolean;
+  enableOpenWeatherMap: boolean;
+
   showTimers: boolean;
   showUpcomingEvents: boolean;
   showPlaylist: boolean;
@@ -38,6 +41,9 @@ const defaultSettings: Settings = {
 
   enableGoogle: false,
   enableSpotify: false,
+  enableNewsApiOrg: false,
+  enableOpenWeatherMap: true,
+  
   showTimers: true,
   showUpcomingEvents: true,
   showPlaylist: false,
