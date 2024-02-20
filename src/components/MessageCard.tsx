@@ -12,7 +12,7 @@ import {Message} from "../model/message";
 import {BsFillPersonFill} from "react-icons/bs";
 import {RiRobot2Fill} from "react-icons/ri";
 import {GoogleMapsCard} from "./GoogleMapsCard";
-import {showToolCallInChat} from "../utils/tools";
+import {showToolCallInChat} from "../integrations/tools";
 import {ButtonGroup, IconButton} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplayIcon from '@mui/icons-material/Replay';

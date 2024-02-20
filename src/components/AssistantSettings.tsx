@@ -164,7 +164,9 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
         <Box className="settingsColumn">
           <Typography variant="h6">Integrations</Typography>
           {integrations.map(item => (
-            <FormControl>
+            <FormControl
+              key={item.settingsKey}
+            >
               <FormControlLabel
                 checked={!!settings[item.settingsKey]}
                 control={<Switch color="primary" />}
