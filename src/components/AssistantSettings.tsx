@@ -9,10 +9,11 @@ import {
   Slider,
   Stack,
   Switch,
-  TextField
+  TextField,
+  Typography
 } from "@mui/material";
 import SpeedIcon from '@mui/icons-material/Speed';
-import {Voice, Personality} from "../contexts/SettingsContext";
+import {Voice, Personality, Settings} from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
 import {BuiltInKeyword} from "@picovoice/porcupine-web";
 
@@ -42,6 +43,12 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
   const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
   const triggerWords = ["Alexa", "Americano", "Blueberry", "Bumblebee", "Computer", "Grapefruit",
     "Grasshopper", "Hey Google", "Hey Siri", "Jarvis", "Okay Google", "Picovoice", "Porcupine", "Terminator"];
+  const integrations: { label: string, settingsKey: keyof Settings }[] = [
+    { label: "Google", settingsKey: "enableGoogle" },
+    { label: "Spotify", settingsKey: "enableSpotify" },
+    { label: "NewsApi", settingsKey: "enableNewsApiOrg" },
+    { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap" },
+  ];
   
   return (
     <Popover
@@ -155,24 +162,18 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
           </Stack>
         </Box>
         <Box className="settingsColumn">
-          <FormControl>
-            <FormControlLabel
-              checked={settings.enableGoogle}
-              control={<Switch color="primary" />}
-              label="Google Integration"
-              labelPlacement="end"
-              onChange={() => setSettings({ ...settings, enableGoogle: !settings.enableGoogle })}
-            />
-          </FormControl>
-          <FormControl>
-            <FormControlLabel
-              checked={settings.enableSpotify}
-              control={<Switch color="primary" />}
-              label="Spotify Integration"
-              labelPlacement="end"
-              onChange={() => setSettings({ ...settings, enableSpotify: !settings.enableSpotify })}
-            />
-          </FormControl>
+          <Typography variant="h6">Integrations</Typography>
+          {integrations.map(item => (
+            <FormControl>
+              <FormControlLabel
+                checked={!!settings[item.settingsKey]}
+                control={<Switch color="primary" />}
+                label={item.label}
+                labelPlacement="end"
+                onChange={() => setSettings({ ...settings, [item.settingsKey]: !settings[item.settingsKey]})}
+              />
+            </FormControl>
+          ))}
         </Box>
       </Box>
     </Popover>

@@ -3,7 +3,7 @@ import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
 import OpenAI from "openai";
-import {modelName, OpenAiConfig} from "../secrets";
+import {modelName, useTools, OpenAiConfig} from "../secrets";
 import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
@@ -226,7 +226,7 @@ async function streamChatCompletionLoop(
       messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
       model: modelName,
       stream: true,
-      tools: tools,
+      tools: useTools ? tools : undefined,
     });
     await streamChatCompletion(
       currentMessages, setMessages, stream, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
