@@ -45,6 +45,7 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
     "Grasshopper", "Hey Google", "Hey Siri", "Jarvis", "Okay Google", "Picovoice", "Porcupine", "Terminator"];
   const integrations: { label: string, settingsKey: keyof Settings }[] = [
     { label: "Google", settingsKey: "enableGoogle" },
+    { label: "Microsoft", settingsKey: "enableMicrosoft" },
     { label: "Spotify", settingsKey: "enableSpotify" },
     { label: "NewsApi", settingsKey: "enableNewsApiOrg" },
     { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap" },
