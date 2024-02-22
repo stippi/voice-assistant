@@ -10,6 +10,7 @@ import {createTheme, ThemeProvider} from '@mui/material/styles';
 import useSettings from "./hooks/useSettings";
 import {Dashboard} from "./components/Dashboard.tsx";
 import {SpotifyContextProvider} from "./contexts/SpotifyContext.tsx";
+import {MicrosoftContextProvider} from "./contexts/MicrosoftContext.tsx";
 
 const theme = createTheme({
   components: {
@@ -80,12 +81,16 @@ function AssistantWithOptionalIntegrations() {
   
   return (
     <ChatsProvider>
-      <GoogleContextProvider enableGoogle={settings.enableGoogle}>
-        <SpotifyContextProvider enableSpotify={settings.enableSpotify}>
-          <Sidebar />
+      <GoogleContextProvider enable={settings.enableGoogle}>
+        <MicrosoftContextProvider enable={settings.enableMicrosoft}>
+          <SpotifyContextProvider enable={settings.enableSpotify}>
+
+            <Sidebar />
             <VoiceAssistant />
-          <Dashboard />
-        </SpotifyContextProvider>
+            <Dashboard />
+
+          </SpotifyContextProvider>
+        </MicrosoftContextProvider>
       </GoogleContextProvider>
     </ChatsProvider>
   );

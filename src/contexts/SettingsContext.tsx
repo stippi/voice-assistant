@@ -19,6 +19,7 @@ export type Settings = {
   
   enableGoogle: boolean;
   enableSpotify: boolean;
+  enableMicrosoft: boolean;
   enableNewsApiOrg: boolean;
   enableOpenWeatherMap: boolean;
 
@@ -40,6 +41,7 @@ const defaultSettings: Settings = {
   transcriptionLanguage: navigator.language,
 
   enableGoogle: false,
+  enableMicrosoft: false,
   enableSpotify: false,
   enableNewsApiOrg: false,
   enableOpenWeatherMap: true,

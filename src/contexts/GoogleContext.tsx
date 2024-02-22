@@ -2,11 +2,12 @@ import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {GoogleApiKey} from "../secrets.ts";
 import {createScript} from "../utils/createScript.ts";
 import {loginFlow} from "../integrations/google.ts";
+import {CalendarEvent} from "../model/event.ts";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
   loggedIn: boolean;
-  upcomingEvents: gapi.client.calendar.Event[];
+  upcomingEvents: CalendarEvent[];
 };
 
 export const GoogleContext = createContext<GoogleContextType>({
@@ -17,15 +18,15 @@ export const GoogleContext = createContext<GoogleContextType>({
 
 interface Props {
   children: ReactNode
-  enableGoogle: boolean
+  enable: boolean
 }
 
-export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children }) => {
+export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) => {
   const [apiLoaded, setApiLoaded] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   
   useEffect(() => {
-    if (!enableGoogle) return;
+    if (!enable) return;
 
     const apiScript = createScript("https://apis.google.com/js/api.js", () => {
       // Initialize gapi
@@ -52,7 +53,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
     return () => {
       document.body.removeChild(apiScript);
     };
-  }, [enableGoogle]);
+  }, [enable]);
 
   useEffect(() => {
     if (!apiLoaded) return;
@@ -83,12 +84,12 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enableGoogle, children
     });
   }
   
-  const [upcomingEvents, setUpcomingEvents] = useState<gapi.client.calendar.Event[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   useEffect(() => {
     if (!loggedIn) return;
     fetchUpcomingEvents();
     const interval = setInterval(async () => {
-      loginFlow.getAccessToken().then(accessToken => {
+      loginFlow.getAccessToken(true).then(accessToken => {
         gapi.client.setToken({access_token: accessToken});
         setLoggedIn(true);
         fetchUpcomingEvents();

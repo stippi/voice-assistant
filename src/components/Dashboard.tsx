@@ -22,6 +22,7 @@ import {MusicPlaylist} from "./MusicPlaylist.tsx";
 import ListItem from "@mui/material/ListItem";
 import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
+import useMicrosoftContext from "../hooks/useMicrosoftContext.tsx";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiList-root': {
@@ -251,30 +252,45 @@ function MusicList() {
 
 export function Dashboard() {
   const {timers} = useAppContext();
-  const {upcomingEvents} = useGoogleContext();
+  const {upcomingEvents: upcomingGoogleEvents} = useGoogleContext();
+  const {upcomingEvents: upcomingMicrosoftEvents} = useMicrosoftContext();
   const {settings} = useSettings();
   
+  const upcomingEvents = [];
+  if (settings.enableGoogle) {
+    upcomingEvents.push(...upcomingGoogleEvents || []);
+  }
+  if (settings.enableMicrosoft) {
+    upcomingEvents.push(...upcomingMicrosoftEvents || []);
+  }
+  upcomingEvents.sort((a, b) => {
+    const aStart = a.start.dateTime || a.start.date || "";
+    const bStart = b.start.dateTime || b.start.date || "";
+    return aStart.localeCompare(bStart);
+  });
+  const hasEvents = upcomingEvents.length > 0;
+  
   React.useEffect(() => {
-    const showDashboard = timers.length > 0 || upcomingEvents.length > 0 || settings.enableSpotify;
+    const showDashboard = timers.length > 0 || hasEvents || settings.enableSpotify;
     document.documentElement.style.setProperty('--dashboard-width', showDashboard ? '230px' : '0');
 
-  }, [timers, upcomingEvents, settings.enableSpotify]);
+  }, [timers, hasEvents, settings.enableSpotify]);
   
   return (
     <ThemeProvider theme={theme}>
       <div
         className="dashboard"
         style={{
-            display: timers.length > 0 || (settings.enableGoogle && upcomingEvents.length > 0) || settings.enableSpotify ? "flex" : "none"
+            display: timers.length > 0 || upcomingEvents.length > 0 || settings.enableSpotify ? "flex" : "none"
         }}
       >
-        {settings.enableGoogle && upcomingEvents.length > 0 && (
+        {hasEvents && (
           <CollapsibleList
             icon={<CalendarMonthIcon style={{color: "#00c4ff", fontSize: "1.5rem"}}/>}
             title="Calendar"
             secondaryTitle="Show upcoming events"
             settingsKey="showUpcomingEvents">
-            <Events/>
+            <Events events={upcomingEvents}/>
           </CollapsibleList>
         )}
         {timers.length > 0 && (
