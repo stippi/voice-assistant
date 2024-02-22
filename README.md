@@ -50,6 +50,8 @@ export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
 export const GoogleCustomSearchEngineId = "<ID of your custom google search engine configured for global search>";
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
+
+export const MicrosoftClientId = "<Your Azure App Client ID>";
 ```
 
 :bulb: **This file is ignored by git.**
@@ -102,6 +104,16 @@ As redirect URL, also specify `http://localhost:5173/spotify-callback`.
 When enabling the Spotify integration, you will be redirected to a Spotify login page where you also need to give Voice Assistant (or however you named your app in the Spotify developer dashboard) the requested permissions.
 In addition, the embedded playback streaming capabilities work only for Spotify Premium users, since the Web Playback SDK requires a Premium account.
 
+### Microsoft Integration
+
+For the optional Microsoft integration (enabled in the Assistant Settings via the switch `Microsoft Integration`), you need to provide a `MicrosoftClientId`.
+To get a client ID, you need to register an application on the [Azure Portal](https://portal.azure.com/).
+It must have the following settings:
+- The application type must be `Single Page Application`.
+- The redirect URL must be `http://localhost:5173/microsoft-callback`.
+- The tenant type must be multi-tenant.
+- The scopes must include `User.Read` and `Calendars.ReadWrite`.
+
 ### LocalAI
 
 [LocalAI](https://github.com/mudler/LocalAI) is a project that allows you to run various LLMs locally.
@@ -124,6 +136,9 @@ yarn run dev
 
 ## Ideas for Next Features
 
+- [ ] Optimize context window size for the LLM.
+- [ ] Integrate more Microsoft Graph APIs.
+- [ ] Add a temporary chat mode, where the chat is auto-cleared after some time of inactivity.
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
 - [ ] Create a persistent Spotify playlist for the Voice-Assistant with dynamic content.
   This is necessary to allow jumping to a specific song in the playlist.
