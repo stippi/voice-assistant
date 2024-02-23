@@ -106,6 +106,10 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
       },
       hr() {
         return <hr style={{border: "none", borderTop: "1px solid rgba(0,0,0,0.2)"}}/>
+      },
+      a(props) {
+        const {children, ...rest } = props
+        return <a {...rest} target="_blank">{children}</a>
       }
     }}
   />)
