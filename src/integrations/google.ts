@@ -17,7 +17,8 @@ export const loginFlow = new LoginFlow({
   scopes: [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/contacts.readonly",
-    "https://www.googleapis.com/auth/cloud-platform"
+    "https://www.googleapis.com/auth/cloud-platform", // For testing Gemini Pro
+    "https://www.googleapis.com/auth/photoslibrary.readonly"
   ],
   storagePrefix: "google"
 });
@@ -347,4 +348,59 @@ export async function listContacts(query: string) {
     });
   }
   return contacts;
+}
+
+async function callApi<T>(url: string, options: RequestInit = {}, expectResponse = true): Promise<T> {
+  const accessToken = await loginFlow.getAccessToken();
+  options.headers = {
+    ...options.headers,
+    "Authorization": `Bearer ${accessToken}`
+  }
+  const response = await fetch(url, options);
+  if (response.ok) {
+    if (!expectResponse) {
+      return {} as T
+    }
+    return await response.json();
+  } else {
+    throw new Error(`Google API error: ${response.status} ${response.statusText}`);
+  }
+}
+
+export type MediaItem = {
+  id: string,
+  productUrl: string,
+  baseUrl: string,
+  mimeType: string,
+  mediaMetadata: {
+    creationTime: string,
+    width: string,
+    height: string,
+  },
+  filename: string
+}
+
+export async function findPhotos(): Promise<MediaItem[]> {
+  const body = {
+    pageSize: 10,
+    filters: {
+      mediaTypeFilter: {
+        mediaTypes: ["PHOTO"]
+      },
+      featureFilter: {
+        includedFeatures: ["FAVORITES"]
+      }
+    },
+  }
+  const url = "https://photoslibrary.googleapis.com/v1/mediaItems:search";
+  const options = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${await loginFlow.getAccessToken()}`
+    },
+    body: JSON.stringify(body)
+  }
+  const result = await callApi<{ mediaItems: MediaItem[] }>(url, options, true);
+  return result.mediaItems;
 }

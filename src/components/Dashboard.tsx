@@ -252,7 +252,7 @@ function MusicList() {
 
 export function Dashboard() {
   const {timers} = useAppContext();
-  const {upcomingEvents: upcomingGoogleEvents} = useGoogleContext();
+  const {upcomingEvents: upcomingGoogleEvents, favoritePhotos} = useGoogleContext();
   const {upcomingEvents: upcomingMicrosoftEvents} = useMicrosoftContext();
   const {settings} = useSettings();
   
@@ -303,6 +303,18 @@ export function Dashboard() {
           </CollapsibleList>
         )}
         {settings.enableSpotify && <MusicList/>}
+        {settings.enableGoogle && favoritePhotos.length > 0 && (
+          <Paper elevation={1} style={{display: "flex", flexDirection: "column", overflow: "hidden"}}>
+            <img
+              src={favoritePhotos[0].baseUrl}
+              alt="Photo"
+              style={{width: "100%", height: "100%", objectFit: "cover", cursor: "pointer"}}
+              onClick={() => {
+                window.open(favoritePhotos[0].productUrl, '_blank');
+              }}
+            />
+          </Paper>
+        )}
       </div>
     </ThemeProvider>
   );
