@@ -258,7 +258,7 @@ export function Dashboard() {
   const {settings} = useSettings();
   
   const upcomingEvents = [];
-  if (settings.enableGoogle) {
+  if (settings.enableGoogle && settings.enableGoogleCalendar) {
     upcomingEvents.push(...upcomingGoogleEvents || []);
   }
   if (settings.enableMicrosoft) {
@@ -304,7 +304,7 @@ export function Dashboard() {
           </CollapsibleList>
         )}
         {settings.enableSpotify && <MusicList/>}
-        {settings.enableGoogle && favoritePhotos.length > 0 && (
+        {settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0 && (
           <Paper elevation={1} style={{display: "flex", flexDirection: "column", overflow: "hidden"}}>
             <RandomPhoto  mediaItems={favoritePhotos}/>
           </Paper>
