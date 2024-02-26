@@ -49,9 +49,9 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
     { label: "Google Calendar", settingsKey: "enableGoogleCalendar", enabled: settings.enableGoogle },
     { label: "Google Photos", settingsKey: "enableGooglePhotos", enabled: settings.enableGoogle },
     { label: "Microsoft", settingsKey: "enableMicrosoft", enabled: true },
-    { label: "Spotify", settingsKey: "enableSpotify", enabled: true  },
-    { label: "NewsApi", settingsKey: "enableNewsApiOrg", enabled: true  },
-    { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap", enabled: true  },
+    { label: "Spotify", settingsKey: "enableSpotify", enabled: true },
+    { label: "NewsApi", settingsKey: "enableNewsApiOrg", enabled: true },
+    { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap", enabled: true },
   ];
   
   return (
