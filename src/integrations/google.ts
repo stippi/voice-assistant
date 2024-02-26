@@ -380,27 +380,47 @@ export type MediaItem = {
   filename: string
 }
 
-export async function findPhotos(): Promise<MediaItem[]> {
-  const body = {
-    pageSize: 10,
-    filters: {
-      mediaTypeFilter: {
-        mediaTypes: ["PHOTO"]
-      },
-      featureFilter: {
-        includedFeatures: ["FAVORITES"]
-      }
+export async function fetchFavoritePhotos(limit: number): Promise<MediaItem[]> {
+  const filters = {
+    mediaTypeFilter: {
+      mediaTypes: ["PHOTO"]
     },
-  }
+    featureFilter: {
+      includedFeatures: ["FAVORITES"]
+    }
+  };
+
   const url = "https://photoslibrary.googleapis.com/v1/mediaItems:search";
-  const options = {
+  const options: RequestInit = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${await loginFlow.getAccessToken()}`
     },
-    body: JSON.stringify(body)
   }
-  const result = await callApi<{ mediaItems: MediaItem[] }>(url, options, true);
-  return result.mediaItems;
+  
+  // Continuously fetch paged media items until the limit is reached
+  let pageToken = '';
+  let allMediaItems: MediaItem[] = [];
+  do {
+   const body = {
+      pageSize: 10,
+      pageToken: pageToken,
+      filters,
+    };
+    options.body = JSON.stringify(body);
+    
+    type Response = {
+      mediaItems: MediaItem[],
+      nextPageToken: string
+    };
+    const response = await callApi<Response>(url, options, true);
+    if (response.mediaItems) {
+      allMediaItems = allMediaItems.concat(response.mediaItems);
+    }
+    pageToken = response.nextPageToken;
+  } while (pageToken && allMediaItems.length < limit);
+  
+  // Truncate the list to the requested limit
+  return allMediaItems.slice(0, limit);
 }

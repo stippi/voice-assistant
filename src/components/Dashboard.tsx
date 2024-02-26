@@ -23,6 +23,7 @@ import ListItem from "@mui/material/ListItem";
 import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import useMicrosoftContext from "../hooks/useMicrosoftContext.tsx";
+import {RandomPhoto} from "./RandomPhoto.tsx";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiList-root': {
@@ -305,14 +306,7 @@ export function Dashboard() {
         {settings.enableSpotify && <MusicList/>}
         {settings.enableGoogle && favoritePhotos.length > 0 && (
           <Paper elevation={1} style={{display: "flex", flexDirection: "column", overflow: "hidden"}}>
-            <img
-              src={favoritePhotos[0].baseUrl}
-              alt="Photo"
-              style={{width: "100%", height: "100%", objectFit: "cover", cursor: "pointer"}}
-              onClick={() => {
-                window.open(favoritePhotos[0].productUrl, '_blank');
-              }}
-            />
+            <RandomPhoto  mediaItems={favoritePhotos}/>
           </Paper>
         )}
       </div>

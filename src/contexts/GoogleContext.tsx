@@ -1,7 +1,7 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {GoogleApiKey} from "../secrets.ts";
 import {createScript} from "../utils/createScript.ts";
-import {findPhotos, loginFlow, MediaItem} from "../integrations/google.ts";
+import {fetchFavoritePhotos, loginFlow, MediaItem} from "../integrations/google.ts";
 import {CalendarEvent} from "../model/event.ts";
 
 export type GoogleContextType = {
@@ -91,7 +91,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
   useEffect(() => {
     if (!loggedIn) return;
     fetchUpcomingEvents();
-    findPhotos().then(photos => {
+    fetchFavoritePhotos(100).then(photos => {
       setFavoritePhotos(photos);
     });
     const interval = setInterval(async () => {
