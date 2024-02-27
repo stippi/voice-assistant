@@ -108,12 +108,13 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
   }, [loggedIn]);
   
   useEffect(() => {
+    if (!loggedIn) return;
     window.addEventListener('refresh-upcoming-events', fetchUpcomingEvents);
     
     return () => {
       window.removeEventListener('refresh-upcoming-events', fetchUpcomingEvents);
     };
-  }, []);
+  }, [loggedIn]);
   
   return (
     <GoogleContext.Provider
