@@ -91,13 +91,13 @@ export function Photos({mediaItems}: PhotosProps) {
   // Increment the index at a regular interval
   useEffect(() => {
     const interval = setInterval(() => {
-      if (documentVisible && playing) {
+      if (documentVisible && playing && isExpanded) {
         setCurrentIndex(currentIndex => (currentIndex + 1) % randomizedMediaItems.length);
       }
     }, 20000);
     
     return () => clearInterval(interval);
-  }, [documentVisible, randomizedMediaItems, playing]);
+  }, [documentVisible, randomizedMediaItems, playing, isExpanded]);
   
   useEffect(() => {
     const item = randomizedMediaItems[currentIndex];
@@ -130,7 +130,7 @@ export function Photos({mediaItems}: PhotosProps) {
               position: "absolute",
               left: 0,
               right: 0,
-              top: 0,
+              top: "3px",
               zIndex: 10,
               
               ...gridConfig,
