@@ -9,7 +9,8 @@ import {KeyboardArrowDown} from "@mui/icons-material";
 import AlarmIcon from '@mui/icons-material/Alarm';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HeadphonesIcon from '@mui/icons-material/Headphones';
-import {Box, ListItemButton} from "@mui/material";
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import {Box, ListItemButton, SxProps} from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import {Settings} from "../contexts/SettingsContext.tsx";
 import useSettings from "../hooks/useSettings.tsx";
@@ -24,20 +25,27 @@ import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import useMicrosoftContext from "../hooks/useMicrosoftContext.tsx";
 import {RandomPhoto} from "./RandomPhoto.tsx";
+import {MediaItem} from "../integrations/google.ts";
+import {Theme} from "@emotion/react";
+
+const gridConfig = {
+  paddingLeft: "16px",
+  paddingRight: "16px",
+  paddingTop: "2px",
+  paddingBottom: "2px",
+
+  display: 'grid',
+  gridTemplateColumns: '32px 1fr 32px',
+  alignItems: 'start',
+  gap: '0 8px',
+};
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiList-root': {
     overflow: 'auto'
   },
   '& .MuiListItemButton-root': {
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingTop: 2,
-    paddingBottom: 2,
-    display: 'grid',
-    gridTemplateColumns: '32px 1fr 32px',
-    alignItems: 'start',
-    gap: '0 8px',
+    ...gridConfig,
   },
   '& .MuiListItem-root': {
     paddingLeft: 16,
@@ -55,9 +63,41 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   },
 });
 
-function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, children, disableExpand}: DashboardItemProps) {
+function ExpandButton({open, sx, key}: { open: boolean, sx?: SxProps<Theme>, key?: string }) {
+  return <KeyboardArrowDown
+    key={key}
+    sx={{
+      ...sx,
+      mr: -1,
+      color: 'rgba(0,0,0,1)',
+      transform: open ? 'rotate(-180deg)' : 'rotate(0)',
+      transition: '0.2s',
+      fontSize: 20,
+      marginRight: 0,
+      justifySelf: 'center',
+    }}
+  />
+}
+
+function CollapsibleList(
+  {
+    header,
+    title,
+    icon,
+    secondaryTitle,
+    settingsKey,
+    children,
+    disableExpand,
+    hideList,
+    sx,
+    expandKey,
+    onMouseEnter,
+    onMouseLeave
+  }: DashboardItemProps
+) {
   const {settings, setSettings} = useSettings();
   const open = settings[settingsKey];
+  const toggleExpand = () => setSettings({...settings, [settingsKey]: !open});
 
   const iconContent = () => {
     if (icon) {
@@ -97,70 +137,66 @@ function CollapsibleList({header, title, icon, secondaryTitle, settingsKey, chil
   }
   const expandContent = () => {
     if (!disableExpand) {
-      return (
-        <KeyboardArrowDown
-          sx={{
-            mr: -1,
-            color: 'rgba(0,0,0,1)',
-            transform: open ? 'rotate(-180deg)' : 'rotate(0)',
-            transition: '0.2s',
-            fontSize: 20,
-            marginRight: 0,
-            justifySelf: 'center',
-          }}
-        />
-      );
+      return <ExpandButton open={!!open} key={expandKey}/>;
     }
   }
-  const toggleExpand = () => setSettings({...settings, [settingsKey]: !open});
   
   return (
-    <Paper elevation={1} style={{display: "flex", flexDirection: "column"}}>
+    <Paper
+      elevation={1}
+      sx={{
+        ...sx,
+        display: "flex",
+        flexDirection: "column",
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {header}
-      <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
-        <Box
-          sx={{
-            paddingTop: 0,
-            paddingBottom: open && !disableExpand ? 1 : 0
-          }}
-        >
-          {disableExpand || typeof title !== "string" ? (
-            <ListItem
-              className="listItemGrid"
-              style={{
-                paddingTop: header ? 4 : 16,
-                paddingBottom: header ? 4 : 16
-              }}
-            >
-              {iconContent()}
-              {titleContent()}
-              {!disableExpand && (
-                <IconButton onClick={toggleExpand} style={{height: 32, width: 32}}>
-                  {expandContent()}
-                </IconButton>)
-              }
-            </ListItem>
-          ) : (
-            <ListItemButton
-              className="listItemGrid"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={toggleExpand}
-              sx={{
-                //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
-              }}
-              style={{
-                paddingTop: header ? 4 : 16,
-                paddingBottom: open ? 0 : header ? 4 : 16
-              }}
-            >
-              {iconContent()}
-              {titleContent()}
-              {expandContent()}
-            </ListItemButton>
-          )}
-          {open && children}
-        </Box>
-      </DashboardList>
+      {!hideList && (
+        <DashboardList style={{paddingTop: 0, paddingBottom: 0, width: '100%'}}>
+          <Box
+            sx={{
+              paddingTop: 0,
+              paddingBottom: open && !disableExpand ? 1 : 0
+            }}
+          >
+            {disableExpand || typeof title !== "string" ? (
+              <ListItem
+                style={{
+                  paddingTop: header ? 4 : 16,
+                  paddingBottom: header ? 4 : 16
+                }}
+              >
+                {iconContent()}
+                {titleContent()}
+                {!disableExpand && (
+                  <IconButton onClick={toggleExpand} style={{height: 32, width: 32}}>
+                    {expandContent()}
+                  </IconButton>)
+                }
+              </ListItem>
+            ) : (
+              <ListItemButton
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={toggleExpand}
+                sx={{
+                  //'&:hover, &:focus': { '& svg': { opacity: open ? 1 : 0 } },
+                }}
+                style={{
+                  paddingTop: header ? 4 : 16,
+                  paddingBottom: open ? 0 : header ? 4 : 16
+                }}
+              >
+                {iconContent()}
+                {titleContent()}
+                {expandContent()}
+              </ListItemButton>
+            )}
+            {open && children}
+          </Box>
+        </DashboardList>
+      )}
     </Paper>
   );
 }
@@ -171,8 +207,13 @@ interface DashboardItemProps {
   title: string | React.ReactNode;
   secondaryTitle: string;
   settingsKey: keyof Settings;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   disableExpand?: boolean;
+  hideList?: boolean;
+  sx?: SxProps<Theme>;
+  expandKey?: string;
+  onMouseEnter?: (event: React.MouseEvent<HTMLElement>) => void;
+  onMouseLeave?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const theme = createTheme({
@@ -251,6 +292,70 @@ function MusicList() {
   );
 }
 
+function Photos({mediaItems}: PhotosProps) {
+  const {settings, setSettings} = useSettings();
+  const isExpanded = settings.showPhotos;
+  const toggleExpand = () => setSettings({...settings, showPhotos: !isExpanded});
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <CollapsibleList
+      sx={{
+        '&:hover .headerItems': { opacity: 1 },
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      header={mediaItems.length > 0 && isExpanded && (
+        <RandomPhoto mediaItems={mediaItems} hovered={hovered}>
+          <Box
+            className="headerItems"
+            sx={{
+              opacity: 0,
+              transition: 'opacity 0.3s',
+
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 0,
+              zIndex: 10,
+              
+              ...gridConfig,
+              
+              paddingTop: "8px",
+              paddingBottom: "8px",
+            }}
+          >
+            <div></div>
+            <div></div>
+            <IconButton
+              sx={{
+                paddingBlock: 0,
+                paddingInline: 0,
+                width: "32px",
+                height: "32px",
+              }}
+              onClick={toggleExpand}
+            >
+              <ExpandButton open={isExpanded} key="expand-photos"/>
+            </IconButton>
+          </Box>
+        </RandomPhoto>
+      )}
+      icon={<CameraAltIcon style={{color: "#ff5bde", fontSize: "1.5rem"}}/>}
+      title="Photos"
+      secondaryTitle="A gallery of your favorites"
+      settingsKey="showPhotos"
+      expandKey="expand-photos"
+      hideList={isExpanded}
+    >
+    </CollapsibleList>
+  );
+}
+
+interface PhotosProps {
+  mediaItems: MediaItem[];
+}
+
 export function Dashboard() {
   const {timers} = useAppContext();
   const {upcomingEvents: upcomingGoogleEvents, favoritePhotos} = useGoogleContext();
@@ -274,7 +379,6 @@ export function Dashboard() {
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || hasEvents || settings.enableSpotify;
     document.documentElement.style.setProperty('--dashboard-width', showDashboard ? '230px' : '0');
-
   }, [timers, hasEvents, settings.enableSpotify]);
   
   return (
@@ -303,11 +407,11 @@ export function Dashboard() {
             <Timers/>
           </CollapsibleList>
         )}
-        {settings.enableSpotify && <MusicList/>}
+        {settings.enableSpotify && (
+          <MusicList/>
+        )}
         {settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0 && (
-          <Paper elevation={1} style={{display: "flex", flexDirection: "column", overflow: "hidden"}}>
-            <RandomPhoto  mediaItems={favoritePhotos}/>
-          </Paper>
+          <Photos mediaItems={favoritePhotos} />
         )}
       </div>
     </ThemeProvider>
