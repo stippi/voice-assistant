@@ -424,3 +424,8 @@ export async function fetchFavoritePhotos(limit: number): Promise<MediaItem[]> {
   // Truncate the list to the requested limit
   return allMediaItems.slice(0, limit);
 }
+
+export async function fetchMediaItem(mediaItemId: string): Promise<MediaItem> {
+  const url = `https://photoslibrary.googleapis.com/v1/mediaItems/${mediaItemId}`;
+  return callApi<MediaItem>(url, {}, true);
+}

@@ -9,7 +9,6 @@ import {KeyboardArrowDown} from "@mui/icons-material";
 import AlarmIcon from '@mui/icons-material/Alarm';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HeadphonesIcon from '@mui/icons-material/Headphones';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import {Box, ListItemButton, SxProps} from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import {Settings} from "../contexts/SettingsContext.tsx";
@@ -24,21 +23,9 @@ import ListItem from "@mui/material/ListItem";
 import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import useMicrosoftContext from "../hooks/useMicrosoftContext.tsx";
-import {RandomPhoto} from "./RandomPhoto.tsx";
-import {MediaItem} from "../integrations/google.ts";
+import {Photos} from "./Photos.tsx";
 import {Theme} from "@emotion/react";
-
-const gridConfig = {
-  paddingLeft: "16px",
-  paddingRight: "16px",
-  paddingTop: "2px",
-  paddingBottom: "2px",
-
-  display: 'grid',
-  gridTemplateColumns: '32px 1fr 32px',
-  alignItems: 'start',
-  gap: '0 8px',
-};
+import {gridConfig} from "./dashboardGridConfig.ts";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiList-root': {
@@ -63,7 +50,7 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   },
 });
 
-function ExpandButton({open, sx, key}: { open: boolean, sx?: SxProps<Theme>, key?: string }) {
+export function ExpandButton({open, sx, key}: { open: boolean, sx?: SxProps<Theme>, key?: string }) {
   return <KeyboardArrowDown
     key={key}
     sx={{
@@ -79,7 +66,7 @@ function ExpandButton({open, sx, key}: { open: boolean, sx?: SxProps<Theme>, key
   />
 }
 
-function CollapsibleList(
+export function CollapsibleList(
   {
     header,
     title,
@@ -290,70 +277,6 @@ function MusicList() {
       <MusicPlaylist/>
     </CollapsibleList>
   );
-}
-
-function Photos({mediaItems}: PhotosProps) {
-  const {settings, setSettings} = useSettings();
-  const isExpanded = settings.showPhotos;
-  const toggleExpand = () => setSettings({...settings, showPhotos: !isExpanded});
-  const [hovered, setHovered] = React.useState(false);
-
-  return (
-    <CollapsibleList
-      sx={{
-        '&:hover .headerItems': { opacity: 1 },
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      header={mediaItems.length > 0 && isExpanded && (
-        <RandomPhoto mediaItems={mediaItems} hovered={hovered}>
-          <Box
-            className="headerItems"
-            sx={{
-              opacity: 0,
-              transition: 'opacity 0.3s',
-
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 0,
-              zIndex: 10,
-              
-              ...gridConfig,
-              
-              paddingTop: "8px",
-              paddingBottom: "8px",
-            }}
-          >
-            <div></div>
-            <div></div>
-            <IconButton
-              sx={{
-                paddingBlock: 0,
-                paddingInline: 0,
-                width: "32px",
-                height: "32px",
-              }}
-              onClick={toggleExpand}
-            >
-              <ExpandButton open={isExpanded} key="expand-photos"/>
-            </IconButton>
-          </Box>
-        </RandomPhoto>
-      )}
-      icon={<CameraAltIcon style={{color: "#ff5bde", fontSize: "1.5rem"}}/>}
-      title="Photos"
-      secondaryTitle="A gallery of your favorites"
-      settingsKey="showPhotos"
-      expandKey="expand-photos"
-      hideList={isExpanded}
-    >
-    </CollapsibleList>
-  );
-}
-
-interface PhotosProps {
-  mediaItems: MediaItem[];
 }
 
 export function Dashboard() {
