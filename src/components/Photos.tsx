@@ -11,6 +11,7 @@ import IconButton from "@mui/material/IconButton";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import {CollapsibleList, ExpandButton} from "./Dashboard.tsx";
+import {PlaybackControls} from "./MusicControls.tsx";
 
 export function Photo({ currentPhoto, hovered, children }: PhotoProps) {
   return (
@@ -74,6 +75,7 @@ export function Photos({mediaItems}: PhotosProps) {
   const toggleExpand = () => setSettings({...settings, showPhotos: !isExpanded});
   const [hovered, setHovered] = React.useState(false);
   
+  const [playing, setPlaying] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhoto, setCurrentPhoto] = useState<MediaItem | null>(null);
   const [randomizedMediaItems, setRandomizedMediaItems] = useState(mediaItems);
@@ -89,13 +91,13 @@ export function Photos({mediaItems}: PhotosProps) {
   // Increment the index at a regular interval
   useEffect(() => {
     const interval = setInterval(() => {
-      if (documentVisible) {
+      if (documentVisible && playing) {
         setCurrentIndex(currentIndex => (currentIndex + 1) % randomizedMediaItems.length);
       }
     }, 20000);
     
     return () => clearInterval(interval);
-  }, [documentVisible, randomizedMediaItems]);
+  }, [documentVisible, randomizedMediaItems, playing]);
   
   useEffect(() => {
     const item = randomizedMediaItems[currentIndex];
@@ -121,6 +123,7 @@ export function Photos({mediaItems}: PhotosProps) {
           <Box
             className="headerItems"
             sx={{
+              color: "#222",
               opacity: 0,
               transition: 'opacity 0.3s',
               
@@ -139,6 +142,7 @@ export function Photos({mediaItems}: PhotosProps) {
             <IconButton
               aria-label="open photo"
               size="small"
+              color="inherit"
               onClick={() => {
                 if (currentPhoto) {
                   window.open(currentPhoto.productUrl, "_blank");
@@ -147,7 +151,14 @@ export function Photos({mediaItems}: PhotosProps) {
             >
               <OpenInNewIcon fontSize="inherit" />
             </IconButton>
-            <div></div>
+            <PlaybackControls
+              playing={playing}
+              togglePlay={() => setPlaying(!playing)}
+              canSkipPrevious={true}
+              canSkipNext={true}
+              skipNext={() => setCurrentIndex((currentIndex + 1) % randomizedMediaItems.length)}
+              skipPrevious={() => setCurrentIndex((currentIndex - 1 + randomizedMediaItems.length) % randomizedMediaItems.length)}
+            />
             <IconButton
               sx={{
                 paddingBlock: 0,

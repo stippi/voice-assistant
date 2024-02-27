@@ -155,7 +155,10 @@ export function PositionControls({position, duration, setPosition}: PositionProp
 
 export const PlaybackControls = React.memo(({
   playing, togglePlay,
-  canSkipPrevious, canSkipNext, skipNext, skipPrevious
+  canSkipPrevious, canSkipNext,
+  skipNext, skipPrevious,
+  fontSize = 28,
+  fontSizeLarge = 32,
 }: PlaybackProps) => {
   return (
     <Box
@@ -167,17 +170,19 @@ export const PlaybackControls = React.memo(({
       }}
     >
       <IconButton
-        aria-label="previous song"
+        aria-label="previous"
         disabled={!canSkipPrevious}
         onClick={skipPrevious}
-        style={{fontSize: 28}}
+        color="inherit"
+        style={{fontSize}}
       >
         <SkipPreviousRounded fontSize="inherit"/>
       </IconButton>
       <IconButton
         aria-label={playing ? 'pause' : 'play'}
         onClick={togglePlay}
-        style={{fontSize: 32}}
+        color="inherit"
+        style={{fontSize: fontSizeLarge}}
       >
         {playing ? (
           <PauseRounded fontSize="inherit"/>
@@ -186,10 +191,11 @@ export const PlaybackControls = React.memo(({
         )}
       </IconButton>
       <IconButton
-        aria-label="next song"
+        aria-label="next"
         disabled={!canSkipNext}
         onClick={skipNext}
-        style={{fontSize: 28}}
+        color="inherit"
+        style={{fontSize}}
       >
         <SkipNextRounded fontSize="inherit"/>
       </IconButton>
@@ -267,6 +273,8 @@ interface PlaybackProps {
   canSkipNext: boolean,
   togglePlay: () => void,
   playing: boolean,
+  fontSize?: number,
+  fontSizeLarge?: number,
 }
 
 interface PositionProps {
