@@ -43,12 +43,15 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
   const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
   const triggerWords = ["Alexa", "Americano", "Blueberry", "Bumblebee", "Computer", "Grapefruit",
     "Grasshopper", "Hey Google", "Hey Siri", "Jarvis", "Okay Google", "Picovoice", "Porcupine", "Terminator"];
-  const integrations: { label: string, settingsKey: keyof Settings }[] = [
-    { label: "Google", settingsKey: "enableGoogle" },
-    { label: "Microsoft", settingsKey: "enableMicrosoft" },
-    { label: "Spotify", settingsKey: "enableSpotify" },
-    { label: "NewsApi", settingsKey: "enableNewsApiOrg" },
-    { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap" },
+  const integrations: { label: string, settingsKey: keyof Settings, enabled: boolean }[] = [
+    { label: "Google", settingsKey: "enableGoogle", enabled: true },
+    { label: "Google Maps", settingsKey: "enableGoogleMaps", enabled: settings.enableGoogle },
+    { label: "Google Calendar", settingsKey: "enableGoogleCalendar", enabled: settings.enableGoogle },
+    { label: "Google Photos", settingsKey: "enableGooglePhotos", enabled: settings.enableGoogle },
+    { label: "Microsoft", settingsKey: "enableMicrosoft", enabled: true },
+    { label: "Spotify", settingsKey: "enableSpotify", enabled: true },
+    { label: "NewsApi", settingsKey: "enableNewsApiOrg", enabled: true },
+    { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap", enabled: true },
   ];
   
   return (
@@ -166,6 +169,7 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
           <Typography variant="h6">Integrations</Typography>
           {integrations.map(item => (
             <FormControl
+              disabled={!item.enabled}
               key={item.settingsKey}
             >
               <FormControlLabel

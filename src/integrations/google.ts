@@ -17,7 +17,8 @@ export const loginFlow = new LoginFlow({
   scopes: [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/contacts.readonly",
-    "https://www.googleapis.com/auth/cloud-platform"
+    "https://www.googleapis.com/auth/cloud-platform", // For testing Gemini Pro
+    "https://www.googleapis.com/auth/photoslibrary.readonly"
   ],
   storagePrefix: "google"
 });
@@ -347,4 +348,84 @@ export async function listContacts(query: string) {
     });
   }
   return contacts;
+}
+
+async function callApi<T>(url: string, options: RequestInit = {}, expectResponse = true): Promise<T> {
+  const accessToken = await loginFlow.getAccessToken();
+  options.headers = {
+    ...options.headers,
+    "Authorization": `Bearer ${accessToken}`
+  }
+  const response = await fetch(url, options);
+  if (response.ok) {
+    if (!expectResponse) {
+      return {} as T
+    }
+    return await response.json();
+  } else {
+    throw new Error(`Google API error: ${response.status} ${response.statusText}`);
+  }
+}
+
+export type MediaItem = {
+  id: string,
+  productUrl: string,
+  baseUrl: string,
+  mimeType: string,
+  mediaMetadata: {
+    creationTime: string,
+    width: string,
+    height: string,
+  },
+  filename: string
+}
+
+export async function fetchFavoritePhotos(limit: number): Promise<MediaItem[]> {
+  const filters = {
+    mediaTypeFilter: {
+      mediaTypes: ["PHOTO"]
+    },
+    featureFilter: {
+      includedFeatures: ["FAVORITES"]
+    }
+  };
+
+  const url = "https://photoslibrary.googleapis.com/v1/mediaItems:search";
+  const options: RequestInit = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${await loginFlow.getAccessToken()}`
+    },
+  }
+  
+  // Continuously fetch paged media items until the limit is reached
+  let pageToken = '';
+  let allMediaItems: MediaItem[] = [];
+  do {
+   const body = {
+      pageSize: 10,
+      pageToken: pageToken,
+      filters,
+    };
+    options.body = JSON.stringify(body);
+    
+    type Response = {
+      mediaItems: MediaItem[],
+      nextPageToken: string
+    };
+    const response = await callApi<Response>(url, options, true);
+    if (response.mediaItems) {
+      allMediaItems = allMediaItems.concat(response.mediaItems);
+    }
+    pageToken = response.nextPageToken;
+  } while (pageToken && allMediaItems.length < limit);
+  
+  // Truncate the list to the requested limit
+  return allMediaItems.slice(0, limit);
+}
+
+export async function fetchMediaItem(mediaItemId: string): Promise<MediaItem> {
+  const url = `https://photoslibrary.googleapis.com/v1/mediaItems/${mediaItemId}`;
+  return callApi<MediaItem>(url, {}, true);
 }

@@ -1,4 +1,4 @@
-import React, {createContext, useState, useEffect, ReactNode} from 'react';
+import React, {createContext, useState, useEffect, ReactNode, useCallback} from 'react';
 import {loginFlow} from "../integrations/microsoft.ts";
 import {CalendarEvent, EventTime} from "../model/event.ts";
 
@@ -29,7 +29,8 @@ export const MicrosoftContextProvider: React.FC<Props>  = ({ enable, children })
   
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   
-  const fetchUpcomingEvents = async () => {
+  const fetchUpcomingEvents = useCallback(async () => {
+    if (!enable) return;
     const accessToken = await loginFlow.getAccessToken();
     const url = "https://graph.microsoft.com/v1.0/me/calendar/events?$top=5&$select=subject,start,end,location";
     const response = await fetch(url, {
@@ -56,7 +57,7 @@ export const MicrosoftContextProvider: React.FC<Props>  = ({ enable, children })
       end: event.end,
       summary: event.subject,
     })));
-  }
+  }, [enable]);
   
   useEffect(() => {
     if (!accessToken) return;
@@ -69,7 +70,7 @@ export const MicrosoftContextProvider: React.FC<Props>  = ({ enable, children })
       await fetchUpcomingEvents();
     }, 1000 * 60 * 15);
     return () => clearInterval(interval);
-  }, [accessToken]);
+  }, [accessToken, fetchUpcomingEvents]);
   
   useEffect(() => {
     window.addEventListener('refresh-upcoming-events', fetchUpcomingEvents);
@@ -77,7 +78,7 @@ export const MicrosoftContextProvider: React.FC<Props>  = ({ enable, children })
     return () => {
       window.removeEventListener('refresh-upcoming-events', fetchUpcomingEvents);
     };
-  }, []);
+  }, [fetchUpcomingEvents]);
   
   return (
     <MicrosoftContext.Provider

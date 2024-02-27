@@ -277,163 +277,180 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
         }
       }
     });
-    tools.push({
-      type: "function",
-      function: {
-        name: "get_places_info",
-        description: "Get information about nearby places using the Google Places API",
-        parameters: {
-          type: "object",
-          properties: {
-            latitude: {type: "number"},
-            longitude: {type: "number"},
-            radius: {type: "number", description: "The radius in meters around the given location"},
-            query: {type: "string", description: "A text query like the name of a nearby place"},
-            fields: {
-              type: "array",
-              items: {type: "string"},
-              description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating' and 'websiteUri'"
+    if (settings.enableGoogleMaps) {
+      tools.push({
+        type: "function",
+        function: {
+          name: "get_places_info",
+          description: "Get information about nearby places using the Google Places API",
+          parameters: {
+            type: "object",
+            properties: {
+              latitude: {type: "number"},
+              longitude: {type: "number"},
+              radius: {type: "number", description: "The radius in meters around the given location"},
+              query: {type: "string", description: "A text query like the name of a nearby place"},
+              fields: {
+                type: "array",
+                items: {type: "string"},
+                description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating' and 'websiteUri'"
+              },
+              maxResults: {type: "number"}
             },
-            maxResults: {type: "number"}
-          },
-          required: ["latitude", "longitude", "query", "fields"]
+            required: ["latitude", "longitude", "query", "fields"]
+          }
         }
-      }
-    });
-    tools.push({
-      type: "function",
-      function: {
-        name: "show_map",
-        description: "Display a map centered on the given location",
-        parameters: {
-          type: "object",
-          properties: {
-            latitude: {type: "number"},
-            longitude: {type: "number"},
-            zoom: {type: "number"}
-          },
-          required: ["latitude", "longitude"]
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "show_map",
+          description: "Display a map centered on the given location",
+          parameters: {
+            type: "object",
+            properties: {
+              latitude: {type: "number"},
+              longitude: {type: "number"},
+              zoom: {type: "number"}
+            },
+            required: ["latitude", "longitude"]
+          }
         }
-      }
-    });
-    tools.push({
-      type: "function",
-      function: {
-        name: "show_directions",
-        description: "Display a map with directions from the given origin to the given destination",
-        parameters: {
-          type: "object",
-          properties: {
-            origin: {
-              type: "string",
-              description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place"
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "show_directions",
+          description: "Display a map with directions from the given origin to the given destination",
+          parameters: {
+            type: "object",
+            properties: {
+              origin: {
+                type: "string",
+                description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place"
+              },
+              destination: {
+                type: "string",
+                description: "Name of a place, address, or latitude and longitude in the format 'latitude,longitude'"
+              },
+              travelMode: {type: "string", enum: ["DRIVING", "BICYCLING", "TRANSIT", "WALKING"]},
+              arrivalTime: {type: "string", description: "Desired arrival time in ISO 8601 format"},
+              departureTime: {type: "string", description: "Desired departure time in ISO 8601 format"},
             },
-            destination: {
-              type: "string",
-              description: "Name of a place, address, or latitude and longitude in the format 'latitude,longitude'"
-            },
-            travelMode: {type: "string", enum: ["DRIVING", "BICYCLING", "TRANSIT", "WALKING"]},
-            arrivalTime: {type: "string", description: "Desired arrival time in ISO 8601 format"},
-            departureTime: {type: "string", description: "Desired departure time in ISO 8601 format"},
-          },
-          required: ["origin", "destination", "travelMode"]
+            required: ["origin", "destination", "travelMode"]
+          }
         }
-      }
-    });
-    tools.push({
-      type: "function",
-      function: {
-        name: "show_transit_directions",
-        description: "Display a map with public transport directions from the given origin to the given destination",
-        parameters: {
-          type: "object",
-          properties: {
-            origin: {
-              type: "string",
-              description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place"
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "show_transit_directions",
+          description: "Display a map with public transport directions from the given origin to the given destination",
+          parameters: {
+            type: "object",
+            properties: {
+              origin: {
+                type: "string",
+                description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place"
+              },
+              destination: {
+                type: "string",
+                description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'"
+              },
+              arrivalTime: {type: "string", description: "Desired arrival time in ISO 8601 format"},
+              departureTime: {type: "string", description: "Desired departure time in ISO 8601 format"},
+              modes: {
+                type: "array",
+                items: {type: "string"},
+                description: "Preferred modes of transport. Available are 'BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'"
+              },
+              routingPreference: {type: "string", enum: ["FEWER_TRANSFERS", "LESS_WALKING"]},
             },
-            destination: {
-              type: "string",
-              description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'"
-            },
-            arrivalTime: {type: "string", description: "Desired arrival time in ISO 8601 format"},
-            departureTime: {type: "string", description: "Desired departure time in ISO 8601 format"},
-            modes: {
-              type: "array",
-              items: {type: "string"},
-              description: "Preferred modes of transport. Available are 'BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'"
-            },
-            routingPreference: {type: "string", enum: ["FEWER_TRANSFERS", "LESS_WALKING"]},
-          },
-          required: ["origin", "destination"]
+            required: ["origin", "destination"]
+          }
         }
-      }
-    });
+      });
+    }
   }
   if (settings.enableGoogle && GoogleClientId && GoogleClientSecret) {
-    tools.push({
-      type: "function",
-      function: {
-        name: "add_google_calendar_event",
-        description: "Add an event to a user's calendar.",
-        parameters: {
-          type: "object",
-          properties: {
-            calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
-            summary: { type: "string", description: "Summary of the event" },
-            description: { type: "string", description: "Optional description of the event" },
-            location: { type: "string", description: "Optional location of the event" },
-            attendees: { type: "array", items: { type: "object", properties: { email: { type: "string" } } }, description: "Optional list of attendees" },
-            startTime: { type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'" },
-            timeZone:  { type: "string", description: "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)" },
-            duration: { type: "string", description: "Duration in minutes" },
-            recurrence: { type: "array", items: { type: "string" }, description: "Optional recurrence rules in RRULE format" },
-            reminders: { type: "array", items: {
-                type: "object",
-                properties: { minutes: { type: "integer" }, method: { type: "string", enum: ["popup", "email"] } }
+    if (settings.enableGoogleCalendar) {
+      tools.push({
+        type: "function",
+        function: {
+          name: "add_google_calendar_event",
+          description: "Add an event to a user's calendar.",
+          parameters: {
+            type: "object",
+            properties: {
+              calendarId: {type: "string", description: "The ID of the calendar (defaults to 'primary')"},
+              summary: {type: "string", description: "Summary of the event"},
+              description: {type: "string", description: "Optional description of the event"},
+              location: {type: "string", description: "Optional location of the event"},
+              attendees: {
+                type: "array",
+                items: {type: "object", properties: {email: {type: "string"}}},
+                description: "Optional list of attendees"
               },
-              description: "Optional reminders in minutes before the event" }
-          },
-          required: ["summary", "startTime", "timeZone", "duration"]
+              startTime: {type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'"},
+              timeZone: {
+                type: "string",
+                description: "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)"
+              },
+              duration: {type: "string", description: "Duration in minutes"},
+              recurrence: {
+                type: "array",
+                items: {type: "string"},
+                description: "Optional recurrence rules in RRULE format"
+              },
+              reminders: {
+                type: "array", items: {
+                  type: "object",
+                  properties: {minutes: {type: "integer"}, method: {type: "string", enum: ["popup", "email"]}}
+                },
+                description: "Optional reminders in minutes before the event"
+              }
+            },
+            required: ["summary", "startTime", "timeZone", "duration"]
+          }
         }
-      }
-    });
-    tools.push({
-      type: "function",
-      function: {
-        name: "delete_google_calendar_event",
-        description: "Delete an event from the user's calendar.",
-        parameters: {
-          type: "object",
-          properties: {
-            calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
-            eventId: { type: "string", description: "The ID of the event to delete" },
-          },
-          required: ["eventId"]
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "delete_google_calendar_event",
+          description: "Delete an event from the user's calendar.",
+          parameters: {
+            type: "object",
+            properties: {
+              calendarId: {type: "string", description: "The ID of the calendar (defaults to 'primary')"},
+              eventId: {type: "string", description: "The ID of the event to delete"},
+            },
+            required: ["eventId"]
+          }
         }
-      }
-    });
-    tools.push({
-      type: "function",
-      function: {
-        name: "list_google_calendar_events",
-        description: "List or query events from the user's calendar.",
-        parameters: {
-          type: "object",
-          properties: {
-            calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
-            query: { type: "string", description: "Text search over events" },
-            timeMin: { type: "string", description: "Start time of the search (inclusive), in ISO format" },
-            timeMax: { type: "string", description: "End time of the search (exclusive), in ISO format" },
-            maxResults: { type: "integer", description: "Maximum number of results to return" },
-            singleEvents: { type: "boolean", description: "Whether to return single events from recurring events" },
-            orderBy: { type: "string", enum: ["startTime", "updated"], description: "Order of the results" },
-            showDeleted: { type: "boolean", description: "Whether to include deleted events in the results" }
-          },
-          required: ["singleEvents"]
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "list_google_calendar_events",
+          description: "List or query events from the user's calendar.",
+          parameters: {
+            type: "object",
+            properties: {
+              calendarId: {type: "string", description: "The ID of the calendar (defaults to 'primary')"},
+              query: {type: "string", description: "Text search over events"},
+              timeMin: {type: "string", description: "Start time of the search (inclusive), in ISO format"},
+              timeMax: {type: "string", description: "End time of the search (exclusive), in ISO format"},
+              maxResults: {type: "integer", description: "Maximum number of results to return"},
+              singleEvents: {type: "boolean", description: "Whether to return single events from recurring events"},
+              orderBy: {type: "string", enum: ["startTime", "updated"], description: "Order of the results"},
+              showDeleted: {type: "boolean", description: "Whether to include deleted events in the results"}
+            },
+            required: ["singleEvents"]
+          }
         }
-      }
-    });
+      });
+    }
     tools.push({
       type: "function",
       function: {

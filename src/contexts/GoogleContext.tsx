@@ -1,19 +1,21 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {GoogleApiKey} from "../secrets.ts";
 import {createScript} from "../utils/createScript.ts";
-import {loginFlow} from "../integrations/google.ts";
+import {fetchFavoritePhotos, loginFlow, MediaItem} from "../integrations/google.ts";
 import {CalendarEvent} from "../model/event.ts";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
   loggedIn: boolean;
   upcomingEvents: CalendarEvent[];
+  favoritePhotos: MediaItem[];
 };
 
 export const GoogleContext = createContext<GoogleContextType>({
   apiLoaded: false,
   loggedIn: false,
-  upcomingEvents: []
+  upcomingEvents: [],
+  favoritePhotos: []
 });
 
 interface Props {
@@ -24,6 +26,8 @@ interface Props {
 export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) => {
   const [apiLoaded, setApiLoaded] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
+  const [favoritePhotos, setFavoritePhotos] = useState<MediaItem[]>([]);
   
   useEffect(() => {
     if (!enable) return;
@@ -84,10 +88,12 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
     });
   }
   
-  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   useEffect(() => {
     if (!loggedIn) return;
     fetchUpcomingEvents();
+    fetchFavoritePhotos(100).then(photos => {
+      setFavoritePhotos(photos);
+    });
     const interval = setInterval(async () => {
       loginFlow.getAccessToken(true).then(accessToken => {
         gapi.client.setToken({access_token: accessToken});
@@ -102,12 +108,13 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
   }, [loggedIn]);
   
   useEffect(() => {
+    if (!loggedIn) return;
     window.addEventListener('refresh-upcoming-events', fetchUpcomingEvents);
     
     return () => {
       window.removeEventListener('refresh-upcoming-events', fetchUpcomingEvents);
     };
-  }, []);
+  }, [loggedIn]);
   
   return (
     <GoogleContext.Provider
@@ -115,6 +122,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
         apiLoaded,
         loggedIn,
         upcomingEvents,
+        favoritePhotos
       }}>
       {children}
     </GoogleContext.Provider>
