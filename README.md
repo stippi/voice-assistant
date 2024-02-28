@@ -56,7 +56,7 @@ export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
 export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
 export const GoogleCustomSearchEngineId = "<ID of your custom google search engine configured for global search>";
-export const GoogleProjectId = "<Your Google Cloud Console project ID>";
+// export const GoogleProjectId = "<Your Google Cloud Console project ID>"; // Needed for Google Vertex AI API (Gemini Pro)
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
 
@@ -102,7 +102,7 @@ A number of things need to be configured in your cloud project:
   - Configure the scopes and include:
     - `https://www.googleapis.com/auth/calendar`
     - `https://www.googleapis.com/auth/contacts.readonly`
-    - `https://www.googleapis.com/auth/photoslibrary.readonly`
+    - `https://www.googleapis.com/auth/photoslibrary.readonly`<br/>
     The scopes are available only if you also enabled the APIs in your cloud project.
   - Add the account you want to use as a test user.
 
@@ -149,6 +149,9 @@ yarn run dev
 
 ## Ideas for Next Features
 
+- [ ] Add an "idle" mode:
+  - [ ] Dashboard fills the screen, conversation is minimized
+  - [ ] Activation starts temporary chat at first, which may could become persisted chat based on some condition.
 - [ ] Optimize context window size for the LLM.
 - [ ] Integrate more Microsoft Graph APIs.
 - [ ] Add a temporary chat mode, where the chat is auto-cleared after some time of inactivity.
@@ -165,10 +168,10 @@ yarn run dev
   - [ ] Edit a single message button
   - [ ] Play a single message button
   - [ ] Regenerate the LLM response
-- [ ] Add a "Clear" button to the chat
-- [ ] Implement automatically naming chats via LLM
 - [ ] Structured replies that force the LLM to consider some things with each reply
   - [ ] Always collect "things to remember"
+  - [ ] Automatic naming chats via LLM
+  - [ ] Get a summary of chat up to that point, use to cut off messages from the beginning
 - [ ] Fix inconsistencies that developed over time:
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
