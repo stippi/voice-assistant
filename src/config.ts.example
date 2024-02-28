@@ -30,7 +30,7 @@ export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
 export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
 export const GoogleCustomSearchEngineId = "<ID of your custom google search engine configured for global search>";
-export const GoogleProjectId = "<Your Google Cloud Console project ID>";
+// export const GoogleProjectId = "<Your Google Cloud Console project ID>"; // Needed for Google Vertex AI API (Gemini Pro)
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
 
