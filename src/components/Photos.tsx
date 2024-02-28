@@ -69,7 +69,7 @@ interface PhotoProps {
   currentPhoto: MediaItem | null;
 }
 
-export function Photos({mediaItems}: PhotosProps) {
+export function Photos({mediaItemIDs}: PhotosProps) {
   const {settings, setSettings} = useSettings();
   const isExpanded = settings.showPhotos;
   const toggleExpand = () => setSettings({...settings, showPhotos: !isExpanded});
@@ -78,15 +78,15 @@ export function Photos({mediaItems}: PhotosProps) {
   const [playing, setPlaying] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhoto, setCurrentPhoto] = useState<MediaItem | null>(null);
-  const [randomizedMediaItems, setRandomizedMediaItems] = useState(mediaItems);
+  const [randomizedMediaItems, setRandomizedMediaItems] = useState(mediaItemIDs);
   const {documentVisible} = useWindowFocus();
   
   // Whenever index == 0, randomize the media items
   useEffect(() => {
     if (currentIndex === 0) {
-      setRandomizedMediaItems(randomizeArray(mediaItems));
+      setRandomizedMediaItems(randomizeArray(mediaItemIDs));
     }
-  }, [mediaItems, currentIndex]);
+  }, [mediaItemIDs, currentIndex]);
   
   // Increment the index at a regular interval
   useEffect(() => {
@@ -100,8 +100,8 @@ export function Photos({mediaItems}: PhotosProps) {
   }, [documentVisible, randomizedMediaItems, playing, isExpanded]);
   
   useEffect(() => {
-    const item = randomizedMediaItems[currentIndex];
-    fetchMediaItem(item.id).then(updatedItem => {
+    const id = randomizedMediaItems[currentIndex];
+    fetchMediaItem(id).then(updatedItem => {
       setCurrentPhoto(updatedItem);
     }).catch(error => {
       console.error("Error fetching media item", error);
@@ -115,7 +115,7 @@ export function Photos({mediaItems}: PhotosProps) {
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      header={mediaItems.length > 0 && isExpanded && (
+      header={mediaItemIDs.length > 0 && isExpanded && (
         <Photo
           hovered={hovered}
           currentPhoto={currentPhoto}
@@ -185,5 +185,5 @@ export function Photos({mediaItems}: PhotosProps) {
 }
 
 interface PhotosProps {
-  mediaItems: MediaItem[];
+  mediaItemIDs: string[];
 }

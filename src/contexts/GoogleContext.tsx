@@ -1,14 +1,15 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {GoogleApiKey} from "../config";
 import {createScript} from "../utils/createScript";
-import {fetchFavoritePhotos, loginFlow, MediaItem} from "../integrations/google";
+import {fetchFavoritePhotos, loginFlow} from "../integrations/google";
 import {CalendarEvent} from "../model/event";
+import {indexDbGet, indexDbPut} from "../utils/indexDB";
 
 export type GoogleContextType = {
   apiLoaded: boolean;
   loggedIn: boolean;
   upcomingEvents: CalendarEvent[];
-  favoritePhotos: MediaItem[];
+  favoritePhotos: string[];
 };
 
 export const GoogleContext = createContext<GoogleContextType>({
@@ -27,7 +28,7 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
   const [apiLoaded, setApiLoaded] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
-  const [favoritePhotos, setFavoritePhotos] = useState<MediaItem[]>([]);
+  const [favoritePhotos, setFavoritePhotos] = useState<string[]>([]);
   
   useEffect(() => {
     if (!enable) return;
@@ -88,18 +89,39 @@ export const GoogleContextProvider: React.FC<Props>  = ({ enable, children }) =>
     });
   }
   
+  const getFavoritePhotos = async (maxResults: number) => {
+    let favoritePhotos: string[] = [];
+    const favoritePhotosLastFetchTime = await indexDbGet<string>("favorite-photos-last-fetch-time");
+    if (favoritePhotosLastFetchTime) {
+      const lastFetchTime = new Date(favoritePhotosLastFetchTime);
+      const now = new Date();
+      if (now.getTime() - lastFetchTime.getTime() < 1000 * 60 * 60 * 24 * 3) {
+        favoritePhotos = await indexDbGet<string[]>("favorite-photo-ids") || [];
+        console.log(`Using ${favoritePhotos.length} cached favorite photos`);
+      }
+    }
+    if (favoritePhotos.length === 0) {
+      console.log("Fetching favorite photos");
+      favoritePhotos = (await fetchFavoritePhotos(maxResults)).map(mediaItem => mediaItem.id);
+      await indexDbPut("favorite-photos-last-fetch-time", new Date().toISOString());
+      await indexDbPut("favorite-photo-ids", favoritePhotos);
+    }
+    return favoritePhotos;
+  }
+  
   useEffect(() => {
     if (!loggedIn) return;
     fetchUpcomingEvents();
-    fetchFavoritePhotos(100).then(photos => {
-      setFavoritePhotos(photos);
+    getFavoritePhotos(3000).then(favoritePhotos => {
+      setFavoritePhotos(favoritePhotos);
     });
     const interval = setInterval(async () => {
       loginFlow.getAccessToken(true).then(accessToken => {
         gapi.client.setToken({access_token: accessToken});
         setLoggedIn(true);
         fetchUpcomingEvents();
-      }).catch(() => {
+      }).catch((error) => {
+        console.log("Error refreshing access token", error);
         gapi.client.setToken(null);
         setLoggedIn(false);
       });
