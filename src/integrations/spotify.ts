@@ -1,6 +1,6 @@
-import {LoginFlow} from "../utils/loginFlow.ts";
-import {SpotifyClientId} from "../secrets.ts";
-import {randomizeArray} from "../utils/randomizeArray.ts";
+import {LoginFlow} from "../utils/loginFlow";
+import {SpotifyClientId} from "../config";
+import {randomizeArray} from "../utils/randomizeArray";
 
 export const loginFlow = new LoginFlow({
   authorizationEndpoint: "https://accounts.spotify.com/authorize",

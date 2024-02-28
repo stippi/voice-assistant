@@ -1,8 +1,8 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
-import {GoogleApiKey} from "../secrets.ts";
-import {createScript} from "../utils/createScript.ts";
-import {fetchFavoritePhotos, loginFlow, MediaItem} from "../integrations/google.ts";
-import {CalendarEvent} from "../model/event.ts";
+import {GoogleApiKey} from "../config";
+import {createScript} from "../utils/createScript";
+import {fetchFavoritePhotos, loginFlow, MediaItem} from "../integrations/google";
+import {CalendarEvent} from "../model/event";
 
 export type GoogleContextType = {
   apiLoaded: boolean;

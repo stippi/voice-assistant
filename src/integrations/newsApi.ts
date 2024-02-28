@@ -1,4 +1,4 @@
-import {NewsApiOrgKey} from "../secrets.ts";
+import {NewsApiOrgKey} from "../config";
 
 export const newsApiLanguageParam = {
   type: "string",

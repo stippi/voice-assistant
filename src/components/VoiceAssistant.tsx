@@ -3,7 +3,15 @@ import {Conversation} from "./Conversation";
 import {Message} from "../model/message";
 import {MessageBar} from "./MessageBar";
 import OpenAI from "openai";
-import {modelName, useTools, OpenAiConfig} from "../secrets";
+import {
+  completionsApiUrl,
+  completionsApiKey,
+  modelName,
+  useTools,
+  useStreaming,
+  speechApiUrl,
+  speechApiKey,
+} from "../config";
 import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
 import generateSystemMessage from "../utils/generateSystemMessage";
@@ -12,19 +20,29 @@ import {Settings as SettingsType} from "../contexts/SettingsContext";
 import useChats from "../hooks/useChats";
 import useSettings from "../hooks/useSettings";
 import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
-// @ts-expect-error - missing types
-import {ChatCompletionMessage} from "openai/resources";
 import useWindowFocus from "../hooks/useWindowFocus.tsx";
 import useAppContext from "../hooks/useAppContext.tsx";
 import {AppContextType} from "../contexts/AppContext.tsx";
 import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
+import ChatCompletion = OpenAI.ChatCompletion;
+import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 
-const openai = new OpenAI(OpenAiConfig);
+const openAi = new OpenAI({
+  apiKey: completionsApiKey,
+  baseURL: completionsApiUrl,
+  dangerouslyAllowBrowser: true,
+});
+const openAiSpeech = new OpenAI({
+  apiKey: speechApiKey,
+  dangerouslyAllowBrowser: true,
+  baseURL: speechApiUrl,
+});
 
 async function streamChatCompletion(
   currentMessages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  stream: ChatCompletionStream,
+  stream: ChatCompletionStream | undefined,
+  completionResponse: ChatCompletion | undefined,
   audible: boolean,
   appContextRef: React.MutableRefObject<AppContextType>,
   settingsRef: React.MutableRefObject<SettingsType>,
@@ -42,7 +60,7 @@ async function streamChatCompletion(
     }
  
     responseLevelRef.current++;
-    const response = await openai.audio.speech.create({
+    const response = await openAiSpeech.audio.speech.create({
       model: "tts-1",
       voice: settingsRef.current.voice,
       speed: settingsRef.current.audioSpeed,
@@ -155,25 +173,32 @@ async function streamChatCompletion(
   }
   
   let rawContent = "";
-  for await (const chunk of stream) {
-    if (responseCancelledRef.current) {
-      console.log("Response cancelled");
-      fadeOutAudio();
-      currentMessages.push({role: "assistant", content: rawContent});
-      return;
+  if (stream) {
+    for await (const chunk of stream) {
+      if (responseCancelledRef.current) {
+        console.log("Response cancelled");
+        fadeOutAudio();
+        currentMessages.push({role: "assistant", content: rawContent});
+        return;
+      }
+      const newContent = chunk.choices[0]?.delta?.content || '';
+      rawContent += newContent;
+      content = removeCodeBlocks(rawContent);
+      if (rawContent !== "") {
+        setMessages([...currentMessages, {role: "assistant", content: rawContent}]);
+      }
+      
+      playNextSentences(false);
     }
-    const newContent = chunk.choices[0]?.delta?.content || '';
-    rawContent += newContent;
+  } else {
+    rawContent = completionResponse!.choices[0].message.content || '';
     content = removeCodeBlocks(rawContent);
-    if (rawContent !== "") {
-      setMessages([...currentMessages, {role: "assistant", content: rawContent}]);
-    }
-    
-    playNextSentences(false);
+    setMessages([...currentMessages, {role: "assistant", content: rawContent}]);
   }
+
   playNextSentences(true);
   
-  const finalMessage = await stream.finalMessage()
+  const finalMessage: ChatCompletionMessage = stream ? await stream.finalMessage() : completionResponse!.choices[0].message;
   currentMessages.push(finalMessage);
 
   // If there are no tool calls, we're done and can exit this loop
@@ -222,14 +247,27 @@ async function streamChatCompletionLoop(
     }
     const systemMessage = generateSystemMessage(
       audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location, playbackState);
-    const stream = openai.beta.chat.completions.stream({
-      messages: [systemMessage, ...currentMessages] as ChatCompletionMessage[],
-      model: modelName,
-      stream: true,
-      tools: useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined,
-    });
+    const messages: ChatCompletionMessage[] = [systemMessage, ...currentMessages];
+    const tools = useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined;
+
+    let response = undefined;
+    let stream = undefined;
+    if (useStreaming) {
+      stream = openAi.beta.chat.completions.stream({
+        messages,
+        model: modelName,
+        stream: true,
+        tools,
+      });
+    } else {
+      response = await openAi.chat.completions.create({
+        messages,
+        model: modelName,
+        tools,
+      });
+    }
     await streamChatCompletion(
-      currentMessages, setMessages, stream, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
+      currentMessages, setMessages, stream, response, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
