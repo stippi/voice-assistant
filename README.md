@@ -76,6 +76,7 @@ To get an API key for the Google APIs, you need to create a "project" in the [Go
 - Custom Search API (you need to create a custom search engine)
 - Calendar API (if you plan to activate the Google Integration, see below)
 - People API (if you plan to activate the Google Integration, see below)
+- Photos Library API (if you plan to activate the Google Integration, see below)
 
 ### Google Integration
 
@@ -89,7 +90,10 @@ A number of things need to be configured in your cloud project:
   - Add `http://localhost:5173/google-callback` to the authorized redirection URIs.
 - *Edit* the `OAuth Consent Screen`:
   - Set the start page to `http://localhost:5173` (not sure if this is indeed needed.)
-  - Configure the scopes and include `https://www.googleapis.com/auth/calendar` and `https://www.googleapis.com/auth/contacts.readonly`.
+  - Configure the scopes and include:
+    - `https://www.googleapis.com/auth/calendar`
+    - `https://www.googleapis.com/auth/contacts.readonly`
+    - `https://www.googleapis.com/auth/photoslibrary.readonly`
     The scopes are available only if you also enabled the APIs in your cloud project.
   - Add the account you want to use as a test user.
 
@@ -99,7 +103,7 @@ For the optional Spotify integration (enabled in the Assistant Settings via the 
 To get a client ID, you need to register an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
 
 As website, specify `http://localhost:5173`.
-As redirect URL, also specify `http://localhost:5173/spotify-callback`.
+As redirect URL, specify `http://localhost:5173/spotify-callback`.
 
 When enabling the Spotify integration, you will be redirected to a Spotify login page where you also need to give Voice Assistant (or however you named your app in the Spotify developer dashboard) the requested permissions.
 In addition, the embedded playback streaming capabilities work only for Spotify Premium users, since the Web Playback SDK requires a Premium account.
