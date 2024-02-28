@@ -20,34 +20,43 @@ Eventually, it would be nice to host the website in a native application that is
 
 ## Running Locally
 
-Create a file named `secrets.ts` in the `src` directory with the following contents:
+Create a file named `config.ts` in the `src` directory.
+You can copy the file [`src/config.ts.example`](src/config.ts.example) and adjust it to your needs.
 
 ```typescript
-// Required:
-export const OpenAiConfig = {
-  apiKey: "<Your platform.openai.com API key>",
-  dangerouslyAllowBrowser: true
-};
-// When running LocalAI, use the following configuration:
-// export const OpenAiConfig = {
-//   apiKey: '<ignored>',
-//   dangerouslyAllowBrowser: true,
-//   baseURL: 'http://localhost:8080/v1'
-// };
+// The following configuration is required:
 
+// By configuring the endpoints below, you can use a server with OpenAI compatible REST API:
+export const completionsApiKey = "<The API Key used for /completions endpoint>";
+
+//export const completionsApiUrl = "http://localhost:5173/mistral/"; // Proxy for https://api.mistral.ai/v1/ due to CORS issues, see vite.config.ts
+//export const completionsApiUrl = "http://localhost:8080/v1"; // LocalAI server, which needs to be started with --cors
+export const completionsApiUrl = "https://api.openai.com/v1";
+
+export const speechApiKey = "<The API Key used for tts and stt endpoints>";
+export const speechApiUrl = "https://api.openai.com/v1";
+
+//export const modelName = "mistral-large-latest";
 export const modelName = "gpt-4-turbo-preview";
+export const useTools = true;
+export const useStreaming = true;
 
-// Theoretically optional. Must be exported, but can be empty.
-export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
+// All the following API keys are optional, and are only required if you want to use the corresponding features.
 
-export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
+// Your picovoice.ai Access Key:
+export const PicoVoiceAccessKey = "";
 
-export const NewsApiOrgKey = "<Your newsapi.org API key>";
+// Your openweathermap.org API Key:
+export const OpenWeatherMapApiKey = "";
+
+// Your newsapi.org API key:
+export const NewsApiOrgKey = "";
 
 export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
 export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
 export const GoogleCustomSearchEngineId = "<ID of your custom google search engine configured for global search>";
+export const GoogleProjectId = "<Your Google Cloud Console project ID>";
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
 
@@ -164,23 +173,3 @@ yarn run dev
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
 - [ ] Strip URLs from audible replies
-
-## Done
-
-- [x] Switch to redirect login flow for signing into Google, like with Spotify.
-  This allows to continuously fetch a new access token with the refresh token.
-- [x] Optional integrate Google Calendar API
-- [X] Add Spotify integration (in progress)
-  - [x] Spotify auth flow
-  - [x] Spotify playback SDK loading
-  - [X] Spotify search
-  - [X] Spotify playback
-- [x] Temporarily open the microphone for conversation after the assistant finished speaking
-- [x] Add a "Stop" button while the response is streaming in
-- [x] More visual feedback during phases of assembling the user message
-- [x] While responding, the trigger phrase should interrupt the assistant from speaking
-- [x] Prevent code blocks from being part of text-to-speech
-- [x] Allow to preserve chats
-- [x] Reset Porcupine when browser tab is (re-)activated
-- [x] Implement renaming chats
-- [x] Move gear icon into sidebar

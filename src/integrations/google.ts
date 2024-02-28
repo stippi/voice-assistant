@@ -1,5 +1,5 @@
-import {LoginFlow} from "../utils/loginFlow.ts";
-import {GoogleApiKey, GoogleClientId, GoogleClientSecret, GoogleCustomSearchEngineId} from "../secrets.ts";
+import {LoginFlow} from "../utils/loginFlow";
+import {GoogleApiKey, GoogleClientId, GoogleClientSecret, GoogleCustomSearchEngineId} from "../config";
 
 export const loginFlow = new LoginFlow({
   authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",

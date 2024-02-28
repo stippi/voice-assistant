@@ -1,5 +1,5 @@
-import {OpenWeatherMapApiKey} from "../secrets.ts";
-import {formatTimestamp} from "../utils/timeFormat.ts";
+import {OpenWeatherMapApiKey} from "../config";
+import {formatTimestamp} from "../utils/timeFormat";
 
 export async function getCurrentWeather(lat: number, lon: number) {
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OpenWeatherMapApiKey}`;

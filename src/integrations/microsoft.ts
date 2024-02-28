@@ -1,5 +1,5 @@
-import {LoginFlow} from "../utils/loginFlow.ts";
-import {MicrosoftClientId} from "../secrets.ts";
+import {LoginFlow} from "../utils/loginFlow";
+import {MicrosoftClientId} from "../config";
 
 export const loginFlow = new LoginFlow({
   authorizationEndpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",

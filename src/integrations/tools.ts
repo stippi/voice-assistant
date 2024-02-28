@@ -6,16 +6,16 @@ import {
   GoogleApiKey,
   GoogleCustomSearchEngineId,
   GoogleClientId, GoogleClientSecret
-} from "../secrets";
+} from "../config";
 import {create, all} from "mathjs";
 import {Timer} from "../model/timer";
 import {addIsoDurationToDate} from "../utils/timeFormat";
-import {AppContextType, Spotify} from "../contexts/AppContext.tsx";
+import {AppContextType, Spotify} from "../contexts/AppContext";
 import OpenAI from "openai";
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
-import {getNews, getTopNews, newsApiCategoryParam, newsApiCountryParam, newsApiLanguageParam} from "./newsApi.ts";
-import {Settings} from "../contexts/SettingsContext.tsx";
-import {getCurrentWeather, getWeatherForecast} from "./openWeatherMap.ts";
+import {getNews, getTopNews, newsApiCategoryParam, newsApiCountryParam, newsApiLanguageParam} from "./newsApi";
+import {Settings} from "../contexts/SettingsContext";
+import {getCurrentWeather, getWeatherForecast} from "./openWeatherMap";
 import {
   createCalendarEvent,
   deleteCalendarEvent,

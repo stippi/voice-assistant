@@ -50,9 +50,9 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   },
 });
 
-export function ExpandButton({open, sx, key}: { open: boolean, sx?: SxProps<Theme>, key?: string }) {
+export function ExpandButton({open, sx, id}: { open: boolean, sx?: SxProps<Theme>, id?: string }) {
   return <KeyboardArrowDown
-    key={key}
+    key={id}
     sx={{
       ...sx,
       mr: -1,
@@ -124,7 +124,7 @@ export function CollapsibleList(
   }
   const expandContent = () => {
     if (!disableExpand) {
-      return <ExpandButton open={!!open} key={expandKey}/>;
+      return <ExpandButton open={!!open} id={expandKey}/>;
     }
   }
   

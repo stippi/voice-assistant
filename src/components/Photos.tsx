@@ -168,7 +168,7 @@ export function Photos({mediaItems}: PhotosProps) {
               }}
               onClick={toggleExpand}
             >
-              <ExpandButton open={isExpanded} key="expand-photos"/>
+              <ExpandButton open={isExpanded} id="expand-photos"/>
             </IconButton>
           </Box>
         </Photo>
