@@ -334,7 +334,7 @@ export function Dashboard() {
           <MusicList/>
         )}
         {settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0 && (
-          <Photos mediaItems={favoritePhotos} />
+          <Photos mediaItemIDs={favoritePhotos} />
         )}
       </div>
     </ThemeProvider>
