@@ -17,7 +17,7 @@ export const loginFlow = new LoginFlow({
   scopes: [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/contacts.readonly",
-    "https://www.googleapis.com/auth/cloud-platform", // For testing Gemini Pro
+    //"https://www.googleapis.com/auth/cloud-platform", // For testing Gemini Pro
     "https://www.googleapis.com/auth/photoslibrary.readonly"
   ],
   storagePrefix: "google"
