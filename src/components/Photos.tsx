@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {CSSTransition, TransitionGroup} from "react-transition-group";
-import {fetchMediaItem, MediaItem} from "../integrations/google";
+import {fetchMediaItem} from "../integrations/google";
 import "./Photos.css";
 import {Box} from "@mui/material";
 import {randomizeArray} from "../utils/randomizeArray.ts";
@@ -13,21 +13,14 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import {CollapsibleList, ExpandButton} from "./Dashboard.tsx";
 import {PlaybackControls} from "./MusicControls.tsx";
 
-export function Photo({ currentPhoto, hovered, children }: PhotoProps) {
+export function Photo({ info, hovered, children }: PhotoProps) {
+  console.log("Rendering photo", info?.url);
+  const aspectRatio = info ? parseInt(info.width) / parseInt(info.height) : 1;
   return (
-    <Box className="container">
-      {currentPhoto && (
-        <img
-          src={currentPhoto.baseUrl}
-          width={currentPhoto.mediaMetadata.width}
-          height={currentPhoto.mediaMetadata.height}
-          alt="Placeholder"
-          className="placeholder"
-        />
-      )}
+    <Box className="container" style={{aspectRatio: aspectRatio}}>
       <TransitionGroup>
-        {currentPhoto && (
-          <CSSTransition key={currentPhoto.id} timeout={1000} classNames="fade">
+        {info && (
+          <CSSTransition key={info.id} timeout={1000} classNames="fade">
             <Box
               sx={{
                 position: "absolute",
@@ -36,7 +29,7 @@ export function Photo({ currentPhoto, hovered, children }: PhotoProps) {
                 right: 0,
                 bottom: 0,
                 borderRadius: "4px",
-                backgroundImage: `url("${currentPhoto.baseUrl}")`,
+                backgroundImage: `url(${info.url})`,
                 backgroundSize: "cover",
                 
                 "&:after": {
@@ -63,13 +56,22 @@ export function Photo({ currentPhoto, hovered, children }: PhotoProps) {
   );
 }
 
+interface ImageInfo {
+  id: string;
+  url: string;
+  width: string;
+  height: string;
+  productUrl: string;
+}
+
 interface PhotoProps {
   hovered?: boolean;
   children?: React.ReactNode;
-  currentPhoto: MediaItem | null;
+  info: ImageInfo | null;
+  fullResolution: boolean;
 }
 
-export function Photos({mediaItemIDs}: PhotosProps) {
+export function Photos({idle, mediaItemIDs}: PhotosProps) {
   const {settings, setSettings} = useSettings();
   const isExpanded = settings.showPhotos;
   const toggleExpand = () => setSettings({...settings, showPhotos: !isExpanded});
@@ -77,7 +79,7 @@ export function Photos({mediaItemIDs}: PhotosProps) {
   
   const [playing, setPlaying] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentPhoto, setCurrentPhoto] = useState<MediaItem | null>(null);
+  const [currentImageInfo, setCurrentImageInfo] = useState<ImageInfo | null>(null);
   const [randomizedMediaItems, setRandomizedMediaItems] = useState(mediaItemIDs);
   const {documentVisible} = useWindowFocus();
   
@@ -102,23 +104,47 @@ export function Photos({mediaItemIDs}: PhotosProps) {
   useEffect(() => {
     const id = randomizedMediaItems[currentIndex];
     fetchMediaItem(id).then(updatedItem => {
-      setCurrentPhoto(updatedItem);
+      const url = updatedItem.baseUrl+ (idle ? "=d" : "");
+      // Use a temporary image to preload the image data.
+      // At least on Chrome and Safari, this seems to cache the decoded image data,
+      // for when it is used as background image in the Photo component.
+      const img = new Image();
+      img.onload = () => {
+        setCurrentImageInfo({
+          id,
+          url,
+          width: updatedItem.mediaMetadata.width,
+          height: updatedItem.mediaMetadata.height,
+          productUrl: updatedItem.productUrl
+        })
+        img.onload = null;
+      };
+      img.src = url;
     }).catch(error => {
       console.error("Error fetching media item", error);
     });
-  }, [randomizedMediaItems, currentIndex, setCurrentPhoto]);
+  }, [idle, randomizedMediaItems, currentIndex, setCurrentImageInfo]);
+  
+  const extraStyles = idle ? {
+    position: "fixed",
+    top: "1.5rem",
+    left: "1.5rem",
+    right: "calc(18vw + 3rem)",
+  } : {};
   
   return (
     <CollapsibleList
       sx={{
         '&:hover .headerItems': { opacity: 1 },
+        ...extraStyles
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       header={mediaItemIDs.length > 0 && isExpanded && (
         <Photo
           hovered={hovered}
-          currentPhoto={currentPhoto}
+          info={currentImageInfo}
+          fullResolution={idle}
         >
           <Box
             className="headerItems"
@@ -144,8 +170,8 @@ export function Photos({mediaItemIDs}: PhotosProps) {
               size="small"
               color="inherit"
               onClick={() => {
-                if (currentPhoto) {
-                  window.open(currentPhoto.productUrl, "_blank");
+                if (currentImageInfo) {
+                  window.open(currentImageInfo.productUrl, "_blank");
                 }
               }}
             >
@@ -185,5 +211,6 @@ export function Photos({mediaItemIDs}: PhotosProps) {
 }
 
 interface PhotosProps {
+  idle: boolean;
   mediaItemIDs: string[];
 }

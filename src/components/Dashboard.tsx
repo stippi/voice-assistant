@@ -280,7 +280,7 @@ function MusicList() {
 }
 
 export function Dashboard() {
-  const {timers} = useAppContext();
+  const {timers, idle} = useAppContext();
   const {upcomingEvents: upcomingGoogleEvents, favoritePhotos} = useGoogleContext();
   const {upcomingEvents: upcomingMicrosoftEvents} = useMicrosoftContext();
   const {settings} = useSettings();
@@ -298,6 +298,7 @@ export function Dashboard() {
     return aStart.localeCompare(bStart);
   });
   const hasEvents = upcomingEvents.length > 0;
+  const hasPhotos = settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0;
   
   React.useEffect(() => {
     const showDashboard = timers.length > 0 || hasEvents || settings.enableSpotify;
@@ -307,9 +308,9 @@ export function Dashboard() {
   return (
     <ThemeProvider theme={theme}>
       <div
-        className="dashboard"
+        className="dashboard side-column"
         style={{
-            display: timers.length > 0 || upcomingEvents.length > 0 || settings.enableSpotify ? "flex" : "none"
+          display: timers.length > 0 || hasEvents || settings.enableSpotify || hasPhotos ? "flex" : "none"
         }}
       >
         {hasEvents && (
@@ -333,8 +334,8 @@ export function Dashboard() {
         {settings.enableSpotify && (
           <MusicList/>
         )}
-        {settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0 && (
-          <Photos mediaItemIDs={favoritePhotos} />
+        {hasPhotos && (
+          <Photos idle={idle} mediaItemIDs={favoritePhotos} />
         )}
       </div>
     </ThemeProvider>

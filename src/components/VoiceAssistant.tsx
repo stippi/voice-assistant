@@ -287,7 +287,7 @@ function appendMessage(messages: Message[], message: Message) {
   return newMessages;
 }
 
-export default function VoiceAssistant() {
+export default function VoiceAssistant({idle}: Props) {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [awaitSpokenResponse, setAwaitSpokenResponse] = React.useState(false);
   const [responding, setResponding] = React.useState(false);
@@ -424,17 +424,22 @@ export default function VoiceAssistant() {
   
   return (
     <>
-      <Conversation
+      {!idle && <Conversation
         chat={messages}
         deleteMessage={deleteMessage}
-      />
+      />}
       <MessageBar
         sendMessage={sendMessage}
         stopResponding={stopResponding}
         responding={responding}
         respondingRef={respondingRef}
         awaitSpokenResponse={awaitSpokenResponse}
+        idle={idle}
       />
     </>
   );
+}
+
+interface Props {
+  idle: boolean;
 }

@@ -2,7 +2,7 @@
     display: flex;
     position: relative;
     width: 100%;
-    height: auto;
+    transition: aspect-ratio 1s ease-in-out;
 }
 
 .placeholder {
