@@ -1,15 +1,30 @@
+.side-column {
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+}
+
 .dashboard {
     background-color: transparent;
     position: fixed;
     top: 1.5rem;
     right: 1.5rem;
 
-    display: flex;
-    gap: 1rem;
-    flex-direction: column;
-
     max-width: 18vw;
     min-width: 18vw;
 
     max-height: calc(100vh - 3rem);
+}
+
+.dashboard-idle {
+    background-color: transparent;
+    position: fixed;
+    left: 1.5rem;
+    top: 1.5rem;
+    right: 1.5rem;
+    bottom: 1.5rem;
+
+    display: grid;
+    grid-template-columns: 1fr 0.618fr;
+    gap: 2rem;
 }
