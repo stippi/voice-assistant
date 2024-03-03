@@ -30,7 +30,8 @@ export function Photo({ info, hovered, children }: PhotoProps) {
                 bottom: 0,
                 borderRadius: "4px",
                 backgroundImage: `url(${info.url})`,
-                backgroundSize: "cover",
+                backgroundSize: "100% auto",
+                backgroundRepeat: "no-repeat",
                 
                 "&:after": {
                   content: '""',
