@@ -10,13 +10,17 @@ import {usePorcupine} from "@picovoice/porcupine-react";
 import {CobraWorker} from "@picovoice/cobra-web";
 import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
 
-import {OpenAiConfig, PicoVoiceAccessKey} from "../secrets";
+import {speechApiUrl, speechApiKey, PicoVoiceAccessKey} from "../config";
 import useSettings from "../hooks/useSettings";
 import useWindowFocus from "../hooks/useWindowFocus";
 import {playSound} from "../utils/audio";
 import {textToLowerCaseWords} from "../utils/textUtils";
 
-const openai = new OpenAI(OpenAiConfig);
+const openai = new OpenAI({
+  apiKey: speechApiKey,
+  dangerouslyAllowBrowser: true,
+  baseURL: speechApiUrl,
+});
 
 let mimeType: string;
 let audioExt: string;

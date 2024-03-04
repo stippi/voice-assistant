@@ -1,4 +1,5 @@
 .fixedBottom {
+    z-index: 10;
     position: fixed;
     bottom: 0;
     left: var(--sidebar-width);
@@ -10,7 +11,9 @@
     justify-content: center;
 
     transition: left 0.3s ease-in-out;
+}
 
+.gradientBottom {
     background: linear-gradient(
             to bottom,
             rgba(0, 0, 0, 0) 0%,
@@ -21,6 +24,7 @@
 .textContainer {
     width: 50vw;
 
+    border: 0 solid transparent;
     border-radius: 1rem;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
@@ -33,6 +37,21 @@
     display: flex;
     align-items: start;
     cursor: text;
+
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.idle .textContainer {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.4), 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+.window-focused .textContainer:focus-within {
+    border: 2px solid rgb(58,166,255);
+    margin: 0;
+    box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.1), 0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
 .buttonContainer {
@@ -61,11 +80,4 @@
 .window-focused .textArea:focus {
     outline: none;
     caret-color: auto;
-}
-
-.window-focused .textContainer:focus-within {
-    border: 2px solid rgb(58,166,255);
-    margin: 0;
-    box-shadow:
-            0 3px 5px rgba(0, 0, 0, 0.1);
 }
