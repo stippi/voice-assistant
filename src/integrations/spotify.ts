@@ -1,15 +1,15 @@
-import {LoginFlow} from "../utils/loginFlow.ts";
-import {SpotifyClientId} from "../secrets.ts";
-import {randomizeArray} from "../utils/randomizeArray.ts";
+import {LoginFlow} from "../utils/loginFlow";
+import {SpotifyClientId} from "../config";
+import {randomizeArray} from "../utils/randomizeArray";
 
-export const loginFlow = new LoginFlow(
-  "https://accounts.spotify.com/authorize",
-  {},
-  "https://accounts.spotify.com/api/token",
-  {},
-  "/spotify-callback",
-  SpotifyClientId,
-  [
+export const loginFlow = new LoginFlow({
+  authorizationEndpoint: "https://accounts.spotify.com/authorize",
+  additionalParams: {},
+  tokenEndpoint: "https://accounts.spotify.com/api/token",
+  additionalTokenParams: {},
+  callbackPath: "/spotify-callback",
+  clientId: SpotifyClientId,
+  scopes: [
     'user-read-private',
     'user-read-email',
     'user-read-playback-state',
@@ -19,8 +19,8 @@ export const loginFlow = new LoginFlow(
     'playlist-read-private',
     'playlist-read-collaborative',
   ],
-  "spotify"
-);
+  storagePrefix: "spotify"
+});
 
 type Item = {
   id: string;
@@ -139,6 +139,10 @@ export async function play(deviceId: string, trackIds: string[], contextUri?: st
       headers: {
         'Content-Type': 'application/json',
       },
+    }
+    if (contextUri && contextUri.startsWith("spotify:track:")) {
+      // Be forgiving to the LLM and play the track if it's a track uri
+      trackIds.push(contextUri.substring("spotify:track:".length));
     }
     if (trackIds.length > 0) {
       options.body = JSON.stringify({ uris: trackIds.map(id => `spotify:track:${id}`) });

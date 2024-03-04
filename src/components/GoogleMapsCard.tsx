@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo, useState} from 'react'
 import {DirectionsRenderer, DirectionsService, GoogleMap, useJsApiLoader} from '@react-google-maps/api';
-import {GoogleApiKey} from "../secrets.ts";
+import {GoogleApiKey} from "../config";
 
 const containerStyle = {
   width: '100%',
