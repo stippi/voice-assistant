@@ -81,14 +81,16 @@ function AssistantWithOptionalIntegrations() {
   const {settings} = useSettings();
   const {idle} = useAppContext();
   
+  const idleMode = idle && settings.enableGooglePhotos;
+  
   return (
     <ChatsProvider>
       <GoogleContextProvider enable={settings.enableGoogle}>
         <MicrosoftContextProvider enable={settings.enableMicrosoft}>
           <SpotifyContextProvider enable={settings.enableSpotify}>
             
-            {!idle && <Sidebar />}
-            <VoiceAssistant idle={idle} />
+            {!idleMode && <Sidebar />}
+            <VoiceAssistant idle={idleMode} />
             <Dashboard />
 
           </SpotifyContextProvider>
