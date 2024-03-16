@@ -90,10 +90,8 @@ export const EagleEnrollContextProvider: React.FC<Props>  = ({ children }) => {
         switch (event.data.command) {
           case "process":
             audioData.push(event.data.inputFrame);
-            
             if (audioData.length * 512 >= profilerRef.current.minEnrollSamples) {
               let result: EagleProfilerEnrollResult;
-              
               try {
                 const frames = new Int16Array(audioData.length * 512);
                 for (let i = 0; i < audioData.length; i++) {
@@ -108,11 +106,12 @@ export const EagleEnrollContextProvider: React.FC<Props>  = ({ children }) => {
               
               setFeedback(getFeedbackMessage(result.feedback));
               setPercentage(result.percentage);
+
               if (result.percentage === 100) {
                 await WebVoiceProcessor.unsubscribe(micEnrollEngine);
-                
                 setEnrolling(false);
-                
+                setFeedback("");
+                setPercentage(0);
                 try {
                   const profile = await profilerRef.current.export();
                   console.log("Enrollment for speaker complete.");
@@ -129,6 +128,8 @@ export const EagleEnrollContextProvider: React.FC<Props>  = ({ children }) => {
     
     try {
       await WebVoiceProcessor.subscribe(micEnrollEngine);
+      setFeedback("");
+      setPercentage(0);
       setEnrolling(true);
     } catch (e) {
       console.error("Failed to subscribe to WebVoiceProcessor", e);
