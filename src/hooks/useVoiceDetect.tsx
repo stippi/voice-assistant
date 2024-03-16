@@ -1,0 +1,110 @@
+import {PvEngine} from "@picovoice/web-voice-processor/dist/types/types";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {EagleProfile, EagleWorker} from "@picovoice/eagle-web";
+import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
+
+export function useVoiceDetect(): {
+  isLoaded: boolean,
+  init: (
+    accessKey: string,
+    model: {publicPath: string},
+    speakerProfiles: EagleProfile | EagleProfile[],
+  ) => Promise<void>,
+  start: () => Promise<void>,
+  stop: () => Promise<void>,
+  release: () => Promise<void>,
+  scores: number[]
+} {
+  const eagleRef = useRef<EagleWorker | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [scores, setScores] = useState<number[]>([]);
+  
+  const init = useCallback(async (
+    accessKey: string,
+    model: {publicPath: string},
+    speakerProfiles: EagleProfile | EagleProfile[],
+  ) => {
+    try {
+      if (!eagleRef.current) {
+        eagleRef.current = await EagleWorker.create(
+          accessKey,
+          model,
+          speakerProfiles,
+        );
+        setIsLoaded(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+  
+  const micDetectEngine = useRef<PvEngine>({
+    onmessage: async (event: MessageEvent) => {
+      if (!eagleRef.current) return;
+      
+      switch (event.data.command) {
+        case "process":
+          try {
+            const scores = await eagleRef.current.process(event.data.inputFrame);
+            setScores(scores);
+          } catch (e) {
+            console.log("Error processing audio data with Eagle");
+            return;
+          }
+          break;
+      }
+    }
+  });
+  
+  const start = useCallback(async (): Promise<void> => {
+    try {
+      if (!eagleRef.current) {
+        console.log("Eagle has not been initialized or has been released");
+        return;
+      }
+      
+      await WebVoiceProcessor.subscribe(micDetectEngine.current);
+    } catch (e) {
+      console.log("Error starting Eagle worker", e);
+    }
+  }, []);
+  
+  const stop = useCallback(async (): Promise<void> => {
+    try {
+      if (!eagleRef.current) {
+        console.error("Eagle has not been initialized or has been released");
+        return;
+      }
+      await WebVoiceProcessor.unsubscribe(micDetectEngine.current);
+    } catch (e) {
+      console.error("Error stopping Eagle worker", e)
+    }
+  }, []);
+  
+  const release = useCallback(async (): Promise<void> => {
+    if (eagleRef.current) {
+      await stop();
+      eagleRef.current.terminate();
+      eagleRef.current = null;
+      
+      setIsLoaded(false);
+    }
+  }, [stop]);
+  
+  useEffect(() => () => {
+    if (eagleRef.current) {
+      WebVoiceProcessor.unsubscribe(micDetectEngine.current).catch(e => console.log(e));
+      eagleRef.current.terminate();
+      eagleRef.current = null;
+    }
+  }, []);
+  
+  return {
+    isLoaded,
+    init,
+    start,
+    stop,
+    release,
+    scores
+  };
+}
