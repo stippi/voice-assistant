@@ -56,8 +56,7 @@ export const EagleEnrollContextProvider: React.FC<Props>  = ({ children }) => {
     EagleProfiler.create(
       PicoVoiceAccessKey,
       {
-        publicPath: "models/eagle_params.pv",
-        forceWrite: true
+        publicPath: "models/eagle_params.pv"
       }).then(profiler => {
         profilerRef.current = profiler;
         setLoaded(true);
