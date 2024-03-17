@@ -3,7 +3,7 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import {EagleProfile, EagleWorker} from "@picovoice/eagle-web";
 import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
 
-export function useVoiceDetect(): {
+export function useEagleWorker(): {
   isLoaded: boolean,
   init: (
     accessKey: string,

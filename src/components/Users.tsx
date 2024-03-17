@@ -82,7 +82,7 @@ export const Users = React.memo(({users, setUsers}: Props) => {
                 name,
                 email,
                 picture: `https://www.gravatar.com/avatar/${hashedEmail}`,
-                voiceEnrolled: false
+                voiceProfileId: ""
               },
               ...users,
             ]
@@ -93,7 +93,14 @@ export const Users = React.memo(({users, setUsers}: Props) => {
       <AddCircleIcon />
     </IconButton>
     <EagleEnrollContextProvider>
-      <UserVoiceEnroll user={users[0]} anchorEl={anchorEl} onClose={handleClose}/>
+      <UserVoiceEnroll
+        user={users[0]}
+        setUserVoiceProfileId={(profileId: string) => {
+        
+        }}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+      />
     </EagleEnrollContextProvider>
   </Stack>
 });

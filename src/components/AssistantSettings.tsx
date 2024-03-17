@@ -1,21 +1,187 @@
 import './AssistantSettings.css';
 import {
-  Box,
+  Avatar, Badge,
+  Box, Button,
   FormControl,
-  FormControlLabel,
+  FormControlLabel, IconButton, Input,
   InputLabel,
   MenuItem, Popover,
   Select,
   Slider,
   Stack,
-  Switch,
-  TextField,
-  Typography
+  Switch, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs,
+  TextField
 } from "@mui/material";
 import SpeedIcon from '@mui/icons-material/Speed';
+import DeleteIcon from "@mui/icons-material/Delete";
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import {Voice, Personality, Settings} from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
 import {BuiltInKeyword} from "@picovoice/porcupine-web";
+import React, {useState} from "react";
+import useAppContext from "../hooks/useAppContext.tsx";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import {UserVoiceEnroll} from "./UserVoiceEnroll.tsx";
+import {User} from "../model/user.ts";
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box className="settingsColumn">
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `tab-${index}`,
+    'aria-controls': `tabpanel-${index}`,
+  };
+}
+
+async function hashEmail(email: string) {
+  const data = new TextEncoder().encode(email.trim().toLowerCase());
+  const hashed = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashed));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function CheckCircleOutlineIcon() {
+  return null;
+}
+
+const UserList = () => {
+  const {users, setUsers} = useAppContext();
+  const [enrollingUser, setEnrollingUser] = useState<User | null>(null);
+  const [editUserId, setEditUserId] = useState<string>("");
+  const [editedName, setEditedName] = useState<string>("");
+  
+  const handleNameClick = (user: User) => {
+    setEditUserId(user.id);
+    setEditedName(user.name);
+  };
+  
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedName(event.target.value);
+  };
+  
+  const handleNameSubmit = () => {
+    setUsers(
+      users.map(user => (user.id != editUserId ? user : {...user, name: editedName}))
+    );
+    setEditUserId("");
+    setEditedName("");
+  };
+  
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleNameSubmit();
+    }
+  }
+
+  const onAddUser = () => {
+    setUsers(
+      [
+        {
+          id: crypto.randomUUID(),
+          name: "<name>",
+          email: "",
+          picture: "",
+          voiceProfileId: ""
+        },
+        ...users,
+      ]
+    );
+  }
+  
+  return (
+    <Box sx={{ width: '100%' }}>
+      <TableContainer>
+        <Table>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <Avatar src={user.picture} />
+                </TableCell>
+                <TableCell sx={{minWidth: "10rem"}}>
+                  {editUserId === user.id ? (
+                    <Input
+                      value={editedName}
+                      onChange={handleNameChange}
+                      onBlur={() => handleNameSubmit()}
+                      onKeyDown={onKeyDown}
+                      autoFocus
+                      fullWidth
+                    />
+                  ) : (
+                    <div
+                      style={{width: "100%", minHeight: '24px', padding: '4px 0'}}
+                      onClick={() => handleNameClick(user)}
+                    >
+                      {user.name}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={() => setEnrollingUser(user)}>
+                    {user.voiceProfileId ? (
+                      <Badge color="success" badgeContent={<CheckCircleOutlineIcon />}>
+                        <RecordVoiceOverIcon color="action" />
+                      </Badge>
+                    ) : (
+                      <RecordVoiceOverIcon />
+                    )}
+                  </IconButton>
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={() => {setUsers(users.filter(otherUser => otherUser.id != user.id))}}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
+        <Button startIcon={<AddCircleIcon />} onClick={onAddUser} variant="contained">
+          Add user
+        </Button>
+      </Box>
+      {enrollingUser && (
+        <UserVoiceEnroll
+          user={enrollingUser}
+          setUserVoiceProfileId={(profileId: string) => {
+            setUsers(
+              users.map(user => (user.id != enrollingUser.id ? user : {...user, voiceProfileId: profileId}))
+            );
+            setEnrollingUser(null);
+          }}
+          onClose={() => setEnrollingUser(null)}
+        />
+      )}
+    </Box>
+  );
+};
 
 const audioSpeedMarks = [
   {
@@ -34,10 +200,15 @@ const audioSpeedMarks = [
 
 export function AssistantSettings({anchorEl, onClose}: Props) {
   
-  const { settings, setSettings } = useSettings();
+  const {settings, setSettings} = useSettings();
   
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
+  
+  const [tabIndex, setTabIndex] = useState(0);
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabIndex(newValue);
+  };
   
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
   const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
@@ -71,8 +242,16 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
       disableScrollLock={true}
       sx={{fontSize: "14px", left: "-5px"}}
     >
-      <Box style={{display: "flex", flexDirection: "row"}}>
-        <Box className="settingsColumn">
+      <Box style={{display: "flex", flexDirection: "column"}}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={tabIndex} onChange={handleTabChange} aria-label="assistant settings">
+            <Tab label="Assistant" {...a11yProps(0)} />
+            <Tab label="Integrations" {...a11yProps(1)} />
+            <Tab label="Users" {...a11yProps(2)} />
+          </Tabs>
+        </Box>
+        
+        <CustomTabPanel value={tabIndex} index={0}>
           <FormControl>
             <FormControlLabel
               checked={settings.openMic}
@@ -164,9 +343,8 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               marks={audioSpeedMarks}
             />
           </Stack>
-        </Box>
-        <Box className="settingsColumn">
-          <Typography variant="h6">Integrations</Typography>
+        </CustomTabPanel>
+        <CustomTabPanel value={tabIndex} index={1}>
           {integrations.map(item => (
             <FormControl
               disabled={!item.enabled}
@@ -181,7 +359,10 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               />
             </FormControl>
           ))}
-        </Box>
+        </CustomTabPanel>
+        <CustomTabPanel value={tabIndex} index={2}>
+          <UserList/>
+        </CustomTabPanel>
       </Box>
     </Popover>
   );

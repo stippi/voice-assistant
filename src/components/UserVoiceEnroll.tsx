@@ -1,19 +1,28 @@
 import {
-  Box, Button, CircularProgress, CircularProgressProps,
-  Popover,
+  Box,
+  Button,
+  CircularProgress,
+  CircularProgressProps,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Typography
 } from "@mui/material";
 import {EagleProfile} from "@picovoice/eagle-web";
-import useEagleEnrollContext from "../hooks/useEagleEnrollContext";
 import {User} from "../model/user";
 import {indexDbPut} from "../utils/indexDB";
+import {useEagleProfiler} from "../hooks/useEagleProfiler.tsx";
+import {useEffect} from "react";
+import {PicoVoiceAccessKey} from "../config.ts";
 
 function CircularProgressWithLabel(
   props: CircularProgressProps & { value: number },
 ) {
   return (
-    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-      <CircularProgress variant="determinate" {...props} />
+    <Box sx={{ position: 'relative', display: 'inline-flex', fontSize: "24px" }}>
+      <CircularProgress variant="determinate" {...props} size={100} thickness={6}/>
       <Box
         sx={{
           top: 0,
@@ -27,7 +36,7 @@ function CircularProgressWithLabel(
         }}
       >
         <Typography
-          variant="caption"
+          fontSize="inherit"
           component="div"
           color="text.secondary"
         >{`${Math.round(props.value)}%`}</Typography>
@@ -36,14 +45,23 @@ function CircularProgressWithLabel(
   );
 }
 
-export function UserVoiceEnroll({user, anchorEl, onClose}: Props) {
-  const open = Boolean(anchorEl);
-  const id = open ? 'simple-popover' : undefined;
-  const {loaded, enrolling, start, feedback, percentage} = useEagleEnrollContext();
+export function UserVoiceEnroll({user, setUserVoiceProfileId, onClose}: Props) {
+  const {isLoaded, init, start, stop, enrolling, feedback, percentage} = useEagleProfiler();
+  
+  useEffect(() => {
+    init(
+      PicoVoiceAccessKey, {
+        publicPath: "models/eagle_params.pv"
+      }).then(() => {
+      console.log("Eagle Profiler initialized");
+    });
+  }, [init]);
   
   const saveProfile = (profile: EagleProfile) => {
-    indexDbPut<Uint8Array>(`voice-profile-${user.id}`, profile.bytes).then(() => {
+    const profileId = `voice-profile-${user.id}`;
+    indexDbPut<Uint8Array>(profileId, profile.bytes).then(() => {
       console.log("User voice profile saved");
+      setUserVoiceProfileId(profileId);
     })
   };
   
@@ -53,44 +71,58 @@ export function UserVoiceEnroll({user, anchorEl, onClose}: Props) {
   };
   
   return (
-    <Popover
-      id={id}
-      open={open}
-      anchorEl={anchorEl}
+    <Dialog
+      open={true}
       onClose={onClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
+      sx={{
+        '& .MuiDialog-paper': { width: '400px', height: '300px' }
       }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      disableScrollLock={true}
-      sx={{fontSize: "14px"}}
     >
-      <Box sx={{display: "flex", flexDirection: "column", minWidth: "20vw", minHeight: "20vh"}}>
-        {loaded && !enrolling && (
-          <Typography>Press Start and keep speaking until your voice is enrolled.</Typography>
+      <DialogTitle>{`Create a Voice Profile for ${user.name}`}</DialogTitle>
+      <DialogContent>
+        {isLoaded && !enrolling && (
+          <DialogContentText>
+            Press Start and keep speaking until the circle closes.
+          </DialogContentText>
+        )}
+        {!isLoaded && (
+          <DialogContentText>
+            Loading...
+          </DialogContentText>
         )}
         {enrolling && (
-          <>
-            <Typography>{feedback}</Typography>
+          <DialogContentText>{feedback}</DialogContentText>
+        )}
+        {isLoaded && (
+          <Box
+            sx={{
+              top: 24,
+              left: 0,
+              bottom: 0,
+              right: 0,
+              position: 'absolute',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <CircularProgressWithLabel value={percentage} />
-          </>
+          </Box>
         )}
-        {loaded ? (
-          <Button disabled={enrolling} onClick={startEnrollment}>Start</Button>
-        ) : (
-          <Typography>Loading...</Typography>
-        )}
-      </Box>
-    </Popover>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={async () => {
+          await stop();
+          onClose();
+        }}>Cancel</Button>
+        <Button disabled={enrolling} onClick={startEnrollment}>Start</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
 interface Props {
   user: User;
+  setUserVoiceProfileId: (id: string) => void;
   onClose: () => void;
-  anchorEl: HTMLButtonElement | null;
 }
