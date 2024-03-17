@@ -26,7 +26,6 @@ import useMicrosoftContext from "../hooks/useMicrosoftContext.tsx";
 import {Photos} from "./Photos.tsx";
 import {Theme} from "@emotion/react";
 import {gridConfig} from "./dashboardGridConfig.ts";
-import {Users} from "./Users.tsx";
 
 const DashboardList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiList-root': {
@@ -281,7 +280,7 @@ function MusicList() {
 }
 
 export function Dashboard() {
-  const {users, setUsers, timers, idle} = useAppContext();
+  const {timers, idle} = useAppContext();
   const {upcomingEvents: upcomingGoogleEvents, favoritePhotos} = useGoogleContext();
   const {upcomingEvents: upcomingMicrosoftEvents} = useMicrosoftContext();
   const {settings} = useSettings();
@@ -314,7 +313,6 @@ export function Dashboard() {
           display: timers.length > 0 || hasEvents || settings.enableSpotify || hasPhotos ? "flex" : "none"
         }}
       >
-        <Users users={users} setUsers={setUsers}/>
         {hasEvents && (
           <CollapsibleList
             icon={<CalendarMonthIcon style={{color: "#00c4ff", fontSize: "1.5rem"}}/>}

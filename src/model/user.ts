@@ -3,5 +3,5 @@ export type User = {
   name: string;
   email: string;
   picture: string;
-  voiceEnrolled: boolean;
+  voiceProfileId: string;
 };
