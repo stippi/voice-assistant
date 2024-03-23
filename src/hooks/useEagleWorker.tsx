@@ -24,15 +24,17 @@ export function useEagleWorker(): {
     model: {publicPath: string},
     speakerProfiles: EagleProfile | EagleProfile[],
   ) => {
+    if (eagleRef.current) {
+      console.error("Eagle worker already initialized. Call release() first.");
+      return;
+    }
     try {
-      if (!eagleRef.current) {
-        eagleRef.current = await EagleWorker.create(
-          accessKey,
-          model,
-          speakerProfiles,
-        );
-        setIsLoaded(true);
-      }
+      eagleRef.current = await EagleWorker.create(
+        accessKey,
+        model,
+        speakerProfiles,
+      );
+      setIsLoaded(true);
     } catch (e) {
       console.error(e);
     }
@@ -45,7 +47,9 @@ export function useEagleWorker(): {
       switch (event.data.command) {
         case "process":
           try {
+            console.log("Eagle processing");
             const scores = await eagleRef.current.process(event.data.inputFrame);
+            console.log("Updating scores", scores);
             setScores(scores);
           } catch (e) {
             console.log("Error processing audio data with Eagle");
@@ -59,13 +63,13 @@ export function useEagleWorker(): {
   const start = useCallback(async (): Promise<void> => {
     try {
       if (!eagleRef.current) {
-        console.log("Eagle has not been initialized or has been released");
+        console.error("Eagle has not been initialized or has been released");
         return;
       }
       
       await WebVoiceProcessor.subscribe(micDetectEngine.current);
     } catch (e) {
-      console.log("Error starting Eagle worker", e);
+      console.error("Error starting Eagle worker", e);
     }
   }, []);
   
