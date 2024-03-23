@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
-
 import OpenAI, { toFile } from 'openai';
-
 import {usePorcupine} from "@picovoice/porcupine-react";
 import {CobraWorker} from "@picovoice/cobra-web";
 import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
-
+import {EagleProfile} from "@picovoice/eagle-web";
+import {useEagleWorker} from "../hooks/useEagleWorker";
 import {speechApiUrl, speechApiKey, PicoVoiceAccessKey} from "../config";
 import useSettings from "../hooks/useSettings";
 import useWindowFocus from "../hooks/useWindowFocus";
 import {playSound} from "../utils/audio";
 import {textToLowerCaseWords} from "../utils/textUtils";
+import useAppContext from "../hooks/useAppContext";
+import {indexDbGet} from "../utils/indexDB";
 
 const openai = new OpenAI({
   apiKey: speechApiKey,
@@ -43,6 +43,8 @@ if (MediaRecorder.isTypeSupported('audio/webm')) {
 
 const silenceTimeout = 2500;
 
+
+
 const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMessage, respondingRef, awaitSpokenResponse}: Props) => {
   const [listening, setListening] = useState(false);
   const [conversationOpen, setConversationOpen] = useState(false);
@@ -62,6 +64,17 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     stop,
     release
   } = usePorcupine();
+  const {
+    isLoaded: isEagleLoaded,
+    init: initEagle,
+    start: startEagle,
+    stop: stopEagle,
+    scores: eagleScores,
+  } = useEagleWorker();
+  
+  useEffect(() => {
+    console.log("Eagle scores", eagleScores);
+  }, [eagleScores])
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     console.log(`received ${audioChunks.length} audio chunks`);
@@ -71,8 +84,8 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     //
     // const downloadLink = document.createElement('a');
     // downloadLink.href = blobUrl;
-    // downloadLink.download = `audio.${audioExt}`; // Dateiname und Erweiterung anpassen
-    // downloadLink.textContent = 'Lade die Audio-Datei herunter';
+    // downloadLink.download = `audio.${audioExt}`;
+    // downloadLink.textContent = 'Download audio blob';
     //
     // document.body.appendChild(downloadLink);
     
@@ -101,13 +114,15 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   const settingsRef = React.useRef(settings);
   const sendToWhisperRef = React.useRef(sendToWhisperAPI);
   const isPorcupineLoadedRef = React.useRef(isLoaded);
+  const isEagleLoadedRef = React.useRef(isEagleLoaded);
   
   // Update refs
   useEffect(() => {
     settingsRef.current = settings;
     sendToWhisperRef.current = sendToWhisperAPI;
     isPorcupineLoadedRef.current = isLoaded;
-  }, [settings, sendToWhisperAPI, isLoaded]);
+    isEagleLoadedRef.current = isEagleLoaded;
+  }, [settings, sendToWhisperAPI, isLoaded, isEagleLoaded]);
   
   const {documentVisible} = useWindowFocus();
 
@@ -155,19 +170,41 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
             audioChunks.current.push(event.data);
           }
         };
+      
+        if (isEagleLoadedRef.current) {
+          startEagle()
+            .then(() => {
+              console.log("Eagle worker started");
+            })
+            .catch((error) => {
+              console.error("Failed to start Eagle worker", error);
+            });
+        }
+      
+        const cobraInstance = cobra.current;
         
-        if (cobra.current) {
-          WebVoiceProcessor.subscribe(cobra.current).catch((error) => {
+        if (cobraInstance) {
+          WebVoiceProcessor.subscribe(cobraInstance).catch((error) => {
             console.error('failed to subscribe to Cobra', error);
           });
         }
         
         mediaRecorder.current.onstop = () => {
-          if (cobra.current) {
-            WebVoiceProcessor.unsubscribe(cobra.current).catch((error) => {
+          if (cobraInstance) {
+            WebVoiceProcessor.unsubscribe(cobraInstance).catch((error) => {
               console.error('failed to unsubscribe from Cobra', error);
             });
           }
+          if (isEagleLoadedRef.current) {
+            stopEagle()
+              .then(() => {
+                console.log("Eagle worker stopped");
+              })
+              .catch((error) => {
+                console.error("Failed to stop Eagle worker", error);
+              });
+          }
+          
           stream.getTracks().forEach(track => track.stop());
           console.log(`stopped MediaRecorder, voice detected: ${voiceDetectedRef.current}`);
           if (voiceDetectedRef.current) {
@@ -374,6 +411,39 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     voiceProbabilityCallbackRef.current(probability);
   }, []);
   
+  const [speakerProfiles, setSpeakerProfiles] = useState<EagleProfile[]>([]);
+  const {users} = useAppContext();
+  const loadProfiles = async (profileIds: string[]) => {
+    console.log("Loading profiles", profileIds);
+    const profiles: EagleProfile[] = [];
+    for (const id of profileIds) {
+      const profileData = await indexDbGet<Uint8Array>(id);
+      profiles.push({bytes: profileData});
+    }
+    setSpeakerProfiles(profiles);
+  };
+  useEffect(() => {
+    loadProfiles(users.filter(user => user.voiceProfileId != "").map(user => user.voiceProfileId))
+      .then(() => console.log("User voice profiles loaded"))
+      .catch((e) => console.error("Failed to load user profiles", e));
+  }, [users]);
+  
+  useEffect(() => {
+    if (speakerProfiles.length > 0) {
+      initEagle(
+        PicoVoiceAccessKey,
+        {
+          publicPath: "models/eagle_params.pv"
+        },
+        speakerProfiles
+      ).then(() => {
+        console.log('Eagle initialized');
+      }).catch((error) => {
+        console.error('Failed to initialize Eagle', error);
+      });
+    }
+  }, [speakerProfiles, initEagle]);
+  
   useEffect(() => {
     if (PicoVoiceAccessKey.length === 0) {
       return;
@@ -389,7 +459,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     ).then(() => {
       console.log('Porcupine initialized');
     }).catch((error) => {
-      console.error('failed to initialize Porcupine', error);
+      console.error('Failed to initialize Porcupine', error);
     });
     
     CobraWorker.create(
