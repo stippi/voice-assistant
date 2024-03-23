@@ -59,10 +59,13 @@ export function UserVoiceEnroll({user, setUserVoiceProfileId, onClose}: Props) {
   
   const saveProfile = (profile: EagleProfile) => {
     const profileId = `voice-profile-${user.id}`;
-    indexDbPut<Uint8Array>(profileId, profile.bytes).then(() => {
-      console.log("User voice profile saved");
-      setUserVoiceProfileId(profileId);
-    })
+    indexDbPut<Uint8Array>(profileId, profile.bytes)
+      .then(() => {
+        console.log("User voice profile saved");
+        setUserVoiceProfileId(profileId);
+      }).catch((e) => {
+        console.error("Failed to save user voice profile", e);
+      });
   };
   
   const startEnrollment = async () => {
