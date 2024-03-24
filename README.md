@@ -125,14 +125,21 @@ It must have the following settings:
 - The tenant type must be multi-tenant.
 - The scopes must include `User.Read` and `Calendars.ReadWrite`.
 
-### LocalAI
+### OpenAI compatible servers
 
-[LocalAI](https://github.com/mudler/LocalAI) is a project that allows you to run various LLMs locally.
-It provides a REST API that can be used (mostly) as a drop-in replacement for OpenAI's API.
-When you configure a `baseURL` in `OpenAiConfig`, the Assistant will use this URL to send requests to the LocalAI server.
-It will also automatically provide a model name of `mistral`.
-This doesn't have to be actual LLM you use, but it must be the name under which it is exposed.
-See the [LocalAI documentation](https://localai.io/docs/getting-started/manual/) for more information.
+There are a bunch of services that provide OpenAI compatible REST endpoints.
+For example, there is [LocalAI](https://github.com/mudler/LocalAI), a project that allows you to run various LLMs locally.
+But there are others like LM Studio, vLLM and so on.
+
+These projects provides an API that can be used (mostly) as a drop-in replacement for OpenAI's.
+
+For this reason, the `config.ts` file exports the `completionsApiUrl` and related settings like the API key and model name.
+This allows to configure another OpenAI compatible server.
+I've tested Mistral, Groq and others.
+However, the support for tools is currently very limited compared to what GPT-4-Turbo can do.
+Often, you can't use streaming and tools concurrently.
+And the LLMs are often overwelmed and just don't reliably understand when to use tools and how to invoke them.
+With OpenAI's GPT-4-Turbo, we can use 30 and more with close to perfect reliability.
 
 ### Starting the Vite Dev Server
 
@@ -158,8 +165,6 @@ yarn run dev
   This is necessary to allow jumping to a specific song in the playlist.
 - [ ] Indicate in tool results whether to send the result to the LLM to receive a response.
   Some tool calls like starting music playback should skip the reply, as the result is obvious to the user.
-- [ ] Make providing any keys besides the OpenAI key truly optional, also removing corresponding LLM function declarations
-- [ ] Allow choosing the model (downgrading to GPT-3.5 and potentially improving latency)
 - [ ] Add speaker separation/partitioning and trim the audio to the speaker who initiated the conversation
 - [ ] Add buttons below messages, like play as speech, or edit for user messages
   - [x] Delete a single message button
