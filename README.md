@@ -16,8 +16,6 @@ The most "sophisticated" integrations are for Google and Spotify.
 
 Generally, you can just ask the Assistant what it can do for you. ;-)
 
-Eventually, it would be nice to host the website in a native application that is less restricted than a Browser.
-
 ## Running Locally
 
 Create a file named `config.ts` in the `src` directory.
