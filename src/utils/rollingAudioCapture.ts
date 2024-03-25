@@ -9,7 +9,10 @@ export class RollingAudioCapture {
   currentIndex = 0;
   
   constructor(options: Options) {
-    this.options = options;
+    this.options = options || {};
+    if (!this.options.maxBuffers) {
+      this.options.maxBuffers = 10;
+    }
   }
   
   appendBuffer(buffer: Int16Array) {
