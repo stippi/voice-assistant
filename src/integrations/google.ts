@@ -163,10 +163,10 @@ export async function getDirections(
     request.intermediates = intermediates.map(intermediate => toWayPoint(intermediate));
   }
   if (arrivalTime) {
-    request.arrivalTime = arrivalTime;
+    request.arrivalTime = new Date(arrivalTime).toISOString();
   }
   if (departureTime) {
-    request.departureTime = departureTime;
+    request.departureTime = new Date(departureTime).toISOString();
   }
   if (trafficModel) {
     request.trafficModel = trafficModel;
