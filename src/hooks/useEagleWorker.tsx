@@ -9,25 +9,27 @@ export function useEagleWorker(): {
     accessKey: string,
     model: {publicPath: string},
     speakerProfiles: EagleProfile | EagleProfile[],
+    speakerScoreCallback: (scores: number[]) => void
   ) => Promise<void>,
   start: () => Promise<void>,
   stop: () => Promise<void>,
-  release: () => Promise<void>,
-  scores: number[]
+  release: () => Promise<void>
 } {
   const eagleRef = useRef<EagleWorker | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [scores, setScores] = useState<number[]>([]);
+  const speakerScoreCallbackRef = useRef<(scores: number[]) => void>(() => {});
   
   const init = useCallback(async (
     accessKey: string,
     model: {publicPath: string},
     speakerProfiles: EagleProfile | EagleProfile[],
+    speakerScoreCallback: (scores: number[]) => void
   ) => {
     if (eagleRef.current) {
       console.error("Eagle worker already initialized. Call release() first.");
       return;
     }
+    speakerScoreCallbackRef.current = speakerScoreCallback;
     try {
       eagleRef.current = await EagleWorker.create(
         accessKey,
@@ -50,7 +52,7 @@ export function useEagleWorker(): {
             console.log("Eagle processing");
             const scores = await eagleRef.current.process(event.data.inputFrame);
             console.log("Updating scores", scores);
-            setScores(scores);
+            speakerScoreCallbackRef.current(scores);
           } catch (e) {
             console.log("Error processing audio data with Eagle");
             return;
@@ -108,7 +110,6 @@ export function useEagleWorker(): {
     init,
     start,
     stop,
-    release,
-    scores
+    release
   };
 }
