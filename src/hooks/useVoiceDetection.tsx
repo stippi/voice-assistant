@@ -1,28 +1,60 @@
 import {PvEngine} from "@picovoice/web-voice-processor/dist/types/types";
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {EagleProfile, EagleWorker} from "@picovoice/eagle-web";
+import {EagleProfile} from "@picovoice/eagle-web";
 import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
 import {RollingAudioCapture} from "../utils/rollingAudioCapture.ts";
 import {useEagleWorker} from "./useEagleWorker.tsx";
 import {PicoVoiceAccessKey} from "../config.ts";
 import {useCobraWorker} from "./useCobraWorker.tsx";
+import {usePorcupine} from "@picovoice/porcupine-react";
+import {BuiltInKeyword} from "@picovoice/porcupine-web";
 
-export function useVoiceDetection(): {
+export function useVoiceDetection(enableWakeWord: boolean): {
   isLoaded: boolean,
-  init: (speakerProfiles: EagleProfile[]) => Promise<void>,
+  init: (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => Promise<void>,
   start: () => Promise<void>,
   stop: () => Promise<void>,
-  release: () => Promise<void>
+  release: () => Promise<void>,
+  isListeningForWakeWord: boolean,
+  wakeWordDetected: boolean,
 } {
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  const {
+    keywordDetection,
+    isLoaded: isPorcupineLoaded,
+    isListening,
+//    error,
+    init: initPorcupine,
+    start: startPorcupine,
+    stop: stopPorcupine,
+    release: releasePorcupine
+  } = usePorcupine();
+  
+  // Start Porcupine wake word detection depending on settings and whether it is loaded
+  useEffect(() => {
+    if (isPorcupineLoaded && enableWakeWord && !isListening) {
+      console.log('starting wake-word detection');
+      startPorcupine().catch((error) => {
+        console.log("failed to start Porcupine wake-word detection", error);
+      });
+    }
+    return () => {
+      if (isListening) {
+        console.log('stopping wake-word detection');
+        stopPorcupine().catch((error) => {
+          console.log("failed to stop Porcupine wake-word detection", error);
+        });
+      }
+    }
+  }, [startPorcupine, stopPorcupine, enableWakeWord, isListening, isPorcupineLoaded])
   
   const {
     isLoaded: isEagleLoaded,
     init: initEagle,
     start: startEagle,
     stop: stopEagle,
-    release: releaseEagle,
-    scores: eagleScores,
+    release: releaseEagle
   } = useEagleWorker();
   
   const {
@@ -38,6 +70,11 @@ export function useVoiceDetection(): {
     console.log("voice probability", probability);
   }, []);
   
+  const speakerScoresCallback = React.useCallback((scores: number[]) => {
+    // TODO: Do something with it
+    console.log("speaker scores", scores);
+  }, []);
+  
   const rollingAudioCapture = useRef(new RollingAudioCapture({maxBuffers: 10}));
   
   const rollingAudioEngine = useRef<PvEngine>({
@@ -50,17 +87,34 @@ export function useVoiceDetection(): {
     }
   });
   
-  const init = useCallback(async (speakerProfiles: EagleProfile[]) => {
+  const init = useCallback(async (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => {
     try {
-      // ...
-      await initEagle(PicoVoiceAccessKey, { publicPath: "/public/models/eagle_params.pv"}, speakerProfiles);
+      await initPorcupine(
+        PicoVoiceAccessKey,
+        wakeWord,
+        {
+          publicPath: "/public/models/porcupine_params.pv",
+          customWritePath: "3.0.0_porcupine_params.pv",
+        }
+      );
+      await initEagle(
+        PicoVoiceAccessKey,
+        {
+          publicPath: "/public/models/eagle_params.pv"
+        },
+        speakerProfiles,
+        speakerScoresCallback
+      );
       await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
       await WebVoiceProcessor.subscribe(rollingAudioEngine.current);
-      setIsLoaded(true);
     } catch (e) {
       console.error(e);
     }
-  }, [initCobra, initEagle, voiceProbabilityCallback]);
+  }, [initPorcupine, initCobra, initEagle, voiceProbabilityCallback, speakerScoresCallback]);
+  
+  useEffect(() => {
+    setIsLoaded(isPorcupineLoaded && isEagleLoaded && isCobraLoaded);
+  }, [isPorcupineLoaded, isEagleLoaded, isCobraLoaded])
   
   const start = useCallback(async (): Promise<void> => {
     try {
@@ -82,11 +136,12 @@ export function useVoiceDetection(): {
   
   const release = useCallback(async (): Promise<void> => {
     await stop();
+    await releasePorcupine();
     await releaseCobra();
     await releaseEagle();
     await WebVoiceProcessor.unsubscribe(rollingAudioEngine.current);
     setIsLoaded(false);
-  }, [releaseCobra, releaseEagle, stop]);
+  }, [releasePorcupine, releaseCobra, releaseEagle, stop]);
   
   useEffect(() => () => {
     if (isLoaded) {
@@ -100,6 +155,8 @@ export function useVoiceDetection(): {
     init,
     start,
     stop,
-    release
+    release,
+    isListeningForWakeWord: isListening,
+    wakeWordDetected: !!keywordDetection
   };
 }

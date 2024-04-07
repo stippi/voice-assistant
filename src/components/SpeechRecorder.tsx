@@ -69,12 +69,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     init: initEagle,
     start: startEagle,
     stop: stopEagle,
-    scores: eagleScores,
   } = useEagleWorker();
-  
-  useEffect(() => {
-    console.log("Eagle scores", eagleScores);
-  }, [eagleScores])
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     console.log(`received ${audioChunks.length} audio chunks`);
@@ -435,7 +430,10 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         {
           publicPath: "models/eagle_params.pv"
         },
-        speakerProfiles
+        speakerProfiles,
+        (scores: number[]) => {
+          console.log('speaker scores:', scores);
+        }
       ).then(() => {
         console.log('Eagle initialized');
       }).catch((error) => {

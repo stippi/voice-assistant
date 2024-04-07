@@ -29,8 +29,8 @@ import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 
 const openAi = new OpenAI({
   apiKey: completionsApiKey,
-  baseURL: completionsApiUrl,
   dangerouslyAllowBrowser: true,
+  baseURL: completionsApiUrl
 });
 const openAiSpeech = new OpenAI({
   apiKey: speechApiKey,
