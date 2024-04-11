@@ -88,53 +88,41 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   });
   
   const init = useCallback(async (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => {
-    try {
-      await initPorcupine(
-        PicoVoiceAccessKey,
-        wakeWord,
-        {
-          publicPath: "/public/models/porcupine_params.pv",
-          customWritePath: "3.0.0_porcupine_params.pv",
-        }
-      );
-      await initEagle(
-        PicoVoiceAccessKey,
-        {
-          publicPath: "/public/models/eagle_params.pv"
-        },
-        speakerProfiles,
-        speakerScoresCallback
-      );
-      await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
-      await WebVoiceProcessor.subscribe(rollingAudioEngine.current);
-    } catch (e) {
-      console.error(e);
-    }
+    await initPorcupine(
+      PicoVoiceAccessKey,
+      wakeWord,
+      {
+        publicPath: "/public/models/porcupine_params.pv",
+        customWritePath: "3.0.0_porcupine_params.pv",
+      }
+    );
+    await initEagle(
+      PicoVoiceAccessKey,
+      {
+        publicPath: "/public/models/eagle_params.pv"
+      },
+      speakerProfiles,
+      speakerScoresCallback
+    );
+    await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
+    await WebVoiceProcessor.subscribe(rollingAudioEngine.current);
   }, [initPorcupine, initCobra, initEagle, voiceProbabilityCallback, speakerScoresCallback]);
   
   useEffect(() => {
     setIsLoaded(isPorcupineLoaded && isEagleLoaded && isCobraLoaded);
   }, [isPorcupineLoaded, isEagleLoaded, isCobraLoaded])
   
-  const start = useCallback(async (): Promise<void> => {
-    try {
-      await startEagle();
-      await startCobra();
-    } catch (e) {
-      console.error("Error starting voice detection", e);
-    }
+  const start = useCallback(async () => {
+    await startEagle();
+    await startCobra();
   }, [startCobra, startEagle]);
   
-  const stop = useCallback(async (): Promise<void> => {
-    try {
-      await stopCobra();
-      await stopEagle();
-    } catch (e) {
-      console.error("Error stopping voice detection", e)
-    }
+  const stop = useCallback(async () => {
+    await stopCobra();
+    await stopEagle();
   }, [stopCobra, stopEagle]);
   
-  const release = useCallback(async (): Promise<void> => {
+  const release = useCallback(async () => {
     await stop();
     await releasePorcupine();
     await releaseCobra();

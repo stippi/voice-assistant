@@ -3,11 +3,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 import OpenAI, { toFile } from 'openai';
-import {usePorcupine} from "@picovoice/porcupine-react";
-import {CobraWorker} from "@picovoice/cobra-web";
-import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
 import {EagleProfile} from "@picovoice/eagle-web";
-import {useEagleWorker} from "../hooks/useEagleWorker";
 import {speechApiUrl, speechApiKey, PicoVoiceAccessKey} from "../config";
 import useSettings from "../hooks/useSettings";
 import useWindowFocus from "../hooks/useWindowFocus";
@@ -15,6 +11,7 @@ import {playSound} from "../utils/audio";
 import {textToLowerCaseWords} from "../utils/textUtils";
 import useAppContext from "../hooks/useAppContext";
 import {indexDbGet} from "../utils/indexDB";
+import {useVoiceDetection} from "../hooks/useVoiceDetection.tsx";
 
 const openai = new OpenAI({
   apiKey: speechApiKey,
@@ -52,24 +49,6 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   
   const shouldRestartRecognition = useRef(false);
   const recognition = useRef<SpeechRecognition | null>(null);
-  const cobra = useRef<CobraWorker | null>(null);
-  
-  const {
-    keywordDetection,
-    isLoaded,
-    isListening,
-//    error,
-    init,
-    start,
-    stop,
-    release
-  } = usePorcupine();
-  const {
-    isLoaded: isEagleLoaded,
-    init: initEagle,
-    start: startEagle,
-    stop: stopEagle,
-  } = useEagleWorker();
   
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     console.log(`received ${audioChunks.length} audio chunks`);
@@ -108,37 +87,26 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   const { settings } = useSettings();
   const settingsRef = React.useRef(settings);
   const sendToWhisperRef = React.useRef(sendToWhisperAPI);
-  const isPorcupineLoadedRef = React.useRef(isLoaded);
-  const isEagleLoadedRef = React.useRef(isEagleLoaded);
+  const isVoiceDetectionLoadedRef = React.useRef(false);
+  const {documentVisible} = useWindowFocus();
+  
+  const {
+    isLoaded: isVoiceDetectionLoaded,
+    init: initVoiceDetection,
+    start: startVoiceDetection,
+    stop: stopVoiceDetection,
+    release: releaseVoiceDetection,
+    isListeningForWakeWord,
+    wakeWordDetected
+  } = useVoiceDetection(settings.openMic && documentVisible);
   
   // Update refs
   useEffect(() => {
     settingsRef.current = settings;
     sendToWhisperRef.current = sendToWhisperAPI;
-    isPorcupineLoadedRef.current = isLoaded;
-    isEagleLoadedRef.current = isEagleLoaded;
-  }, [settings, sendToWhisperAPI, isLoaded, isEagleLoaded]);
+    isVoiceDetectionLoadedRef.current = isVoiceDetectionLoaded;
+  }, [settings, sendToWhisperAPI, isVoiceDetectionLoaded]);
   
-  const {documentVisible} = useWindowFocus();
-
-  // Start Porcupine wake word detection depending on settings and whether it is loaded
-  useEffect(() => {
-    if (isLoaded && settings.openMic && documentVisible && !isListening) {
-      console.log('starting wake-word detection');
-      start().catch((error) => {
-        console.log("failed to start Porcupine wake-word detection", error);
-      });
-    }
-    return () => {
-      if (isListening) {
-        console.log('stopping wake-word detection');
-        stop().catch((error) => {
-          console.log("failed to stop Porcupine wake-word detection", error);
-        });
-      }
-    }
-  }, [start, stop, documentVisible, isListening, isLoaded, settings.openMic])
-
   const mediaRecorder = React.useRef<MediaRecorder | null>(null);
   const audioChunks  = React.useRef<Blob[]>([]);
   
@@ -166,40 +134,17 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
           }
         };
       
-        if (isEagleLoadedRef.current) {
-          startEagle()
+        if (isVoiceDetectionLoadedRef.current) {
+          startVoiceDetection()
             .then(() => {
-              console.log("Eagle worker started");
+              console.log("Voice detection started");
             })
             .catch((error) => {
-              console.error("Failed to start Eagle worker", error);
+              console.error("Failed to start Voice detection", error);
             });
-        }
-      
-        const cobraInstance = cobra.current;
-        
-        if (cobraInstance) {
-          WebVoiceProcessor.subscribe(cobraInstance).catch((error) => {
-            console.error('failed to subscribe to Cobra', error);
-          });
         }
         
         mediaRecorder.current.onstop = () => {
-          if (cobraInstance) {
-            WebVoiceProcessor.unsubscribe(cobraInstance).catch((error) => {
-              console.error('failed to unsubscribe from Cobra', error);
-            });
-          }
-          if (isEagleLoadedRef.current) {
-            stopEagle()
-              .then(() => {
-                console.log("Eagle worker stopped");
-              })
-              .catch((error) => {
-                console.error("Failed to stop Eagle worker", error);
-              });
-          }
-          
           stream.getTracks().forEach(track => track.stop());
           console.log(`stopped MediaRecorder, voice detected: ${voiceDetectedRef.current}`);
           if (voiceDetectedRef.current) {
@@ -261,16 +206,16 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   }, [conversationOpen, startConversation, stopResponding]);
   
   useEffect(() => {
-    if (keywordDetection !== null) {
-      console.log('wake word detected:', keywordDetection.label);
-      if (!conversationOpenRef.current && keywordDetection.label === settings.triggerWord) {
+    if (wakeWordDetected) {
+      console.log('wake word detected');
+      if (!conversationOpenRef.current) {
         if (respondingRef.current) {
           stopRespondingRef.current(true);
         }
         startConversationRef.current();
       }
     }
-  }, [keywordDetection, respondingRef, settings.triggerWord])
+  }, [wakeWordDetected, respondingRef])
   
   useEffect(() => {
     if (PicoVoiceAccessKey.length !== 0) {
@@ -312,7 +257,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   const openMicRef = React.useRef(settings.openMic);
   
   useEffect(() => {
-    if (!isLoaded && recognition.current && openMicRef.current !== settings.openMic) {
+    if (!isVoiceDetectionLoaded && recognition.current && openMicRef.current !== settings.openMic) {
       openMicRef.current = settings.openMic;
       if (settings.openMic) {
         console.log('open mic changed: starting speech recognition')
@@ -322,7 +267,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         recognition.current.stop();
       }
     }
-  }, [settings, isLoaded]);
+  }, [settings, isVoiceDetectionLoaded]);
   
   const handleResult = useCallback((event: SpeechRecognitionEvent) => {
     if (silenceTimer !== null) {
@@ -423,68 +368,29 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       .catch((e) => console.error("Failed to load user profiles", e));
   }, [users]);
   
-  useEffect(() => {
-    if (speakerProfiles.length > 0) {
-      initEagle(
-        PicoVoiceAccessKey,
-        {
-          publicPath: "models/eagle_params.pv"
-        },
-        speakerProfiles,
-        (scores: number[]) => {
-          console.log('speaker scores:', scores);
-        }
-      ).then(() => {
-        console.log('Eagle initialized');
-      }).catch((error) => {
-        console.error('Failed to initialize Eagle', error);
-      });
-    }
-  }, [speakerProfiles, initEagle]);
   
   useEffect(() => {
     if (PicoVoiceAccessKey.length === 0) {
       return;
     }
     
-    init(
-      PicoVoiceAccessKey,
+    initVoiceDetection(
       settings.triggerWord,
-      {
-        publicPath: "models/porcupine_params.pv",
-        customWritePath: "3.0.0_porcupine_params.pv",
-      }
+      speakerProfiles
     ).then(() => {
-      console.log('Porcupine initialized');
+      console.log('Voice detection initialized');
     }).catch((error) => {
-      console.error('Failed to initialize Porcupine', error);
-    });
-    
-    CobraWorker.create(
-      PicoVoiceAccessKey,
-      voiceProbabilityCallback
-    ).then((cobraWorker) => {
-      console.log('Cobra initialized');
-      cobra.current = cobraWorker;
-    }).catch((error) => {
-      console.error('failed to initialize Cobra', error);
+      console.error('Failed to initialize voice detection', error);
     });
     
     return () => {
-      if (cobra.current) {
-        cobra.current.release().then(() => {
-          console.log('Cobra released');
-        }).catch((error) => {
-          console.error('failed to release Cobra', error);
-        });
-      }
-      release().then(() => {
-        console.log('Porcupine released');
+      releaseVoiceDetection().then(() => {
+        console.log('Voice detection released');
       }).catch((error) => {
-        console.error('failed to release Porcupine', error);
+        console.error('failed to release Voice detection', error);
       });
     }
-  }, [init, release, voiceProbabilityCallback, settings.triggerWord])
+  }, [initVoiceDetection, releaseVoiceDetection, speakerProfiles, settings.triggerWord])
   
   useEffect(() => {
     if (awaitSpokenResponse && !conversationOpen && openMicRef.current) {
@@ -503,7 +409,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       </IconButton>}
       {!conversationOpen && <IconButton
         area-label="start conversation"
-        color={isListening || listening ? "error" : "default"}
+        color={isListeningForWakeWord || listening ? "error" : "default"}
         onClick={startConversation}
       >
         <MicIcon />
