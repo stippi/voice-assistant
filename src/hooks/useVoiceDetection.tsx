@@ -7,7 +7,13 @@ import {useEagleWorker} from "./useEagleWorker.tsx";
 import {PicoVoiceAccessKey} from "../config.ts";
 import {useCobraWorker} from "./useCobraWorker.tsx";
 import {usePorcupine} from "@picovoice/porcupine-react";
-import {BuiltInKeyword} from "@picovoice/porcupine-web";
+import {BuiltInKeyword, PorcupineDetection} from "@picovoice/porcupine-web";
+
+type VoiceDetection = {
+  voiceDetected: boolean;
+  silenceDetected: boolean;
+  userDetected: number;
+};
 
 export function useVoiceDetection(enableWakeWord: boolean): {
   isLoaded: boolean,
@@ -16,9 +22,13 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   stop: () => Promise<void>,
   release: () => Promise<void>,
   isListeningForWakeWord: boolean,
-  wakeWordDetected: boolean,
+  wakeWordDetection: PorcupineDetection | null,
+  voiceDetection: VoiceDetection | null
 } {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [voiceDetection, setVoiceDetection] = useState<VoiceDetection | null>(null);
+  const voiceDetectedRef = useRef(false);
+  const lastSilenceCheckRef = useRef(new Date().getTime());
   
   const {
     keywordDetection,
@@ -65,9 +75,52 @@ export function useVoiceDetection(enableWakeWord: boolean): {
     release: releaseCobra,
   } = useCobraWorker();
   
+  const start = useCallback(async () => {
+    if (isEagleLoaded) {
+      await startEagle();
+    }
+    await startCobra();
+    voiceDetectedRef.current = false;
+    lastSilenceCheckRef.current = new Date().getTime();
+    setVoiceDetection({
+      voiceDetected: false,
+      silenceDetected: false,
+      userDetected: -1,
+    });
+  }, [isEagleLoaded, startCobra, startEagle]);
+  
+  const stop = useCallback(async () => {
+    await stopCobra();
+    if (isEagleLoaded) {
+      await stopEagle();
+    }
+    setVoiceDetection(null);
+  }, [isEagleLoaded, stopCobra, stopEagle]);
+  
   const voiceProbabilityCallback = React.useCallback((probability: number) => {
-    // TODO: Do something with it
-    console.log("voice probability", probability);
+    const now = new Date().getTime();
+    if (probability > 0.7) {
+      if (!voiceDetectedRef.current) {
+        console.log("voice detected");
+        setVoiceDetection((current) => ({
+          voiceDetected: true,
+          silenceDetected: false,
+          userDetected: current ? current.userDetected : -1,
+        }));
+      }
+      lastSilenceCheckRef.current = now;
+    } else {
+      // Shorten the silence timeout when voice was detected after starting the recording
+      const timeout = voiceDetectedRef.current ? 1750 : 2500;
+      if (now - lastSilenceCheckRef.current > timeout) {
+        console.log("silence detected");
+        setVoiceDetection((current) => ({
+          voiceDetected: current ? current.voiceDetected : false,
+          silenceDetected: true,
+          userDetected: current ? current.userDetected : -1,
+        }));
+      }
+    }
   }, []);
   
   const speakerScoresCallback = React.useCallback((scores: number[]) => {
@@ -96,33 +149,26 @@ export function useVoiceDetection(enableWakeWord: boolean): {
         customWritePath: "3.0.0_porcupine_params.pv",
       }
     );
-    await initEagle(
-      PicoVoiceAccessKey,
-      {
-        publicPath: "/public/models/eagle_params.pv"
-      },
-      speakerProfiles,
-      speakerScoresCallback
-    );
+    if (speakerProfiles.length > 0) {
+      await initEagle(
+        PicoVoiceAccessKey,
+        {
+          publicPath: "/public/models/eagle_params.pv"
+        },
+        speakerProfiles,
+        speakerScoresCallback
+      );
+    }
     await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
     await WebVoiceProcessor.subscribe(rollingAudioEngine.current);
-  }, [initPorcupine, initCobra, initEagle, voiceProbabilityCallback, speakerScoresCallback]);
+  }, [initPorcupine, initEagle, initCobra, voiceProbabilityCallback, speakerScoresCallback]);
   
   useEffect(() => {
     setIsLoaded(isPorcupineLoaded && isEagleLoaded && isCobraLoaded);
   }, [isPorcupineLoaded, isEagleLoaded, isCobraLoaded])
   
-  const start = useCallback(async () => {
-    await startEagle();
-    await startCobra();
-  }, [startCobra, startEagle]);
-  
-  const stop = useCallback(async () => {
-    await stopCobra();
-    await stopEagle();
-  }, [stopCobra, stopEagle]);
-  
   const release = useCallback(async () => {
+    console.log("releasing voice detection via release()");
     await stop();
     await releasePorcupine();
     await releaseCobra();
@@ -133,6 +179,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   
   useEffect(() => () => {
     if (isLoaded) {
+      console.log("releasing voice detection via effect");
       WebVoiceProcessor.unsubscribe(rollingAudioEngine.current).catch(e => console.log(e));
       release().catch(e => console.log(e));
     }
@@ -145,6 +192,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
     stop,
     release,
     isListeningForWakeWord: isListening,
-    wakeWordDetected: !!keywordDetection
+    wakeWordDetection: keywordDetection,
+    voiceDetection
   };
 }
