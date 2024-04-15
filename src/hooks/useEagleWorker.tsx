@@ -49,9 +49,7 @@ export function useEagleWorker(): {
       switch (event.data.command) {
         case "process":
           try {
-            console.log("Eagle processing");
             const scores = await eagleRef.current.process(event.data.inputFrame);
-            console.log("Updating scores", scores);
             speakerScoreCallbackRef.current(scores);
           } catch (e) {
             console.log("Error processing audio data with Eagle");

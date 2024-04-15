@@ -20,7 +20,7 @@ export function useCobraWorker(): {
     voiceProbabilityCallback: (probability: number) => void
   ) => {
     if (cobraRef.current) {
-      console.error("Eagle worker already initialized. Call release() first.");
+      console.error("Cobra worker already initialized. Call release() first.");
       return;
     }
     try {

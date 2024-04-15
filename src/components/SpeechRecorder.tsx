@@ -97,15 +97,21 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     stop: stopVoiceDetection,
     release: releaseVoiceDetection,
     isListeningForWakeWord,
-    wakeWordDetected
+    wakeWordDetection,
+    voiceDetection,
   } = useVoiceDetection(settings.openMic && documentVisible);
+  
+  const startVoiceDetectionRef = React.useRef(startVoiceDetection);
+  const stopVoiceDetectionRef = React.useRef(stopVoiceDetection);
   
   // Update refs
   useEffect(() => {
     settingsRef.current = settings;
     sendToWhisperRef.current = sendToWhisperAPI;
     isVoiceDetectionLoadedRef.current = isVoiceDetectionLoaded;
-  }, [settings, sendToWhisperAPI, isVoiceDetectionLoaded]);
+    startVoiceDetectionRef.current = startVoiceDetection;
+    stopVoiceDetectionRef.current = stopVoiceDetection;
+  }, [settings, sendToWhisperAPI, isVoiceDetectionLoaded, startVoiceDetection, stopVoiceDetection]);
   
   const mediaRecorder = React.useRef<MediaRecorder | null>(null);
   const audioChunks  = React.useRef<Blob[]>([]);
@@ -135,7 +141,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         };
       
         if (isVoiceDetectionLoadedRef.current) {
-          startVoiceDetection()
+          startVoiceDetectionRef.current()
             .then(() => {
               console.log("Voice detection started");
             })
@@ -145,6 +151,13 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         }
         
         mediaRecorder.current.onstop = () => {
+          if (isVoiceDetectionLoadedRef.current) {
+            stopVoiceDetectionRef.current()
+              .then(() => {
+                console.log("Voice detection stopped");
+              });
+          }
+          
           stream.getTracks().forEach(track => track.stop());
           console.log(`stopped MediaRecorder, voice detected: ${voiceDetectedRef.current}`);
           if (voiceDetectedRef.current) {
@@ -206,7 +219,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   }, [conversationOpen, startConversation, stopResponding]);
   
   useEffect(() => {
-    if (wakeWordDetected) {
+    if (wakeWordDetection) {
       console.log('wake word detected');
       if (!conversationOpenRef.current) {
         if (respondingRef.current) {
@@ -215,7 +228,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
         startConversationRef.current();
       }
     }
-  }, [wakeWordDetected, respondingRef])
+  }, [wakeWordDetection, respondingRef])
   
   useEffect(() => {
     if (PicoVoiceAccessKey.length !== 0) {
@@ -319,39 +332,18 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     };
   }, [handleResult]);
   
-  const mutableVoiceProbabilityCallback = React.useCallback((probability: number) => {
-    if (probability > 0.7) {
-      if (silenceTimer !== null) {
-        clearTimeout(silenceTimer);
-        setSilenceTimer(null);
-      }
-      if (!voiceDetectedRef.current) {
-        voiceDetectedRef.current = true;
-      }
-    } else {
-      if (silenceTimer === null) {
-        const timeout = voiceDetectedRef.current ? silenceTimeout / 2 : silenceTimeout;
-        const newTimer = window.setTimeout(() => {
-          if (conversationOpen) {
-            stopConversation();
-          }
-          setSilenceTimer(null);
-        }, timeout);
-        setSilenceTimer(newTimer);
-      }
+  useEffect(() => {
+    if (!voiceDetection) return;
+    
+    if (voiceDetection.voiceDetected) {
+      voiceDetectedRef.current = true;
     }
-  }, [silenceTimer, conversationOpen, stopConversation]);
+    if (voiceDetection.silenceDetected && conversationOpenRef.current) {
+      stopConversation();
+    }
+  }, [voiceDetection, stopConversation]);
   
-  const voiceProbabilityCallbackRef = React.useRef(mutableVoiceProbabilityCallback);
-  React.useEffect(() => {
-    voiceProbabilityCallbackRef.current = mutableVoiceProbabilityCallback;
-  }, [mutableVoiceProbabilityCallback]);
-  
-  const voiceProbabilityCallback = React.useCallback((probability: number) => {
-    voiceProbabilityCallbackRef.current(probability);
-  }, []);
-  
-  const [speakerProfiles, setSpeakerProfiles] = useState<EagleProfile[]>([]);
+  const [speakerProfiles, setSpeakerProfiles] = useState<EagleProfile[] | null>(null);
   const {users} = useAppContext();
   const loadProfiles = async (profileIds: string[]) => {
     console.log("Loading profiles", profileIds);
@@ -368,29 +360,34 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       .catch((e) => console.error("Failed to load user profiles", e));
   }, [users]);
   
-  
   useEffect(() => {
     if (PicoVoiceAccessKey.length === 0) {
       return;
     }
     
-    initVoiceDetection(
-      settings.triggerWord,
-      speakerProfiles
-    ).then(() => {
-      console.log('Voice detection initialized');
-    }).catch((error) => {
-      console.error('Failed to initialize voice detection', error);
-    });
-    
-    return () => {
-      releaseVoiceDetection().then(() => {
-        console.log('Voice detection released');
+    if (!isVoiceDetectionLoaded && speakerProfiles != null) {
+      console.log('Initializing voice detection');
+      initVoiceDetection(
+        settings.triggerWord,
+        speakerProfiles
+      ).then(() => {
+        console.log('Voice detection initialized');
       }).catch((error) => {
-        console.error('failed to release Voice detection', error);
+        console.error('Failed to initialize voice detection', error);
       });
     }
-  }, [initVoiceDetection, releaseVoiceDetection, speakerProfiles, settings.triggerWord])
+    
+    return () => {
+      if (isVoiceDetectionLoaded) {
+        console.log('Releasing voice detection');
+        releaseVoiceDetection().then(() => {
+          console.log('Voice detection released');
+        }).catch((error) => {
+          console.error('failed to release Voice detection', error);
+        });
+      }
+    }
+  }, [initVoiceDetection, releaseVoiceDetection, speakerProfiles, settings.triggerWord, isVoiceDetectionLoaded])
   
   useEffect(() => {
     if (awaitSpokenResponse && !conversationOpen && openMicRef.current) {
