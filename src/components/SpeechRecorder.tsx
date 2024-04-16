@@ -360,13 +360,16 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
       .catch((e) => console.error("Failed to load user profiles", e));
   }, [users]);
   
+  const voiceDetectionInitTriggeredRef = useRef(false);
+  
   useEffect(() => {
     if (PicoVoiceAccessKey.length === 0) {
       return;
     }
     
-    if (!isVoiceDetectionLoaded && speakerProfiles != null) {
+    if (!isVoiceDetectionLoaded && speakerProfiles != null && !voiceDetectionInitTriggeredRef.current) {
       console.log('Initializing voice detection');
+      voiceDetectionInitTriggeredRef.current = true;
       initVoiceDetection(
         settings.triggerWord,
         speakerProfiles
@@ -380,6 +383,7 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     return () => {
       if (isVoiceDetectionLoaded) {
         console.log('Releasing voice detection');
+        voiceDetectionInitTriggeredRef.current = false;
         releaseVoiceDetection().then(() => {
           console.log('Voice detection released');
         }).catch((error) => {
