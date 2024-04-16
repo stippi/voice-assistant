@@ -25,7 +25,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   wakeWordDetection: PorcupineDetection | null,
   voiceDetection: VoiceDetection | null
 } {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
   const [voiceDetection, setVoiceDetection] = useState<VoiceDetection | null>(null);
   const voiceDetectedRef = useRef(false);
   const lastSilenceCheckRef = useRef(new Date().getTime());
@@ -101,6 +101,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
     const now = new Date().getTime();
     if (probability > 0.7) {
       if (!voiceDetectedRef.current) {
+        voiceDetectedRef.current = true;
         console.log("voice detected");
         setVoiceDetection((current) => ({
           voiceDetected: true,
@@ -161,32 +162,33 @@ export function useVoiceDetection(enableWakeWord: boolean): {
     }
     await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
     await WebVoiceProcessor.subscribe(rollingAudioEngine.current);
+    setSubscribed(true);
   }, [initPorcupine, initEagle, initCobra, voiceProbabilityCallback, speakerScoresCallback]);
   
-  useEffect(() => {
-    setIsLoaded(isPorcupineLoaded && isEagleLoaded && isCobraLoaded);
-  }, [isPorcupineLoaded, isEagleLoaded, isCobraLoaded])
-  
   const release = useCallback(async () => {
-    console.log("releasing voice detection via release()");
     await stop();
-    await releasePorcupine();
-    await releaseCobra();
-    await releaseEagle();
-    await WebVoiceProcessor.unsubscribe(rollingAudioEngine.current);
-    setIsLoaded(false);
-  }, [releasePorcupine, releaseCobra, releaseEagle, stop]);
-  
-  useEffect(() => () => {
-    if (isLoaded) {
-      console.log("releasing voice detection via effect");
-      WebVoiceProcessor.unsubscribe(rollingAudioEngine.current).catch(e => console.log(e));
-      release().catch(e => console.log(e));
+    if (isPorcupineLoaded) {
+      await releasePorcupine();
     }
-  }, [isLoaded, release]);
+    if (isCobraLoaded) {
+      await releaseCobra();
+    }
+    if (isEagleLoaded) {
+      await releaseEagle();
+    }
+    if (subscribed) {
+      await WebVoiceProcessor.unsubscribe(rollingAudioEngine.current);
+      setSubscribed(false);
+    }
+  }, [stop, isPorcupineLoaded, isCobraLoaded, isEagleLoaded, subscribed, releasePorcupine, releaseCobra, releaseEagle]);
+  
+  // useEffect(() => () => {
+  //   console.log("releasing voice detection via effect");
+  //   release().catch(e => console.log(e));
+  // }, [release]);
   
   return {
-    isLoaded,
+    isLoaded: subscribed && isPorcupineLoaded && isCobraLoaded,
     init,
     start,
     stop,
