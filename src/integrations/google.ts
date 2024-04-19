@@ -263,7 +263,7 @@ export async function deleteCalendarEvent(calendarId: string = "primary", eventI
   return request.status === 204 ? { result: "event deleted" } : { error: "unknown error" };
 }
 
-export async function listCalendarEvents(calendarId: string = "primary", query: string, timeMin: string = (new Date()).toISOString(), timeMax: string, maxResults: number, singleEvents: boolean, orderBy: string, showDeleted: boolean) {
+export async function listCalendarEvents(calendarId: string = "primary", query: string, timeMin: string = (new Date()).toISOString(), timeMax: string, maxResults: number, singleEvents: boolean, orderBy: gapi.client.calendar.EventsOrder, showDeleted: boolean) {
   if (!gapi) {
     return { error: "Google integration is not enabled in the settings, or Google API failed to load" };
   }
@@ -272,15 +272,28 @@ export async function listCalendarEvents(calendarId: string = "primary", query: 
   }
   const parameters: gapi.client.calendar.EventsListParameters = {
     calendarId: calendarId,
-    q: query,
-    timeMin: timeMin,
-    timeMax: timeMax,
-    maxResults: maxResults,
-    singleEvents: singleEvents,
-    // @ts-expect-error - orderBy is not in the types
-    orderBy: orderBy,
-    showDeleted: showDeleted,
   };
+  if (query) {
+    parameters.q = query;
+  }
+  if (timeMin) {
+    parameters.timeMin = new Date(timeMin).toISOString();
+  }
+  if (timeMax) {
+    parameters.timeMax = new Date(timeMax).toISOString();
+  }
+  if (maxResults) {
+    parameters.maxResults = maxResults;
+  }
+  if (orderBy) {
+    parameters.orderBy = orderBy;
+  }
+  if (singleEvents != undefined) {
+    parameters.singleEvents = singleEvents;
+  }
+  if (showDeleted != undefined) {
+    parameters.showDeleted = showDeleted;
+  }
   const request = await gapi.client.calendar.events.list(parameters);
   return {
     result: request.result.items
