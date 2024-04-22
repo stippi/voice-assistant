@@ -13,6 +13,7 @@ export function useEagleWorker(): {
   ) => Promise<void>,
   start: () => Promise<void>,
   stop: () => Promise<void>,
+  analyze: (buffers: Int16Array[]) => Promise<number[]>,
   release: () => Promise<void>
 } {
   const eagleRef = useRef<EagleWorker | null>(null);
@@ -95,6 +96,26 @@ export function useEagleWorker(): {
     }
   }, [stop]);
   
+  const analyze = useCallback(async (buffers: Int16Array[]): Promise<number[]> => {
+    try {
+      if (!eagleRef.current) {
+        console.error("Eagle has not been initialized or has been released");
+        return [];
+      }
+      const scores = await eagleRef.current.process(buffers[0]);
+      for (let i = 1; i < buffers.length; i++) {
+        const moreScores = await eagleRef.current.process(buffers[i]);
+        for (let j = 0; j < scores.length; j++) {
+          scores[j] += moreScores[j];
+        }
+      }
+      return scores;
+    } catch (e) {
+      console.error("Error analyzing buffers", e)
+      return [];
+    }
+  }, []);
+  
   useEffect(() => () => {
     if (eagleRef.current) {
       WebVoiceProcessor.unsubscribe(micDetectEngine.current).catch(e => console.log(e));
@@ -108,6 +129,7 @@ export function useEagleWorker(): {
     init,
     start,
     stop,
+    analyze,
     release
   };
 }
