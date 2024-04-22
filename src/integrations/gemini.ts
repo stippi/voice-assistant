@@ -1,11 +1,11 @@
 import {Message} from "../model/message";
-import {GoogleProjectId} from "../secrets";
-// @ts-expect-error - The import works, no idea why the IDE complains
-import {ChatCompletionTool} from "openai/resources";
+import {GoogleProjectId, modelName} from "../config";
 import {loginFlow} from "./google";
 import React from "react";
-import {AppContextType} from "../contexts/AppContext.tsx";
-import {callFunction} from "../utils/tools.ts";
+import OpenAI from "openai";
+import ChatCompletion = OpenAI.ChatCompletion;
+import ChatCompletionTool = OpenAI.ChatCompletionTool;
+import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 
 
 function convertRole(role: string) {
@@ -24,8 +24,7 @@ export async function postGeminiRequest(
   messages: Message[],
   tools: ChatCompletionTool[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  appContextRef: React.MutableRefObject<AppContextType>,
-) {
+): Promise<ChatCompletion> {
   const accessToken = await loginFlow.getAccessToken();
   
   const wrappedSystemMessage = "Hi. I'll explain how you should behave:\n"
@@ -35,8 +34,8 @@ export async function postGeminiRequest(
     {role: "assistant", content: "Ok, let's start! Please continue in your native language."},
     ...messages];
   
-  const region = 'us-east4';
-  const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${GoogleProjectId}/locations/${region}/publishers/google/models/gemini-pro:streamGenerateContent?alt=sse`
+  const region = "europe-west3";//"us-east4";
+  const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${GoogleProjectId}/locations/${region}/publishers/google/models/${modelName}:streamGenerateContent?alt=sse`
   const body = {
     contents: transformedMessages.map(message => {
       const converted: GeminiMessage = {
@@ -76,74 +75,64 @@ export async function postGeminiRequest(
     ]
   };
   
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'text/event-stream'
-      },
-      body: JSON.stringify(body)
-    });
-    
-    if (!response.ok || !response.body) {
-      const errorMessage = `Failed to fetch from Gemini: ${response.status} ${response.statusText}`;
-      console.error(errorMessage);
-      return { error: errorMessage };
-    }
-    
-    let content = '';
-    let functionCall: FunctionCall | undefined;
-    for await (const event of fetchServerSentEvents(response.body.getReader())) {
-      const delta: GeminiResponse = JSON.parse(event.data);
-      content += delta.candidates?.[0].content?.parts?.[0].text || "";
-      if (content) {
-        setMessages([...messages, {role: "assistant", content: content}]);
-      }
-      if (delta.candidates?.[0].content?.parts?.[0].functionCall) {
-        functionCall = delta.candidates[0].content.parts[0].functionCall;
-      }
-    }
-    
-    const finalMessage: Message = {
-      role: "assistant",
-      content: content ? content : null
-    };
-    if (functionCall) {
-      finalMessage.tool_calls = [
-        {
-          id: "unused",
-          type: "function",
-          function: {
-            name: functionCall.name,
-            arguments: JSON.stringify(functionCall.args)
-          }
-        }
-      ];
-    }
-    
-    messages.push(finalMessage);
-
-    if (functionCall) {
-      const result = await callFunction(
-        { name: functionCall.name, arguments: JSON.stringify(functionCall.args)},
-        appContextRef.current
-      );
-      console.log("function result:", result);
-      const functionReply: Message = {
-        role: "tool",
-        name: functionCall.name,
-        tool_call_id: "unused",
-        content: JSON.stringify(result),
-      };
-      messages.push(functionReply);
-    }
-    
-  } catch (error) {
-    console.error('Failed to fetch from Gemini:', error);
-    return error instanceof Error ? { error: error.message } : { error: 'Unknown error' };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Authorization': `Bearer ${accessToken}`,
+      'Accept': 'text/event-stream'
+    },
+    body: JSON.stringify(body)
+  });
+  
+  if (!response.ok || !response.body) {
+    throw new Error(`Failed to fetch from Gemini: ${response.status} ${response.statusText}`);
   }
+  
+  let content = '';
+  let functionCall: FunctionCall | undefined;
+  for await (const event of fetchServerSentEvents(response.body.getReader())) {
+    const delta: GeminiResponse = JSON.parse(event.data);
+    content += delta.candidates?.[0].content?.parts?.[0].text || "";
+    if (content) {
+      setMessages([...messages, {role: "assistant", content: content}]);
+    }
+    if (delta.candidates?.[0].content?.parts?.[0].functionCall) {
+      functionCall = delta.candidates[0].content.parts[0].functionCall;
+    }
+  }
+  
+  const finalMessage: ChatCompletionMessage = {
+    role: "assistant",
+    content: content ? content : null
+  };
+  if (functionCall) {
+    finalMessage.tool_calls = [
+      {
+        id: "unused",
+        type: "function",
+        function: {
+          name: functionCall.name,
+          arguments: JSON.stringify(functionCall.args)
+        }
+      }
+    ];
+  }
+
+  return {
+    id: "unused",
+    choices: [
+      {
+        index: 0,
+        message: finalMessage,
+        finish_reason: functionCall ? "function_call" : "stop",
+        logprobs: null
+      }
+    ],
+    model: "gemini-pro",
+    created: new Date().getTime(),
+    object: "chat.completion"
+  };
 }
 
 async function* fetchServerSentEvents(reader:  ReadableStreamDefaultReader<Uint8Array>): AsyncIterableIterator<MessageEvent> {
