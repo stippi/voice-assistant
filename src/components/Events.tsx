@@ -1,9 +1,9 @@
-//import Divider from "@mui/material/Divider";
-import useGoogleContext from "../hooks/useGoogleContext.tsx";
 import ListItemText from "@mui/material/ListItemText";
 import ListItem from "@mui/material/ListItem";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {IconButton} from "@mui/material";
+import {CalendarEvent} from "../model/event";
+import React from "react";
 
 interface MonthDivider {
   type: 'month';
@@ -19,12 +19,12 @@ interface EventItem {
   summary: string;
   startTime: string;
   endTime: string;
-  uiLink: string;
+  uiLink?: string;
 }
 
 type ListItem = MonthDivider | EventItem;
 
-const pimpedEventList = (events: gapi.client.calendar.Event[], lang = navigator.language): ListItem[] => {
+const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): ListItem[] => {
   const pimpedList: ListItem[] = [];
   let currentMonth: string | null = null;
   let currentDay: string | null = null;
@@ -102,7 +102,7 @@ function Event({monthDay, weekday, summary, startTime, endTime, uiLink}: EventPr
           opacity: 1,
         },
       }}
-      secondaryAction={
+      secondaryAction={uiLink &&
         <IconButton
           aria-label="open event"
           size="small"
@@ -160,19 +160,21 @@ interface EventProps {
   summary: string;
   startTime: string;
   endTime: string;
-  uiLink: string;
+  uiLink?: string;
 }
 
-export function Events() {
-  const { upcomingEvents } = useGoogleContext();
-  const pimpedEvents = pimpedEventList(upcomingEvents);
+export const Events = React.memo(({events}: Props) => {
+  const pimpedEvents = pimpedEventList(events);
   
   return (
     <>
       {pimpedEvents.map((item/*, index, array*/) => {
         if (item.type === 'month') {
-          return <div key={item.id}>
-            <ListItem style={{paddingTop: 2, paddingBottom: 2}}>
+          return (
+            <ListItem
+              key={item.id}
+              style={{paddingTop: 2, paddingBottom: 2}}
+            >
               <div></div>
               <ListItemText
                 primary={item.monthAndYear}
@@ -182,10 +184,11 @@ export function Events() {
                 }}
               />
             </ListItem>
-          </div>
+          );
         } else {
-          return <div key={item.id}>
+          return (
             <Event
+              key={item.id}
               monthDay={item.monthDay}
               weekday={item.weekday}
               summary={item.summary}
@@ -193,10 +196,13 @@ export function Events() {
               endTime={item.endTime}
               uiLink={item.uiLink}
             />
-            {/*{index < array.length - 1 && <Divider />}*/}
-          </div>
+          );
         }
       })}
     </>
   );
+});
+
+interface Props {
+  events: CalendarEvent[];
 }

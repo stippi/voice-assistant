@@ -80,10 +80,10 @@ export const SpotifyContext = createContext<SpotifyContextType>({
 
 interface Props {
   children: ReactNode
-  enableSpotify: boolean
+  enable: boolean
 }
 
-export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, children }) => {
+export const SpotifyContextProvider: React.FC<Props>  = ({ enable, children }) => {
   const [accessToken, setAccessToken] = useState("");
   const [ourDeviceId, setDeviceId] = useState("");
   const [spotifyPlayer, setPlayer] = React.useState<Spotify.Player | null>(null);
@@ -106,17 +106,17 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
   const [connected, setConnected] = useState(false);
   
   useEffect(() => {
-    if (!enableSpotify) {
+    if (!enable) {
       setAccessToken("");
       return;
     }
     loginFlow.getAccessToken().then(token => setAccessToken(token));
-  }, [enableSpotify]);
+  }, [enable]);
   
   const playerRef = React.useRef<Spotify.Player | null>(null);
   
   useEffect(() => {
-    if (!enableSpotify) return;
+    if (!enable) return;
     
     const readyListener = ({ device_id }: { device_id: string }) => {
       setDeviceId(device_id);
@@ -246,7 +246,7 @@ export const SpotifyContextProvider: React.FC<Props>  = ({ enableSpotify, childr
       }
       setPlayer(null);
     };
-  }, [enableSpotify]);
+  }, [enable]);
   
   // Refresh access token every 15 minutes
   useEffect(() => {

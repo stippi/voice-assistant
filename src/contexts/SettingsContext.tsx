@@ -18,10 +18,18 @@ export type Settings = {
   transcriptionLanguage: string;
   
   enableGoogle: boolean;
+  enableGoogleCalendar: boolean;
+  enableGoogleMaps: boolean;
+  enableGooglePhotos: boolean;
   enableSpotify: boolean;
+  enableMicrosoft: boolean;
+  enableNewsApiOrg: boolean;
+  enableOpenWeatherMap: boolean;
+
   showTimers: boolean;
   showUpcomingEvents: boolean;
   showPlaylist: boolean;
+  showPhotos: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -37,10 +45,18 @@ const defaultSettings: Settings = {
   transcriptionLanguage: navigator.language,
 
   enableGoogle: false,
+  enableGoogleCalendar: true,
+  enableGoogleMaps: true,
+  enableGooglePhotos: true,
+  enableMicrosoft: false,
   enableSpotify: false,
+  enableNewsApiOrg: false,
+  enableOpenWeatherMap: true,
+  
   showTimers: true,
   showUpcomingEvents: true,
   showPlaylist: false,
+  showPhotos: true,
 }
 let initialSettings = defaultSettings;
 

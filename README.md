@@ -6,6 +6,8 @@ This project was bootstrapped using `npm create vite@latest ./ -- --template rea
 
 ## About
 
+https://github.com/stippi/voice-assistant/assets/67784/bc1989e9-6595-4996-b1c3-8a136cdfc882
+
 The rough idea for this project is to have a voice-activated assistant similar to Amazon Alexa or Siri, but backed by a Large Language Model.
 It is currently implemented as a website running purely in your browser.
 It uses OpenAI's GPT-4 Turbo model configured with several tools (a.k.a. "functions") that allow it to integrate with a range of APIs.
@@ -18,34 +20,47 @@ Eventually, it would be nice to host the website in a native application that is
 
 ## Running Locally
 
-Create a file named `secrets.ts` in the `src` directory with the following contents:
+Create a file named `config.ts` in the `src` directory.
+You can copy the file [`src/config.ts.example`](src/config.ts.example) and adjust it to your needs.
 
 ```typescript
-// Required:
-export const OpenAiConfig = {
-  apiKey: "<Your platform.openai.com API key>",
-  dangerouslyAllowBrowser: true
-};
-// When running LocalAI, use the following configuration:
-// export const OpenAiConfig = {
-//   apiKey: '<ignored>',
-//   dangerouslyAllowBrowser: true,
-//   baseURL: 'http://localhost:8080/v1'
-// };
+// The following configuration is required:
 
-// Theoretically optional. Must be exported, but can be empty.
-export const PicoVoiceAccessKey = "<Your picovoice.ai Access key>";
+// By configuring the endpoints below, you can use a server with OpenAI compatible REST API:
+export const completionsApiKey = "<The API Key used for /completions endpoint>";
 
-export const OpenWeatherMapApiKey = "<Your openweathermap.org API key>";
+//export const completionsApiUrl = "http://localhost:5173/mistral/"; // Proxy for https://api.mistral.ai/v1/ due to CORS issues, see vite.config.ts
+//export const completionsApiUrl = "http://localhost:8080/v1"; // LocalAI server, which needs to be started with --cors
+export const completionsApiUrl = "https://api.openai.com/v1";
 
-export const NewsApiOrgKey = "<Your newsapi.org API key>";
+export const speechApiKey = "<The API Key used for tts and stt endpoints>";
+export const speechApiUrl = "https://api.openai.com/v1";
+
+//export const modelName = "mistral-large-latest";
+export const modelName = "gpt-4-turbo-preview";
+export const useTools = true;
+export const useStreaming = true;
+
+// All the following API keys are optional, and are only required if you want to use the corresponding features.
+
+// Your picovoice.ai Access Key:
+export const PicoVoiceAccessKey = "";
+
+// Your openweathermap.org API Key:
+export const OpenWeatherMapApiKey = "";
+
+// Your newsapi.org API key:
+export const NewsApiOrgKey = "";
 
 export const GoogleApiKey = "<Your googleapis.com API key>";
 export const GoogleClientId = "XXX.apps.googleusercontent.com";
 export const GoogleClientSecret = "<Your OAuth2 Client Secret/Key>";
 export const GoogleCustomSearchEngineId = "<ID of your custom google search engine configured for global search>";
+// export const GoogleProjectId = "<Your Google Cloud Console project ID>"; // Needed for Google Vertex AI API (Gemini Pro)
 
 export const SpotifyClientId = "<Your Spotify Client ID>";
+
+export const MicrosoftClientId = "<Your Azure App Client ID>";
 ```
 
 :bulb: **This file is ignored by git.**
@@ -61,7 +76,7 @@ It just comes with a rate limit.
 Not providing the PicoVoiceAccessKey will most likely break wake-word detection.
 In theory, the Browser Speech Recognition API is used as a fallback, but it hasn't been tested in a while.
 
-To get an API key for the Google APIs, you need create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
+To get an API key for the Google APIs, you need to create a "project" in the [Google developer console](https://console.cloud.google.com) and enable the following APIs:
 
 - Maps JavaScript API
 - Places API (New)
@@ -70,6 +85,7 @@ To get an API key for the Google APIs, you need create a "project" in the [Googl
 - Custom Search API (you need to create a custom search engine)
 - Calendar API (if you plan to activate the Google Integration, see below)
 - People API (if you plan to activate the Google Integration, see below)
+- Photos Library API (if you plan to activate the Google Integration, see below)
 
 ### Google Integration
 
@@ -83,7 +99,10 @@ A number of things need to be configured in your cloud project:
   - Add `http://localhost:5173/google-callback` to the authorized redirection URIs.
 - *Edit* the `OAuth Consent Screen`:
   - Set the start page to `http://localhost:5173` (not sure if this is indeed needed.)
-  - Configure the scopes and include `https://www.googleapis.com/auth/calendar` and `https://www.googleapis.com/auth/contacts.readonly`.
+  - Configure the scopes and include:
+    - `https://www.googleapis.com/auth/calendar`
+    - `https://www.googleapis.com/auth/contacts.readonly`
+    - `https://www.googleapis.com/auth/photoslibrary.readonly`<br/>
     The scopes are available only if you also enabled the APIs in your cloud project.
   - Add the account you want to use as a test user.
 
@@ -93,10 +112,20 @@ For the optional Spotify integration (enabled in the Assistant Settings via the 
 To get a client ID, you need to register an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
 
 As website, specify `http://localhost:5173`.
-As redirect URL, also specify `http://localhost:5173/spotify-callback`.
+As redirect URL, specify `http://localhost:5173/spotify-callback`.
 
 When enabling the Spotify integration, you will be redirected to a Spotify login page where you also need to give Voice Assistant (or however you named your app in the Spotify developer dashboard) the requested permissions.
 In addition, the embedded playback streaming capabilities work only for Spotify Premium users, since the Web Playback SDK requires a Premium account.
+
+### Microsoft Integration
+
+For the optional Microsoft integration (enabled in the Assistant Settings via the switch `Microsoft Integration`), you need to provide a `MicrosoftClientId`.
+To get a client ID, you need to register an application on the [Azure Portal](https://portal.azure.com/).
+It must have the following settings:
+- The application type must be `Single Page Application`.
+- The redirect URL must be `http://localhost:5173/microsoft-callback`.
+- The tenant type must be multi-tenant.
+- The scopes must include `User.Read` and `Calendars.ReadWrite`.
 
 ### LocalAI
 
@@ -106,8 +135,6 @@ When you configure a `baseURL` in `OpenAiConfig`, the Assistant will use this UR
 It will also automatically provide a model name of `mistral`.
 This doesn't have to be actual LLM you use, but it must be the name under which it is exposed.
 See the [LocalAI documentation](https://localai.io/docs/getting-started/manual/) for more information.
-
-:construction: At the moment, function calls (which provide a lot of the integrations of this Voice Assistant), are not yet provided in a compatible way by LocalAI.
 
 ### Starting the Vite Dev Server
 
@@ -122,6 +149,12 @@ yarn run dev
 
 ## Ideas for Next Features
 
+- [ ] Add an "idle" mode:
+  - [ ] Dashboard fills the screen, conversation is minimized
+  - [ ] Activation starts temporary chat at first, which may could become persisted chat based on some condition.
+- [ ] Optimize context window size for the LLM.
+- [ ] Integrate more Microsoft Graph APIs.
+- [ ] Add a temporary chat mode, where the chat is auto-cleared after some time of inactivity.
 - [ ] Add a status/error React context, surfacing errors as message strips or similar.
 - [ ] Create a persistent Spotify playlist for the Voice-Assistant with dynamic content.
   This is necessary to allow jumping to a specific song in the playlist.
@@ -135,31 +168,11 @@ yarn run dev
   - [ ] Edit a single message button
   - [ ] Play a single message button
   - [ ] Regenerate the LLM response
-- [ ] Add a "Clear" button to the chat
-- [ ] Implement automatically naming chats via LLM
 - [ ] Structured replies that force the LLM to consider some things with each reply
   - [ ] Always collect "things to remember"
+  - [ ] Automatic naming chats via LLM
+  - [ ] Get a summary of chat up to that point, use to cut off messages from the beginning
 - [ ] Fix inconsistencies that developed over time:
   - [ ] Browser SpeechRecognition should be used when "Use Whisper transcription" is disabled
   - [x] Trigger word needs to be picked from Porcupine built-in keywords
 - [ ] Strip URLs from audible replies
-
-## Done
-
-- [x] Switch to redirect login flow for signing into Google, like with Spotify.
-  This allows to continuously fetch a new access token with the refresh token.
-- [x] Optional integrate Google Calendar API
-- [X] Add Spotify integration (in progress)
-  - [x] Spotify auth flow
-  - [x] Spotify playback SDK loading
-  - [X] Spotify search
-  - [X] Spotify playback
-- [x] Temporarily open the microphone for conversation after the assistant finished speaking
-- [x] Add a "Stop" button while the response is streaming in
-- [x] More visual feedback during phases of assembling the user message
-- [x] While responding, the trigger phrase should interrupt the assistant from speaking
-- [x] Prevent code blocks from being part of text-to-speech
-- [x] Allow to preserve chats
-- [x] Reset Porcupine when browser tab is (re-)activated
-- [x] Implement renaming chats
-- [x] Move gear icon into sidebar

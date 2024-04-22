@@ -12,7 +12,7 @@ import {Message} from "../model/message";
 import {BsFillPersonFill} from "react-icons/bs";
 import {RiRobot2Fill} from "react-icons/ri";
 import {GoogleMapsCard} from "./GoogleMapsCard";
-import {showToolCallInChat} from "../utils/tools";
+import {showToolCallInChat} from "../integrations/tools";
 import {ButtonGroup, IconButton} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -106,6 +106,10 @@ const MessageContent = React.memo(({role, content, tool_calls}: Message) => {
       },
       hr() {
         return <hr style={{border: "none", borderTop: "1px solid rgba(0,0,0,0.2)"}}/>
+      },
+      a(props) {
+        const {children, ...rest } = props
+        return <a {...rest} target="_blank">{children}</a>
       }
     }}
   />)

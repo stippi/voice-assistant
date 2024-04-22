@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // The proxy is used to avoid CORS issues when calling the Google Places API
+    // The proxy is used to avoid CORS issues when calling respective APIs
     // The response does not include the Access-Control-Allow-Origin header.
     proxy: {
       "/places-api": {
@@ -17,6 +17,11 @@ export default defineConfig({
         target: "https://routes.googleapis.com/directions/v2:computeRoutes",
         changeOrigin: true,
         rewrite: path => path.replace(/^\/directions-api/, '')
+      },
+      "/mistral": {
+        target: "https://api.mistral.ai/v1/",
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/mistral/, '')
       }
     }
   }

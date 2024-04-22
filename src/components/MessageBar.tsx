@@ -16,7 +16,7 @@ const theme = createTheme({
   }
 });
 
-export const MessageBar = React.memo(({ sendMessage, stopResponding, responding, respondingRef, awaitSpokenResponse }: Props) => {
+export const MessageBar = React.memo(({ sendMessage, stopResponding, responding, respondingRef, awaitSpokenResponse, idle }: Props) => {
   
   const [message, setMessage] = React.useState("");
   const defaultPlaceHolder = "Type to chat";
@@ -38,7 +38,7 @@ export const MessageBar = React.memo(({ sendMessage, stopResponding, responding,
   };
   
   return (
-    <div className="fixedBottom">
+    <div className={`fixedBottom ${idle ? "idle" : "gradientBottom"}`}>
       <ThemeProvider theme={theme}>
         <div
           className="textContainer"
@@ -97,4 +97,5 @@ interface Props {
   responding: boolean;
   respondingRef: React.MutableRefObject<boolean>;
   awaitSpokenResponse: boolean;
+  idle: boolean;
 }

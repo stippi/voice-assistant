@@ -138,12 +138,11 @@
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
+  color: rgb(14,138,214);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: rgb(58,166,255);
 }
 
 html {
@@ -171,9 +170,6 @@ h1 {
   :root {
     color: #213547;
     background-color: #e1e1e1;
-  }
-  a:hover {
-    color: #747bff;
   }
 }
 

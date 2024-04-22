@@ -20,6 +20,8 @@ export type AppContextType = {
   location: GeoLocation | undefined;
   spotify: Spotify | undefined;
   setSpotify: (spotify: Spotify | undefined) => void;
+  idle: boolean;
+  setIdle: (idle: boolean) => void;
 };
 
 export const AppContext = createContext<AppContextType>({
@@ -28,6 +30,8 @@ export const AppContext = createContext<AppContextType>({
   location: undefined,
   spotify: undefined,
   setSpotify: () => {},
+  idle: false,
+  setIdle: () => {}
 });
 
 function getTimers(): Timer[] {
@@ -51,8 +55,34 @@ export const AppContextProvider: React.FC<{children: ReactNode}>  = ({ children 
   
   const [spotify, setSpotify] = useState<Spotify | undefined>(undefined);
   
+  const [idle, setIdle] = useState(false);
+  
+  useEffect(() => {
+    let inactivityTimeout: number;
+    function resetInactivityTimeout() {
+      setIdle(false);
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = window.setTimeout(() => {
+        setIdle(true);
+      }, 30000);
+    }
+
+    document.addEventListener('mousemove', resetInactivityTimeout);
+    document.addEventListener('keydown', resetInactivityTimeout);
+    document.addEventListener('touchstart', resetInactivityTimeout);
+
+    resetInactivityTimeout();
+  
+    return () => {
+      document.removeEventListener('mousemove', resetInactivityTimeout);
+      document.removeEventListener('keydown', resetInactivityTimeout);
+      document.removeEventListener('touchstart', resetInactivityTimeout);
+      clearTimeout(inactivityTimeout);
+    };
+  }, []);
+  
   return (
-    <AppContext.Provider value={{ timers, setTimers, location, spotify, setSpotify }}>
+    <AppContext.Provider value={{ timers, setTimers, location, spotify, setSpotify, idle, setIdle }}>
       {children}
     </AppContext.Provider>
   );
