@@ -41,13 +41,13 @@ export const useStreaming = true;
 
 // All the following API keys are optional, and are only required if you want to use the corresponding features.
 
-// Your picovoice.ai Access Key:
+// Your picovoice.ai Access Key (wake word detection):
 export const PicoVoiceAccessKey = "";
 
-// Your openweathermap.org API Key:
+// Your openweathermap.org API Key (used for weather tools):
 export const OpenWeatherMapApiKey = "";
 
-// Your newsapi.org API key:
+// Your newsapi.org API key (used for some news tools):
 export const NewsApiOrgKey = "";
 
 export const GoogleApiKey = "<Your googleapis.com API key>";
@@ -143,14 +143,14 @@ With OpenAI's GPT-4-Turbo, we can use 30 and more with close to perfect reliabil
 
 ### Starting the Vite Dev Server
 
-After preparing the `secrets.ts` file, you can run:
+After preparing the `config.ts` file, you can run:
 
 ```bash
 yarn install
 yarn run dev
 ```
 
-:warning: **Do not build this project and host it somewhere publicly, since it would expose all keys from `secrets.ts`!**
+:warning: **Do not build this project and host it somewhere publicly, since it would expose all keys from `config.ts`!**
 
 ## Ideas for Next Features
 
