@@ -265,12 +265,12 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
     tools.push({
       type: "function",
       function: {
-        name: "google_custom_search",
-        description: "Use only to query for information you don't already know",
+        name: "search_the_internet",
+        description: "Perform a Google search. Use only to query for information you don't already know.",
         parameters: {
           type: "object",
           properties: {
-            query: {type: "string"},
+            query: {type: "string", description: "The query terms in any language."},
             maxResults: {type: "number"}
           },
           required: ["query"]
@@ -612,7 +612,7 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
       case 'get_news':
         return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
       
-      case 'google_custom_search':
+      case 'search_the_internet':
         return await googleCustomSearch(args.query, args.maxResults)
       case 'get_places_info':
         return await getPlacesInfo(args.query, args.fields, args.latitude, args.longitude, args.radius, args.maxResults);

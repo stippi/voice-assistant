@@ -29,8 +29,8 @@ import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 
 const openAi = new OpenAI({
   apiKey: completionsApiKey,
-  baseURL: completionsApiUrl,
   dangerouslyAllowBrowser: true,
+  baseURL: completionsApiUrl
 });
 const openAiSpeech = new OpenAI({
   apiKey: speechApiKey,
@@ -60,6 +60,48 @@ async function streamChatCompletion(
     }
  
     responseLevelRef.current++;
+    
+    /*
+const audio = document.getElementById('audio');
+const mediaSource = new MediaSource();
+audio.src = URL.createObjectURL(mediaSource);
+
+mediaSource.addEventListener('sourceopen', sourceOpen);
+
+async function sourceOpen() {
+    const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg'); // Adjust MIME type as needed
+    const rs = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+            Authorization: 'Bearer ' + openAIApiKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            input: 'What is up?!',
+            model: 'tts-1',
+            response_format: 'mp3',
+            voice: 'echo',
+        }),
+    }).then((res) => res.body);
+
+    const reader = rs.getReader();
+
+    reader.read().then(function process({ done, value }) {
+        if (done) {
+            if (mediaSource.readyState === 'open') mediaSource.endOfStream();
+            return;
+        }
+        // If value is not in the right format, you need to transcode it here
+        sourceBuffer.appendBuffer(value);
+
+        sourceBuffer.addEventListener('updateend', () => {
+            if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                reader.read().then(process);
+            }
+        });
+    });
+     */
+    
     const response = await openAiSpeech.audio.speech.create({
       model: "tts-1",
       voice: settingsRef.current.voice,

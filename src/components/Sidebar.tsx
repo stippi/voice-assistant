@@ -15,8 +15,8 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Settings from '@mui/icons-material/Settings';
 import useChats from "../hooks/useChats";
 import './Sidebar.css'
-import {ChatSelection} from "./ChatSelection.tsx";
-import {AssistantSettings} from "./AssistantSettings.tsx";
+import {ChatSelection} from "./ChatSelection";
+import {AssistantSettings} from "./AssistantSettings";
 import {RiRobot2Fill} from "react-icons/ri";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
@@ -115,8 +115,6 @@ export function Sidebar() {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  
-  // const settingsOpen = Boolean(anchorEl);
   
   return (
     <ThemeProvider theme={theme}>
