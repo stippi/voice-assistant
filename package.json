@@ -19,6 +19,7 @@
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
     "@picovoice/cobra-web": "^2.0.3",
+    "@picovoice/eagle-web": "^1.0.0",
     "@picovoice/porcupine-react": "^3.0.3",
     "@picovoice/web-voice-processor": "^4.0.8",
     "@react-google-maps/api": "^2.19.3",
