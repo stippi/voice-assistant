@@ -5,7 +5,6 @@ import {
   ListItemButton,
   ListItemText,
   ListItemIcon,
-  ListItemSecondaryAction,
   Checkbox,
   Button,
   TextField,
@@ -52,7 +51,10 @@ export const LLMConfigs: React.FC = () => {
     setSelectedConfigIndex(llmConfigs.length);
   };
 
-  const handleConfigChange = (field: keyof LLMConfig, value: any) => {
+  const handleConfigChange = <K extends keyof LLMConfig>(
+    field: K,
+    value: LLMConfig[K],
+  ) => {
     if (selectedConfigIndex === null) return;
     const updatedConfigs = llmConfigs.map((config, index) =>
       index === selectedConfigIndex ? { ...config, [field]: value } : config,
@@ -130,7 +132,10 @@ export const LLMConfigs: React.FC = () => {
                 <Select
                   value={llmConfigs[selectedConfigIndex].apiCompatibility}
                   onChange={(e) =>
-                    handleConfigChange("apiCompatibility", e.target.value)
+                    handleConfigChange(
+                      "apiCompatibility",
+                      e.target.value as LLMConfig["apiCompatibility"],
+                    )
                   }
                 >
                   <MenuItem value="OpenAI">OpenAI</MenuItem>
