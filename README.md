@@ -1,6 +1,7 @@
 # Voice Assistant
 
-Start a spoken ChatGPT conversation by activation word in your browser.
+Provides a voice-controlled AI chat interface in your Browser.
+The AI assistant can use **tools** that integrate with various services such as Spotify, Google Calendar and Google Maps.
 
 This project was bootstrapped using `npm create vite@latest ./ -- --template react-ts`.
 
