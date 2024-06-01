@@ -66,12 +66,12 @@ function a11yProps(index: number) {
   };
 }
 
-async function hashEmail(email: string) {
-  const data = new TextEncoder().encode(email.trim().toLowerCase());
-  const hashed = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashed));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+// async function hashEmail(email: string) {
+//   const data = new TextEncoder().encode(email.trim().toLowerCase());
+//   const hashed = await crypto.subtle.digest('SHA-256', data);
+//   const hashArray = Array.from(new Uint8Array(hashed));
+//   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// }
 
 function CheckCircleOutlineIcon() {
   return null;
