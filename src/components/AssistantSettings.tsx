@@ -328,37 +328,39 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
         </Box>
 
         <CustomTabPanel value={tabIndex} index={0}>
-          <FormControl>
-            <FormControlLabel
-              checked={settings.openMic}
-              control={<Switch color="primary" />}
-              label="Open Mic"
-              labelPlacement="end"
-              onChange={() =>
-                setSettings({ ...settings, openMic: !settings.openMic })
-              }
-            />
-          </FormControl>
-          <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
-            <InputLabel>Wake word</InputLabel>
-            <Select
-              value={settings.triggerWord.valueOf()}
-              label="Personality"
-              disabled={!settings.openMic}
-              onChange={(event) => {
-                setSettings({
-                  ...settings,
-                  triggerWord: event.target.value as BuiltInKeyword,
-                });
-              }}
-            >
-              {triggerWords.map((word, index) => (
-                <MenuItem key={index} value={word}>
-                  {word}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Stack spacing={2} direction="row" alignItems="center">
+            <FormControl>
+              <FormControlLabel
+                checked={settings.openMic}
+                control={<Switch color="primary" />}
+                label="Open Mic"
+                labelPlacement="end"
+                onChange={() =>
+                  setSettings({ ...settings, openMic: !settings.openMic })
+                }
+              />
+            </FormControl>
+            <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
+              <InputLabel>Wake word</InputLabel>
+              <Select
+                value={settings.triggerWord.valueOf()}
+                label="Wake word"
+                disabled={!settings.openMic}
+                onChange={(event) => {
+                  setSettings({
+                    ...settings,
+                    triggerWord: event.target.value as BuiltInKeyword,
+                  });
+                }}
+              >
+                {triggerWords.map((word, index) => (
+                  <MenuItem key={index} value={word}>
+                    {word}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
           <FormControl>
             <FormControlLabel
               checked={settings.expectResponse}
