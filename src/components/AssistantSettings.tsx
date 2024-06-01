@@ -1,28 +1,40 @@
-import './AssistantSettings.css';
+import "./AssistantSettings.css";
 import {
-  Avatar, Badge,
-  Box, Button,
+  Avatar,
+  Badge,
+  Box,
+  Button,
   FormControl,
-  FormControlLabel, IconButton, Input,
+  FormControlLabel,
+  IconButton,
+  Input,
   InputLabel,
-  MenuItem, Popover,
+  MenuItem,
+  Popover,
   Select,
   Slider,
   Stack,
-  Switch, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs,
-  TextField
+  Switch,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  Tabs,
+  TextField,
 } from "@mui/material";
-import SpeedIcon from '@mui/icons-material/Speed';
+import SpeedIcon from "@mui/icons-material/Speed";
 import DeleteIcon from "@mui/icons-material/Delete";
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import {Voice, Personality, Settings} from "../contexts/SettingsContext";
+import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
+import { Voice, Personality, Settings } from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
-import {BuiltInKeyword} from "@picovoice/porcupine-web";
-import React, {useState} from "react";
+import { BuiltInKeyword } from "@picovoice/porcupine-web";
+import React, { useState } from "react";
 import useAppContext from "../hooks/useAppContext.tsx";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import {UserVoiceEnroll} from "./UserVoiceEnroll.tsx";
-import {User} from "../model/user.ts";
+import { UserVoiceEnroll } from "./UserVoiceEnroll.tsx";
+import { User } from "../model/user.ts";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -32,7 +44,7 @@ interface TabPanelProps {
 
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
-  
+
   return (
     <div
       role="tabpanel"
@@ -41,11 +53,7 @@ function CustomTabPanel(props: TabPanelProps) {
       aria-labelledby={`tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box className="settingsColumn">
-          {children}
-        </Box>
-      )}
+      {value === index && <Box className="settingsColumn">{children}</Box>}
     </div>
   );
 }
@@ -53,67 +61,67 @@ function CustomTabPanel(props: TabPanelProps) {
 function a11yProps(index: number) {
   return {
     id: `tab-${index}`,
-    'aria-controls': `tabpanel-${index}`,
+    "aria-controls": `tabpanel-${index}`,
   };
 }
 
-async function hashEmail(email: string) {
-  const data = new TextEncoder().encode(email.trim().toLowerCase());
-  const hashed = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashed));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+// async function hashEmail(email: string) {
+//   const data = new TextEncoder().encode(email.trim().toLowerCase());
+//   const hashed = await crypto.subtle.digest('SHA-256', data);
+//   const hashArray = Array.from(new Uint8Array(hashed));
+//   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// }
 
 function CheckCircleOutlineIcon() {
   return null;
 }
 
 const UserList = () => {
-  const {users, setUsers} = useAppContext();
+  const { users, setUsers } = useAppContext();
   const [enrollingUser, setEnrollingUser] = useState<User | null>(null);
   const [editUserId, setEditUserId] = useState<string>("");
   const [editedName, setEditedName] = useState<string>("");
-  
+
   const handleNameClick = (user: User) => {
     setEditUserId(user.id);
     setEditedName(user.name);
   };
-  
+
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEditedName(event.target.value);
   };
-  
+
   const handleNameSubmit = () => {
     setUsers(
-      users.map(user => (user.id != editUserId ? user : {...user, name: editedName}))
+      users.map((user) =>
+        user.id != editUserId ? user : { ...user, name: editedName },
+      ),
     );
     setEditUserId("");
     setEditedName("");
   };
-  
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleNameSubmit();
     }
-  }
+  };
 
   const onAddUser = () => {
-    setUsers(
-      [
-        {
-          id: crypto.randomUUID(),
-          name: "<name>",
-          email: "",
-          picture: "",
-          voiceProfileId: ""
-        },
-        ...users,
-      ]
-    );
-  }
-  
+    setUsers([
+      {
+        id: crypto.randomUUID(),
+        name: "<name>",
+        email: "",
+        picture: "",
+        voiceProfileId: "",
+      },
+      ...users,
+    ]);
+  };
+
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: "100%" }}>
       <TableContainer>
         <Table>
           <TableBody>
@@ -122,7 +130,7 @@ const UserList = () => {
                 <TableCell>
                   <Avatar src={user.picture} />
                 </TableCell>
-                <TableCell sx={{minWidth: "10rem"}}>
+                <TableCell sx={{ minWidth: "10rem" }}>
                   {editUserId === user.id ? (
                     <Input
                       value={editedName}
@@ -134,7 +142,11 @@ const UserList = () => {
                     />
                   ) : (
                     <div
-                      style={{width: "100%", minHeight: '24px', padding: '4px 0'}}
+                      style={{
+                        width: "100%",
+                        minHeight: "24px",
+                        padding: "4px 0",
+                      }}
                       onClick={() => handleNameClick(user)}
                     >
                       {user.name}
@@ -144,7 +156,10 @@ const UserList = () => {
                 <TableCell>
                   <IconButton onClick={() => setEnrollingUser(user)}>
                     {user.voiceProfileId ? (
-                      <Badge color="success" badgeContent={<CheckCircleOutlineIcon />}>
+                      <Badge
+                        color="success"
+                        badgeContent={<CheckCircleOutlineIcon />}
+                      >
                         <RecordVoiceOverIcon color="action" />
                       </Badge>
                     ) : (
@@ -153,7 +168,13 @@ const UserList = () => {
                   </IconButton>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => {setUsers(users.filter(otherUser => otherUser.id != user.id))}}>
+                  <IconButton
+                    onClick={() => {
+                      setUsers(
+                        users.filter((otherUser) => otherUser.id != user.id),
+                      );
+                    }}
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -162,8 +183,12 @@ const UserList = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-        <Button startIcon={<AddCircleIcon />} onClick={onAddUser} variant="contained">
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+        <Button
+          startIcon={<AddCircleIcon />}
+          onClick={onAddUser}
+          variant="contained"
+        >
           Add user
         </Button>
       </Box>
@@ -172,7 +197,11 @@ const UserList = () => {
           user={enrollingUser}
           setUserVoiceProfileId={(profileId: string) => {
             setUsers(
-              users.map(user => (user.id != enrollingUser.id ? user : {...user, voiceProfileId: profileId}))
+              users.map((user) =>
+                user.id != enrollingUser.id
+                  ? user
+                  : { ...user, voiceProfileId: profileId },
+              ),
             );
             setEnrollingUser(null);
           }}
@@ -186,45 +215,86 @@ const UserList = () => {
 const audioSpeedMarks = [
   {
     value: 0.25,
-    label: '0.25',
+    label: "0.25",
   },
   {
     value: 1.0,
-    label: '1.0',
+    label: "1.0",
   },
   {
     value: 2.0,
-    label: '2.0',
+    label: "2.0",
   },
 ];
 
-export function AssistantSettings({anchorEl, onClose}: Props) {
-  
-  const {settings, setSettings} = useSettings();
-  
+export function AssistantSettings({ anchorEl, onClose }: Props) {
+  const { settings, setSettings } = useSettings();
+
   const open = Boolean(anchorEl);
-  const id = open ? 'simple-popover' : undefined;
-  
+  const id = open ? "simple-popover" : undefined;
+
   const [tabIndex, setTabIndex] = useState(0);
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
-  
+
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
-  const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
-  const triggerWords = ["Alexa", "Americano", "Blueberry", "Bumblebee", "Computer", "Grapefruit",
-    "Grasshopper", "Hey Google", "Hey Siri", "Jarvis", "Okay Google", "Picovoice", "Porcupine", "Terminator"];
-  const integrations: { label: string, settingsKey: keyof Settings, enabled: boolean }[] = [
+  const personalities = [
+    "Curious",
+    "Professional",
+    "Friendly",
+    "Peppy",
+    "Snarky",
+    "Silly",
+    "Zen",
+  ];
+  const triggerWords = [
+    "Alexa",
+    "Americano",
+    "Blueberry",
+    "Bumblebee",
+    "Computer",
+    "Grapefruit",
+    "Grasshopper",
+    "Hey Google",
+    "Hey Siri",
+    "Jarvis",
+    "Okay Google",
+    "Picovoice",
+    "Porcupine",
+    "Terminator",
+  ];
+  const integrations: {
+    label: string;
+    settingsKey: keyof Settings;
+    enabled: boolean;
+  }[] = [
     { label: "Google", settingsKey: "enableGoogle", enabled: true },
-    { label: "Google Maps", settingsKey: "enableGoogleMaps", enabled: settings.enableGoogle },
-    { label: "Google Calendar", settingsKey: "enableGoogleCalendar", enabled: settings.enableGoogle },
-    { label: "Google Photos", settingsKey: "enableGooglePhotos", enabled: settings.enableGoogle },
+    {
+      label: "Google Maps",
+      settingsKey: "enableGoogleMaps",
+      enabled: settings.enableGoogle,
+    },
+    {
+      label: "Google Calendar",
+      settingsKey: "enableGoogleCalendar",
+      enabled: settings.enableGoogle,
+    },
+    {
+      label: "Google Photos",
+      settingsKey: "enableGooglePhotos",
+      enabled: settings.enableGoogle,
+    },
     { label: "Microsoft", settingsKey: "enableMicrosoft", enabled: true },
     { label: "Spotify", settingsKey: "enableSpotify", enabled: true },
     { label: "NewsApi", settingsKey: "enableNewsApiOrg", enabled: true },
-    { label: "OpenWeatherMap", settingsKey: "enableOpenWeatherMap", enabled: true },
+    {
+      label: "OpenWeatherMap",
+      settingsKey: "enableOpenWeatherMap",
+      enabled: true,
+    },
   ];
-  
+
   return (
     <Popover
       id={id}
@@ -232,25 +302,29 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
       anchorEl={anchorEl}
       onClose={onClose}
       anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
+        vertical: "top",
+        horizontal: "right",
       }}
       transformOrigin={{
-        vertical: 'top',
-        horizontal: 'left',
+        vertical: "top",
+        horizontal: "left",
       }}
       disableScrollLock={true}
-      sx={{fontSize: "14px", left: "-5px"}}
+      sx={{ fontSize: "14px", left: "-5px" }}
     >
-      <Box style={{display: "flex", flexDirection: "column"}}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabIndex} onChange={handleTabChange} aria-label="assistant settings">
+      <Box style={{ display: "flex", flexDirection: "column" }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={tabIndex}
+            onChange={handleTabChange}
+            aria-label="assistant settings"
+          >
             <Tab label="Assistant" {...a11yProps(0)} />
             <Tab label="Integrations" {...a11yProps(1)} />
             <Tab label="Users" {...a11yProps(2)} />
           </Tabs>
         </Box>
-        
+
         <CustomTabPanel value={tabIndex} index={0}>
           <FormControl>
             <FormControlLabel
@@ -258,7 +332,9 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               control={<Switch color="primary" />}
               label="Open Mic"
               labelPlacement="end"
-              onChange={() => setSettings({ ...settings, openMic: !settings.openMic })}
+              onChange={() =>
+                setSettings({ ...settings, openMic: !settings.openMic })
+              }
             />
           </FormControl>
           <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
@@ -267,10 +343,17 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               value={settings.triggerWord.valueOf()}
               label="Personality"
               disabled={!settings.openMic}
-              onChange={(event) => {setSettings({ ...settings, triggerWord: event.target.value as BuiltInKeyword });}}
+              onChange={(event) => {
+                setSettings({
+                  ...settings,
+                  triggerWord: event.target.value as BuiltInKeyword,
+                });
+              }}
             >
               {triggerWords.map((word, index) => (
-                <MenuItem key={index} value={word}>{word}</MenuItem>
+                <MenuItem key={index} value={word}>
+                  {word}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -280,7 +363,12 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               control={<Switch color="primary" />}
               label="Listen when done responding"
               labelPlacement="end"
-              onChange={() => setSettings({ ...settings, expectResponse: !settings.expectResponse })}
+              onChange={() =>
+                setSettings({
+                  ...settings,
+                  expectResponse: !settings.expectResponse,
+                })
+              }
             />
           </FormControl>
           <FormControl>
@@ -289,20 +377,32 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
               control={<Switch color="primary" />}
               label="Use Whisper Transcription"
               labelPlacement="end"
-              onChange={() => setSettings({ ...settings, useWhisper: !settings.useWhisper })}
+              onChange={() =>
+                setSettings({ ...settings, useWhisper: !settings.useWhisper })
+              }
             />
           </FormControl>
           <TextField
             label="Stop words"
             value={settings.stopWords.join(", ")}
-            onChange={(event) => setSettings({ ...settings, stopWords: event.target.value.split(", ") })}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                stopWords: event.target.value.split(", "),
+              })
+            }
             helperText="Cancel when all spoken words are in this list"
             variant="filled"
           />
           <TextField
             label="Transcription language"
             value={settings.transcriptionLanguage}
-            onChange={(event) => setSettings({ ...settings, transcriptionLanguage: event.target.value })}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                transcriptionLanguage: event.target.value,
+              })
+            }
             helperText="Your language or leave empty"
             variant="filled"
           />
@@ -311,10 +411,17 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
             <Select
               value={settings.personality}
               label="Personality"
-              onChange={(event) => {setSettings({ ...settings, personality: event.target.value as Personality });}}
+              onChange={(event) => {
+                setSettings({
+                  ...settings,
+                  personality: event.target.value as Personality,
+                });
+              }}
             >
               {personalities.map((personality, index) => (
-                <MenuItem key={index} value={personality.toLowerCase()}>{personality}</MenuItem>
+                <MenuItem key={index} value={personality.toLowerCase()}>
+                  {personality}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -323,19 +430,28 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
             <Select
               value={settings.voice}
               label="Voice"
-              onChange={(event) => {setSettings({ ...settings, voice: event.target.value as Voice });}}
+              onChange={(event) => {
+                setSettings({
+                  ...settings,
+                  voice: event.target.value as Voice,
+                });
+              }}
             >
               {voices.map((voice, index) => (
-                <MenuItem key={index} value={voice.toLowerCase()}>{voice}</MenuItem>
+                <MenuItem key={index} value={voice.toLowerCase()}>
+                  {voice}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
           <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
-            <SpeedIcon/>
+            <SpeedIcon />
             <Slider
               aria-label="Custom marks"
               value={settings.audioSpeed}
-              onChange={(_event, newValue) => setSettings({ ...settings, audioSpeed: newValue as number })}
+              onChange={(_event, newValue) =>
+                setSettings({ ...settings, audioSpeed: newValue as number })
+              }
               min={0.25}
               max={2.0}
               step={0.05}
@@ -345,23 +461,25 @@ export function AssistantSettings({anchorEl, onClose}: Props) {
           </Stack>
         </CustomTabPanel>
         <CustomTabPanel value={tabIndex} index={1}>
-          {integrations.map(item => (
-            <FormControl
-              disabled={!item.enabled}
-              key={item.settingsKey}
-            >
+          {integrations.map((item) => (
+            <FormControl disabled={!item.enabled} key={item.settingsKey}>
               <FormControlLabel
                 checked={!!settings[item.settingsKey]}
                 control={<Switch color="primary" />}
                 label={item.label}
                 labelPlacement="end"
-                onChange={() => setSettings({ ...settings, [item.settingsKey]: !settings[item.settingsKey]})}
+                onChange={() =>
+                  setSettings({
+                    ...settings,
+                    [item.settingsKey]: !settings[item.settingsKey],
+                  })
+                }
               />
             </FormControl>
           ))}
         </CustomTabPanel>
         <CustomTabPanel value={tabIndex} index={2}>
-          <UserList/>
+          <UserList />
         </CustomTabPanel>
       </Box>
     </Popover>
