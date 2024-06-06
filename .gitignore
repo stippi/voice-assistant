@@ -26,3 +26,4 @@ dist-ssr
 
 # Config and secrets
 frontend/src/config.ts
+/credentials/

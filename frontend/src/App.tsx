@@ -12,6 +12,7 @@ import {Dashboard} from "./components/Dashboard.tsx";
 import {SpotifyContextProvider} from "./contexts/SpotifyContext.tsx";
 import {MicrosoftContextProvider} from "./contexts/MicrosoftContext.tsx";
 import useAppContext from "./hooks/useAppContext.tsx";
+import {AuthenticationContextProvider} from "./contexts/AuthenticationContext.tsx";
 
 const theme = createTheme({
   components: {
@@ -103,13 +104,15 @@ function AssistantWithOptionalIntegrations() {
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
-      <WindowFocusProvider>
-        <AppContextProvider>
-          <SettingsProvider>
-            <AssistantWithOptionalIntegrations />
-          </SettingsProvider>
-        </AppContextProvider>
-      </WindowFocusProvider>
+      <AuthenticationContextProvider>
+        <WindowFocusProvider>
+          <AppContextProvider>
+            <SettingsProvider>
+              <AssistantWithOptionalIntegrations />
+            </SettingsProvider>
+          </AppContextProvider>
+        </WindowFocusProvider>
+      </AuthenticationContextProvider>
     </ThemeProvider>
   );
 }
