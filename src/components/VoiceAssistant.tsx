@@ -308,10 +308,9 @@ async function streamChatCompletionLoop(
       systemMessage,
       ...currentMessages,
     ];
-    const tools =
-      useTools && currentMessages[currentMessages.length - 1].role === "user"
-        ? await getTools(settingsRef.current, appContextRef.current)
-        : undefined;
+    const tools = useTools
+      ? await getTools(settingsRef.current, appContextRef.current)
+      : undefined;
 
     let response = undefined;
     let stream = undefined;
