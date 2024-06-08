@@ -20,13 +20,15 @@ import { Settings as SettingsType } from "../contexts/SettingsContext";
 import useChats from "../hooks/useChats";
 import useSettings from "../hooks/useSettings";
 import { ChatCompletionStream } from "openai/lib/ChatCompletionStream";
-import useWindowFocus from "../hooks/useWindowFocus.tsx";
-import useAppContext from "../hooks/useAppContext.tsx";
-import { AppContextType } from "../contexts/AppContext.tsx";
-import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
+import useWindowFocus from "../hooks/useWindowFocus";
+import useAppContext from "../hooks/useAppContext";
+import useConfigs from "../hooks/useConfigs";
+import { AppContextType } from "../contexts/AppContext";
+import useSpotifyContext from "../hooks/useSpotifyContext";
 import ChatCompletion = OpenAI.ChatCompletion;
 import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 import ChatCompletionMessageParam = OpenAI.ChatCompletionMessageParam;
+import { LLMConfig } from "../model/llmConfig";
 
 const openAi = new OpenAI({
   apiKey: completionsApiKey,
@@ -275,6 +277,8 @@ async function sourceOpen() {
 }
 
 async function streamChatCompletionLoop(
+  openAiClient: OpenAI,
+  llmConfig: LLMConfig,
   currentMessages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   audible: boolean,
@@ -306,27 +310,27 @@ async function streamChatCompletionLoop(
     );
     const messages: ChatCompletionMessageParam[] = [
       systemMessage,
-      ...currentMessages,
+      ...currentMessages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
     ];
-    const tools = useTools
-      ? await getTools(settingsRef.current, appContextRef.current)
-      : undefined;
-
+    const options = {
+      messages,
+      model: llmConfig.modelID,
+      tools: llmConfig.useTools
+        ? await getTools(settingsRef.current, appContextRef.current)
+        : undefined,
+    };
     let response = undefined;
     let stream = undefined;
     if (useStreaming) {
-      stream = openAi.beta.chat.completions.stream({
-        messages,
-        model: modelName,
+      stream = openAiClient.beta.chat.completions.stream({
+        ...options,
         stream: true,
-        tools,
       });
     } else {
-      response = await openAi.chat.completions.create({
-        messages,
-        model: modelName,
-        tools,
-      });
+      response = await openAiClient.chat.completions.create(options);
     }
     await streamChatCompletion(
       currentMessages,
@@ -376,6 +380,29 @@ export default function VoiceAssistant({ idle }: Props) {
   const cancelAudioRef = React.useRef<() => void>(() => {});
 
   const { currentChatID, currentChat, newChat, updateChat } = useChats();
+
+  const { llmConfigs, activeLLMConfig } = useConfigs();
+  const openAiRef = React.useRef<OpenAI>(openAi);
+  const activeLLMConfigRef = React.useRef<LLMConfig>();
+  useEffect(() => {
+    activeLLMConfigRef.current = llmConfigs.find(
+      (config) => config.id === activeLLMConfig,
+    ) || {
+      id: "",
+      name: "fallback",
+      modelID: modelName,
+      apiKey: completionsApiKey,
+      apiEndPoint: completionsApiUrl,
+      apiCompatibility: "OpenAI",
+      useTools: useTools,
+      useStreaming: useStreaming,
+    };
+    openAiRef.current = new OpenAI({
+      apiKey: activeLLMConfigRef.current.apiKey,
+      dangerouslyAllowBrowser: true,
+      baseURL: activeLLMConfigRef.current.apiEndPoint,
+    });
+  }, [llmConfigs, activeLLMConfig]);
 
   React.useEffect(() => {
     if (currentChat) {
@@ -437,19 +464,31 @@ export default function VoiceAssistant({ idle }: Props) {
       if (message === "") {
         console.log("inserted pending user message");
         setMessages((currentMessages) =>
-          appendMessage(currentMessages, { role: "user", content: "" }),
+          appendMessage(currentMessages, {
+            role: "user",
+            content: "",
+          }),
         );
         setResponding(false);
         respondingRef.current = false;
         return;
       }
+      const userMessage: Message = {
+        role: "user",
+        content: message,
+        stats: {
+          timestamp: new Date().toISOString(),
+        },
+      };
       setMessages((currentMessages) => {
-        const newMessages: Message[] = appendMessage(currentMessages, {
-          role: "user",
-          content: message,
-        });
+        const newMessages: Message[] = appendMessage(
+          currentMessages,
+          userMessage,
+        );
 
         streamChatCompletionLoop(
+          openAiRef.current,
+          activeLLMConfigRef.current!,
           newMessages,
           setMessages,
           audible,
@@ -473,12 +512,7 @@ export default function VoiceAssistant({ idle }: Props) {
             responseLevelRef.current = 0;
             respondingRef.current = false;
             console.error("Failed to stream chat completion", error);
-            setMessages(
-              appendMessage(currentMessages, {
-                role: "user",
-                content: message,
-              }),
-            );
+            setMessages(appendMessage(currentMessages, userMessage));
           })
           .finally(() => {
             console.log("response finished");

@@ -14,6 +14,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Stack,
   Switch,
   Typography,
 } from "@mui/material";
@@ -21,24 +22,13 @@ import useConfigs from "../hooks/useConfigs";
 import { LLMConfig } from "../model/llmConfig";
 
 export const LLMConfigs: React.FC = () => {
-  const { llmConfigs, setLLMConfigs } = useConfigs();
-  const [selectedConfigIndex, setSelectedConfigIndex] = useState<number | null>(
-    null,
-  );
-  const [activeConfigIndex, setActiveConfigIndex] = useState<number | null>(
-    null,
-  );
-
-  const handleSelectConfig = (index: number) => {
-    setSelectedConfigIndex(index);
-  };
-
-  const handleToggleActiveConfig = (index: number) => {
-    setActiveConfigIndex(index);
-  };
+  const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } =
+    useConfigs();
+  const [selectedConfig, setSelectedConfig] = useState("");
 
   const handleAddConfig = () => {
     const newConfig: LLMConfig = {
+      id: crypto.randomUUID(),
       name: "",
       apiEndPoint: "",
       apiKey: "",
@@ -48,32 +38,31 @@ export const LLMConfigs: React.FC = () => {
       useStreaming: true,
     };
     setLLMConfigs([...llmConfigs, newConfig]);
-    setSelectedConfigIndex(llmConfigs.length);
+    setSelectedConfig(newConfig.id);
   };
 
   const handleConfigChange = <K extends keyof LLMConfig>(
     field: K,
     value: LLMConfig[K],
   ) => {
-    if (selectedConfigIndex === null) return;
-    const updatedConfigs = llmConfigs.map((config, index) =>
-      index === selectedConfigIndex ? { ...config, [field]: value } : config,
+    if (selectedConfig === "") return;
+    const updatedConfigs = llmConfigs.map((config) =>
+      config.id === selectedConfig ? { ...config, [field]: value } : config,
     );
     setLLMConfigs(updatedConfigs);
   };
 
-  const disabled = selectedConfigIndex === null;
-  const config = !disabled
-    ? llmConfigs[selectedConfigIndex]
-    : {
-        name: "",
-        apiEndPoint: "",
-        apiKey: "",
-        apiCompatibility: "OpenAI",
-        modelID: "",
-        useTools: true,
-        useStreaming: true,
-      };
+  const disabled =
+    llmConfigs.find((config) => config.id === selectedConfig) === null;
+  const config = llmConfigs.find((config) => config.id === selectedConfig) || {
+    name: "",
+    apiEndPoint: "",
+    apiKey: "",
+    apiCompatibility: "OpenAI",
+    modelID: "",
+    useTools: true,
+    useStreaming: true,
+  };
 
   return (
     <Container>
@@ -84,16 +73,16 @@ export const LLMConfigs: React.FC = () => {
             {llmConfigs.map((config, index) => (
               <ListItemButton
                 key={index}
-                selected={selectedConfigIndex === index}
-                onClick={() => handleSelectConfig(index)}
+                selected={selectedConfig === config.id}
+                onClick={() => setSelectedConfig(config.id)}
               >
                 <ListItemIcon>
                   <Checkbox
                     edge="start"
-                    checked={activeConfigIndex === index}
+                    checked={activeLLMConfig === config.id}
                     tabIndex={-1}
                     disableRipple
-                    onChange={() => handleToggleActiveConfig(index)}
+                    onChange={() => setActiveLLMConfig(config.id)}
                   />
                 </ListItemIcon>
                 <ListItemText primary={config.name || "<unknown LLM config>"} />
@@ -110,28 +99,26 @@ export const LLMConfigs: React.FC = () => {
             display: "flex",
             flexDirection: "column",
             minWidth: "20rem",
+            gap: "0.5rem",
           }}
         >
           <TextField
             label="Name"
-            fullWidth
-            margin="normal"
+            variant="filled"
             disabled={disabled}
             value={config.name}
             onChange={(e) => handleConfigChange("name", e.target.value)}
           />
           <TextField
             label="API endpoint"
-            fullWidth
-            margin="normal"
+            variant="filled"
             disabled={disabled}
             value={config.apiEndPoint}
             onChange={(e) => handleConfigChange("apiEndPoint", e.target.value)}
           />
           <TextField
             label="API key"
-            fullWidth
-            margin="normal"
+            variant="filled"
             disabled={disabled}
             value={config.apiKey}
             onChange={(e) => handleConfigChange("apiKey", e.target.value)}
@@ -155,34 +142,37 @@ export const LLMConfigs: React.FC = () => {
           </FormControl>
           <TextField
             label="Model ID"
-            fullWidth
-            margin="normal"
+            variant="filled"
             disabled={disabled}
             value={config.modelID}
             onChange={(e) => handleConfigChange("modelID", e.target.value)}
           />
-          <FormControl>
-            <FormControlLabel
-              disabled={disabled}
-              checked={config.useTools}
-              control={<Switch color="primary" />}
-              label="Tools"
-              labelPlacement="end"
-              onChange={() => handleConfigChange("useTools", !config.useTools)}
-            />
-          </FormControl>
-          <FormControl>
-            <FormControlLabel
-              disabled={disabled}
-              checked={config.useStreaming}
-              control={<Switch color="primary" />}
-              label="Streaming"
-              labelPlacement="end"
-              onChange={() =>
-                handleConfigChange("useStreaming", !config.useStreaming)
-              }
-            />
-          </FormControl>
+          <Stack spacing={2} direction="row" alignItems="center">
+            <FormControl>
+              <FormControlLabel
+                disabled={disabled}
+                checked={config.useTools}
+                control={<Switch color="primary" />}
+                label="Tools"
+                labelPlacement="end"
+                onChange={() =>
+                  handleConfigChange("useTools", !config.useTools)
+                }
+              />
+            </FormControl>
+            <FormControl>
+              <FormControlLabel
+                disabled={disabled}
+                checked={config.useStreaming}
+                control={<Switch color="primary" />}
+                label="Streaming"
+                labelPlacement="end"
+                onChange={() =>
+                  handleConfigChange("useStreaming", !config.useStreaming)
+                }
+              />
+            </FormControl>
+          </Stack>
         </Box>
       </Box>
     </Container>
