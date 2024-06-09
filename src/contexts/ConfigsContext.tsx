@@ -36,6 +36,7 @@ export const ConfigsProvider: React.FC<{ children: ReactNode }> = ({
   const [activeLLMConfig, setActiveLLMConfig] = useState(savedActiveConfig);
 
   useEffect(() => {
+    console.log(`Saving ${llmConfigs.length} configs`);
     localStorage.setItem("voice-assistant-configs", JSON.stringify(llmConfigs));
   }, [llmConfigs]);
   useEffect(() => {

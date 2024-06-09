@@ -310,10 +310,11 @@ async function streamChatCompletionLoop(
     );
     const messages: ChatCompletionMessageParam[] = [
       systemMessage,
-      ...currentMessages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      ...currentMessages.map((message) => {
+        const cleanMessage = { ...message };
+        delete cleanMessage.stats;
+        return cleanMessage;
+      }),
     ];
     const options = {
       messages,
