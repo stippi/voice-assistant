@@ -19,6 +19,7 @@ import {
 import useConfigs from "../hooks/useConfigs";
 import { LLMConfig } from "../model/llmConfig";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
+import Paper from "@mui/material/Paper";
 
 export const LLMConfigs: React.FC = () => {
   const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } =
@@ -65,29 +66,43 @@ export const LLMConfigs: React.FC = () => {
   };
 
   return (
-    <Box style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
-      <Box style={{ minWidth: "14rem", maxWidth: "14rem" }}>
-        <List style={{ padding: 0 }}>
-          {llmConfigs.map((config, index) => (
-            <ListItemButton
-              key={index}
-              selected={selectedConfig === config.id}
-              onClick={() => setSelectedConfig(config.id)}
-            >
-              <ListItemIcon>
-                <Checkbox
-                  edge="start"
-                  checked={activeLLMConfig === config.id}
-                  tabIndex={-1}
-                  disableRipple
-                  onChange={() => setActiveLLMConfig(config.id)}
-                />
-              </ListItemIcon>
-              <ListItemText primary={config.name || "<unnamed>"} />
-            </ListItemButton>
-          ))}
-        </List>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+    <Box style={{ display: "flex", flexDirection: "row", gap: "1rem", alignItems: "stretch" }}>
+      <Box style={{
+        minWidth: "14rem",
+        maxWidth: "14rem",
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        alignItems: "stretch",
+        flexShrink: 0
+      }}>
+        <Paper sx={{
+          flex: 1,
+          overflow: "auto"
+        }}>
+          <List style={{ padding: 0 }}>
+            {llmConfigs.map((config, index) => (
+                <ListItemButton
+                    key={index}
+                    selected={selectedConfig === config.id}
+                    onClick={() => setSelectedConfig(config.id)}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                        edge="start"
+                        checked={activeLLMConfig === config.id}
+                        tabIndex={-1}
+                        disableRipple
+                        onChange={() => setActiveLLMConfig(config.id)}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary={config.name || "<unnamed>"} />
+                </ListItemButton>
+            ))}
+          </List>
+        </Paper>
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
               startIcon={<AddCircleIcon />}
               onClick={handleAddConfig}
@@ -103,7 +118,9 @@ export const LLMConfigs: React.FC = () => {
           display: "flex",
           flexDirection: "column",
           minWidth: "14rem",
+          minHeight: "100%",
           gap: "0.5rem",
+          flex: 1
         }}
       >
         <TextField
