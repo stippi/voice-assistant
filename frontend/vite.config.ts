@@ -22,6 +22,10 @@ export default defineConfig({
         target: "https://api.mistral.ai/v1/",
         changeOrigin: true,
         rewrite: path => path.replace(/^\/mistral/, '')
+      },
+      "/api": {
+        changeOrigin: true,
+        target: "http://localhost:3000/",
       }
     }
   }

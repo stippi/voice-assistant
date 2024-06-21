@@ -114,7 +114,7 @@ interface ItemProps {
 }
 
 export function ChatSelection() {
-  const { chats, setCurrentChat, currentChatID, renameChat, deleteChat} = useChats();
+  const { chats, setCurrentChatID, currentChatID, renameChat, deleteChat} = useChats();
   
   const sortedChats = chats.sort((a, b) => {
     return b.lastUpdated - a.lastUpdated;
@@ -126,7 +126,7 @@ export function ChatSelection() {
         <ChatInfoListItem
           key={chat.id}
           chat={chat}
-          onClick={() => setCurrentChat(chat.id)}
+          onClick={() => setCurrentChatID(chat.id)}
           onRename={(newName: string) => renameChat(chat.id, newName)}
           onDelete={() => deleteChat(chat.id)}
           isSelected={chat.id === currentChatID}

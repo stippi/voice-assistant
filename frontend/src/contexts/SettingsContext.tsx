@@ -1,5 +1,7 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {BuiltInKeyword} from "@picovoice/porcupine-web";
+import useAuthenticationContext from "../hooks/useAuthenticationContext.tsx";
+import {fetchWithJWT, fetchWithJWTParsed} from "../utils/fetch.ts";
 
 export type Voice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
@@ -58,13 +60,6 @@ const defaultSettings: Settings = {
   showPlaylist: false,
   showPhotos: true,
 }
-let initialSettings = defaultSettings;
-
-const savedSettings = localStorage.getItem('voice-assistant-settings');
-if (savedSettings) {
-  const parsedSettings: Partial<Settings> = JSON.parse(savedSettings);
-  initialSettings = { ...defaultSettings, ...parsedSettings };
-}
 
 type SettingsContextType = {
   settings: Settings;
@@ -77,10 +72,23 @@ export const SettingsContext = createContext<SettingsContextType>({
 });
 
 export const SettingsProvider: React.FC<{children: ReactNode}>  = ({ children }) => {
-  const [settings, setSettings] = useState(initialSettings);
-  
+  const [settings, setSettings] = useState(defaultSettings);
+
+  const {user} = useAuthenticationContext()
+
   useEffect(() => {
-    localStorage.setItem('voice-assistant-settings', JSON.stringify(settings));
+    fetchWithJWTParsed<Settings>('/api/settings', user)
+      .then(setSettings)
+      .catch((error) => {
+        console.error("An error occurred while loading settings", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchWithJWT('/api/settings', user, {body: JSON.stringify(settings), method: 'PUT', headers: {'Content-Type': 'application/json'}})
+      .catch((error) => {
+        console.error("An error occurred while loading settings", error);
+      });
   }, [settings]);
   
   return (

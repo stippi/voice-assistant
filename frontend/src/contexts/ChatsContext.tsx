@@ -1,19 +1,19 @@
 import React, {createContext, useState, useEffect, ReactNode} from 'react';
 import {ChatInfo, Chat} from "../model/chat";
 import {Message} from "../model/message.ts";
-import {indexDbDelete, indexDbGet, indexDbGetAllKeys, indexDbPut} from "../utils/indexDB.ts";
+import useAuthenticationContext from "../hooks/useAuthenticationContext.tsx";
+import {fetchWithJWT, fetchWithJWTParsed} from "../utils/fetch.ts";
 
 type ChatsContextType = {
   loading: boolean;
   chats: ChatInfo[];
   currentChatID: string;
   currentChat: Chat | null
-  setCurrentChat: (chatID: string) => void;
+  setCurrentChatID: (chatID: string) => void;
   newChat: (messages: Message[]) => Promise<string>;
   updateChat: (messages: Message[]) => void;
   renameChat: (chatID: string, newName: string) => void;
   deleteChat: (chatID: string) => void;
-  syncChats: () => void;
 };
 
 export const ChatsContext = createContext<ChatsContextType>({
@@ -21,12 +21,11 @@ export const ChatsContext = createContext<ChatsContextType>({
   chats: [],
   currentChatID: "",
   currentChat: null,
-  setCurrentChat: () => {},
+  setCurrentChatID: () => {},
   newChat: async () => { return ""; },
   updateChat: () => {},
   renameChat: () => {},
   deleteChat: () => {},
-  syncChats: () => {},
 });
 
 export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) => {
@@ -34,34 +33,40 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [currentChatID, setCurrentChatID] = useState<string>("");
   const [currentChat, setChat] = useState<Chat | null>(null);
-  
+
+  const {user} = useAuthenticationContext()
+
+
+  function reloadChats() {
+    setLoading(true);
+    fetchWithJWTParsed<ChatInfo[]>('/api/chats', user)
+        .then((chats) => {
+          setChats(chats);
+          if (!currentChatID && chats.length > 0) {
+            setCurrentChatID(chats[0].id);
+          }
+        })
+        .catch((error) => {
+            console.error("An error occurred while loading chats", error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+  }
+
   useEffect(() => {
-    indexDbGet<ChatInfo[]>("chats").then((chatsFromDb) => {
-      setChats(chatsFromDb || []);
-      return indexDbGet<string>("currentChatID");
-    }).then((currentChatIDFromDb) => {
-      if (currentChatIDFromDb) {
-        setCurrentChatID(currentChatIDFromDb);
-      }
-    }).catch((error) => {
-      console.error("An error occurred while loading chats or currentChatID", error);
-    }).finally(() => {
-      setLoading(false);
-    });
+    reloadChats()
   }, []);
   
   useEffect(() => {
     if (currentChatID) {
-      indexDbGet<Chat>(currentChatID).then((chat) => {
-        setChat(chat);
-      });
+      fetchWithJWTParsed<Chat>(`/api/chats/${currentChatID}`, user)
+            .then(setChat)
+            .catch((error) => {
+                console.error("An error occurred while loading current chat", error);
+            });
     }
   }, [currentChatID]);
-  
-  const setCurrentChat = async (chatID: string) => {
-    await indexDbPut("currentChatID", chatID);
-    setCurrentChatID(chatID);
-  }
   
   const newChat = React.useCallback(async (messages: Message[]) => {
     if (loading) throw new Error("Cannot create new chat while loading");
@@ -73,15 +78,17 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
       created: now,
       lastUpdated: now,
     };
-    // TODO: Should use an atomic transaction here
-    await indexDbPut("chats", [...chats, newChatInfo]);
     const newChat: Chat = {
       ...newChatInfo,
       messages: messages,
     }
-    await indexDbPut(newChatID, newChat);
-    setChats((prevChats) => [...prevChats, newChatInfo]);
-    await setCurrentChat(newChatID);
+
+    fetchWithJWT(`/api/chats/${newChatID}`, user, {method: "PUT", body: JSON.stringify(newChat), headers: {"Content-Type": "application/json"}})
+      .then(()=> setChats([newChatInfo, ...chats]))
+      .then(() => setCurrentChatID(newChatID))
+      .catch((error) => {
+          console.error("An error occurred while creating new chat", error);
+      });
     return newChatID;
   }, [loading, chats]);
   
@@ -91,67 +98,47 @@ export const ChatsProvider: React.FC<{children: ReactNode}>  = ({ children }) =>
     updatedChat.lastUpdated = new Date().getTime();
     updatedChat.messages = messages;
     // update current chat
-    await indexDbPut(currentChat.id, updatedChat);
-    setChat(updatedChat);
-    // update chats
-    const updatedChats = [...chats];
-    const chatIndex = updatedChats.findIndex((chatInfo) => chatInfo.id === currentChat.id);
-    if (chatIndex === -1) throw new Error("Cannot find current chat in chats");
-    updatedChats[chatIndex].lastUpdated = updatedChat.lastUpdated;
-    await indexDbPut("chats", updatedChats);
-    setChats(updatedChats);
+
+    fetchWithJWT(`/api/chats/${currentChatID}`, user, {method: "PUT", body: JSON.stringify(updatedChat), headers: {"Content-Type": "application/json"}})
+    .then(() => {
+        setChats(chats.map((chat) => chat.id === currentChatID ? updatedChat : chat));
+        setChat(updatedChat);
+    })
+    .catch((error) => {
+        console.error("An error occurred while updating chat", error);
+    });
   }, [currentChat, chats]);
   
   const renameChat = React.useCallback(async (chatID: string, newName: string) => {
     if (loading) throw new Error("Cannot rename chat while loading");
-    
-    const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
-    if (index === -1) throw new Error("Cannot find chat to rename");
-    
-    const newChats = chats.map((chatInfo) => ({...chatInfo}));
-    newChats[index].name = newName;
-    await indexDbPut("chats", newChats);
-    setChats(newChats);
+    const patch: Partial<ChatInfo> = {name: newName};
+
+    fetchWithJWT(`/api/chats/${chatID}`, user, {method: "PATCH", body: JSON.stringify(patch), headers: {"Content-Type": "application/json"}})
+    .then(() => setChats(chats.map((chat) => chat.id === chatID ? {...chat, name: newName} : chat)))
+    .catch((error) => {
+        console.error("An error occurred while renaming chat", error);
+    });
+
   }, [loading, chats]);
   
   const deleteChat = React.useCallback(async (chatID: string) => {
     if (loading) throw new Error("Cannot delete chat while loading");
-    
-    const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
-    if (index === -1) throw new Error("Cannot find chat to delete");
-    
-    const newChats = [...chats];
-    newChats.splice(index, 1);
-    // TODO: Should use an atomic transaction here
-    await indexDbPut("chats", newChats);
-    await indexDbDelete(chatID);
-    setChats(newChats);
-    
-    if (index < chats.length) {
-      await setCurrentChat(newChats[index].id);
-    } else if (index > 0) {
-      await setCurrentChat(newChats[index - 1].id);
-    } else {
-      await setCurrentChat("");
-    }
+
+    fetchWithJWT(`/api/chats/${chatID}`, user, {method: "DELETE"})
+      .then(() => {
+        if (currentChatID === chatID) {
+          setCurrentChatID("");
+        }
+      })
+      .then(() => setChats(chats.filter((chat) => chat.id !== chatID)))
+      .catch((error) => {
+          console.error("An error occurred while deleting chat", error);
+      });
   }, [loading, chats]);
-  
-  const syncChats = React.useCallback(async () => {
-    const allChatIDs = (await indexDbGetAllKeys()).filter((key) => key !== "chats" && key !== "currentChatID");
-    const chatsFromDb = await Promise.all(allChatIDs.map((chatID) => indexDbGet<Chat>(chatID)));
-    const chatInfos = chatsFromDb.map((chat) => {
-      return {
-        id: chat.id,
-        created: chat.created,
-        lastUpdated: chat.lastUpdated,
-      };
-    });
-    await indexDbPut("chats", chatInfos);
-  }, []);
   
   return (
     <ChatsContext.Provider value={{
-      loading, chats, newChat, currentChatID, setCurrentChat, currentChat, updateChat, renameChat, deleteChat, syncChats
+      loading, chats, newChat, currentChatID, setCurrentChatID, currentChat, updateChat, renameChat, deleteChat
     }}>
       {children}
     </ChatsContext.Provider>

@@ -4,7 +4,7 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import IconButton from '@mui/material/IconButton';
 import OpenAI, { toFile } from 'openai';
 import {EagleProfile} from "@picovoice/eagle-web";
-import {speechApiUrl, speechApiKey, PicoVoiceAccessKey} from "../config";
+import {speechApiUrl, PicoVoiceAccessKey} from "../config";
 import useSettings from "../hooks/useSettings";
 import useWindowFocus from "../hooks/useWindowFocus";
 import {playSound} from "../utils/audio";
@@ -12,12 +12,7 @@ import {textToLowerCaseWords} from "../utils/textUtils";
 import useAppContext from "../hooks/useAppContext";
 import {indexDbGet} from "../utils/indexDB";
 import {useVoiceDetection} from "../hooks/useVoiceDetection.tsx";
-
-const openai = new OpenAI({
-  apiKey: speechApiKey,
-  dangerouslyAllowBrowser: true,
-  baseURL: speechApiUrl,
-});
+import useAuthenticationContext from "../hooks/useAuthenticationContext.tsx";
 
 let mimeType: string;
 let audioExt: string;
@@ -49,7 +44,9 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
   
   const shouldRestartRecognition = useRef(false);
   const recognition = useRef<SpeechRecognition | null>(null);
-  
+
+  const { user } = useAuthenticationContext()
+
   const sendToWhisperAPI = useCallback(async (audioChunks: Blob[]) => {
     console.log(`received ${audioChunks.length} audio chunks`);
     const audioBlob = new Blob(audioChunks, { type: mimeType });
@@ -62,7 +59,17 @@ const SpeechRecorder = ({sendMessage, stopResponding, setTranscript, defaultMess
     // downloadLink.textContent = 'Download audio blob';
     //
     // document.body.appendChild(downloadLink);
-    
+    if (!user) {
+        console.error('User not authenticated');
+        return;
+    }
+    const token = await user.getIdToken();
+    const openai = new OpenAI({
+      apiKey: token,
+      dangerouslyAllowBrowser: true,
+      baseURL: speechApiUrl,
+    });
+
     try {
       playSound('sending');
       sendMessage("", true);

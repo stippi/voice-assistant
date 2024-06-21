@@ -5,12 +5,10 @@ import {MessageBar} from "./MessageBar";
 import OpenAI from "openai";
 import {
   completionsApiUrl,
-  completionsApiKey,
   modelName,
   useTools,
   useStreaming,
   speechApiUrl,
-  speechApiKey,
 } from "../config";
 import {splitIntoSentencesAst} from "../utils/textUtils";
 import {removeCodeBlocks} from "../utils/removeCodeBlocks";
@@ -26,17 +24,8 @@ import {AppContextType} from "../contexts/AppContext.tsx";
 import useSpotifyContext from "../hooks/useSpotifyContext.tsx";
 import ChatCompletion = OpenAI.ChatCompletion;
 import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
-
-const openAi = new OpenAI({
-  apiKey: completionsApiKey,
-  dangerouslyAllowBrowser: true,
-  baseURL: completionsApiUrl
-});
-const openAiSpeech = new OpenAI({
-  apiKey: speechApiKey,
-  dangerouslyAllowBrowser: true,
-  baseURL: speechApiUrl,
-});
+import useAuthenticationContext from "../hooks/useAuthenticationContext.tsx";
+import {User} from "firebase/auth";
 
 async function streamChatCompletion(
   currentMessages: Message[],
@@ -48,7 +37,8 @@ async function streamChatCompletion(
   settingsRef: React.MutableRefObject<SettingsType>,
   responseLevelRef: React.MutableRefObject<number>,
   responseCancelledRef: React.MutableRefObject<boolean>,
-  cancelAudioRef: React.MutableRefObject<() => void>
+  cancelAudioRef: React.MutableRefObject<() => void>,
+  user: User,
 ) {
   let audioEndedPromise: Promise<unknown> | null = null;
   let currentAudio: HTMLAudioElement | null = null;
@@ -101,7 +91,14 @@ async function sourceOpen() {
         });
     });
      */
-    
+
+    const token = await user.getIdToken();
+    const openAiSpeech = new OpenAI({
+      apiKey: token,
+      dangerouslyAllowBrowser: true,
+      baseURL: speechApiUrl,
+    });
+
     const response = await openAiSpeech.audio.speech.create({
       model: "tts-1",
       voice: settingsRef.current.voice,
@@ -273,13 +270,19 @@ async function streamChatCompletionLoop(
   settingsRef: React.MutableRefObject<SettingsType>,
   responseLevelRef: React.MutableRefObject<number>,
   responseCancelledRef: React.MutableRefObject<boolean>,
-  cancelAudioRef: React.MutableRefObject<() => void>
+  cancelAudioRef: React.MutableRefObject<() => void>,
+  user: User | null,
 ) {
   // console.log(`streamChatCompletionLoop(last message: "${currentMessages[currentMessages.length-1].content}, responseLevel: ${responseLevelRef.current}")`);
   if (responseLevelRef.current > 0) {
     console.log("Already responding to a message, ignoring");
     return;
   }
+  if (!user){
+    console.error("User is not logged in");
+    return;
+  }
+
   let tries = 0
   responseLevelRef.current++;
   while (tries < 4) {
@@ -291,6 +294,14 @@ async function streamChatCompletionLoop(
       audible, settingsRef.current.personality, appContextRef.current.timers, appContextRef.current.location, playbackState);
     const messages: ChatCompletionMessage[] = [systemMessage, ...currentMessages];
     const tools = useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined;
+
+    const userToken = await user.getIdToken();
+
+    const openAi = new OpenAI({
+      apiKey: userToken,
+      dangerouslyAllowBrowser: true,
+      baseURL: completionsApiUrl
+    });
 
     let response = undefined;
     let stream = undefined;
@@ -309,7 +320,7 @@ async function streamChatCompletionLoop(
       });
     }
     await streamChatCompletion(
-      currentMessages, setMessages, stream, response, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef);
+      currentMessages, setMessages, stream, response, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef, user);
     const lastMessage = currentMessages[currentMessages.length - 1];
     if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
@@ -339,7 +350,9 @@ export default function VoiceAssistant({idle}: Props) {
   const cancelAudioRef = React.useRef<() => void>(() => {})
 
   const {currentChatID, currentChat, newChat, updateChat} = useChats();
-  
+
+  const { user } = useAuthenticationContext();
+
   React.useEffect(() => {
     if (currentChat) {
       setMessages(currentChat.messages);
@@ -394,7 +407,7 @@ export default function VoiceAssistant({idle}: Props) {
     setMessages(currentMessages => {
       const newMessages: Message[] = appendMessage(currentMessages, {role: "user", content: message});
       
-      streamChatCompletionLoop(newMessages, setMessages, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef)
+      streamChatCompletionLoop(newMessages, setMessages, audible, appContextRef, settingsRef, responseLevelRef, responseCancelledRef, cancelAudioRef, user)
         .then(() => {
           setMessages(newMessages)
           if (currentChatID === "") {
