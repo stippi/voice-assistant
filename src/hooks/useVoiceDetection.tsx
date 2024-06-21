@@ -169,14 +169,14 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   const init = useCallback(
     async (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => {
       await initPorcupine(PicoVoiceAccessKey, wakeWord, {
-        publicPath: "/public/models/porcupine_params.pv",
+        publicPath: "/models/porcupine_params.pv",
         customWritePath: "3.0.0_porcupine_params.pv",
       });
       if (speakerProfiles.length > 0) {
         await initEagle(
           PicoVoiceAccessKey,
           {
-            publicPath: "/public/models/eagle_params.pv",
+            publicPath: "/models/eagle_params.pv",
           },
           speakerProfiles,
           speakerScoresCallback,

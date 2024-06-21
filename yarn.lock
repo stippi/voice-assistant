@@ -1085,6 +1085,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-katex@^3.0.4":
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@types/react-katex/-/react-katex-3.0.4.tgz#2b60eebf76938bb385337fd850d99cc53ad6ef67"
+  integrity sha512-aLkykKzSKLpXI6REJ3uClao6P47HAFfR1gcHOZwDeTuALsyjgMhz+oynLV4gX0kiJVnvHrBKF/TLXqyNTpHDUg==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-syntax-highlighter@^15.5.10":
   version "15.5.11"
   resolved "https://registry.yarnpkg.com/@types/react-syntax-highlighter/-/react-syntax-highlighter-15.5.11.tgz#e050745b22eff81fc13cb0c763dd0d063413bbf1"
