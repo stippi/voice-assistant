@@ -16,7 +16,7 @@ const theme = createTheme({
   }
 });
 
-export const MessageBar = React.memo(({ sendMessage, stopResponding, responding, respondingRef, awaitSpokenResponse, idle }: Props) => {
+export const MessageBar = React.memo(({ sendMessage, stopResponding, responding, awaitSpokenResponse, idle }: Props) => {
   
   const [message, setMessage] = React.useState("");
   const defaultPlaceHolder = "Type to chat";
@@ -32,7 +32,7 @@ export const MessageBar = React.memo(({ sendMessage, stopResponding, responding,
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !message.includes('\n')) {
       e.preventDefault();
-      sendMessage(message, false);
+      sendMessage(message, true);
       setMessage('');
     }
   };
@@ -81,7 +81,7 @@ export const MessageBar = React.memo(({ sendMessage, stopResponding, responding,
               stopResponding={stopResponding}
               setTranscript={setPlaceHolder}
               defaultMessage={defaultPlaceHolder}
-              respondingRef={respondingRef}
+              responding={responding}
               awaitSpokenResponse={awaitSpokenResponse}
             />
           </div>
@@ -95,7 +95,6 @@ interface Props {
   sendMessage: (message: string, audible: boolean) => void;
   stopResponding: (audible: boolean) => void;
   responding: boolean;
-  respondingRef: React.MutableRefObject<boolean>;
   awaitSpokenResponse: boolean;
   idle: boolean;
 }

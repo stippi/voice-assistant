@@ -4,8 +4,10 @@ export type LLMConfig = {
 
   apiEndPoint: string;
   apiKey: string;
+  projectID?: string;
+  location?: string;
 
-  apiCompatibility: "OpenAI" | "VertexAI";
+  apiCompatibility: "Anthropic" | "OpenAI" | "VertexAI";
 
   modelID: string;
 

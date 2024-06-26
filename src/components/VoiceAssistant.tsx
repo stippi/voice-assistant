@@ -580,7 +580,6 @@ export default function VoiceAssistant({ idle }: Props) {
         sendMessage={sendMessage}
         stopResponding={stopResponding}
         responding={responding}
-        respondingRef={respondingRef}
         awaitSpokenResponse={awaitSpokenResponse}
         idle={idle}
       />

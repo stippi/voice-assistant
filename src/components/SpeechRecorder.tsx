@@ -45,7 +45,7 @@ const SpeechRecorder = ({
   stopResponding,
   setTranscript,
   defaultMessage,
-  respondingRef,
+  responding,
   awaitSpokenResponse,
 }: Props) => {
   const [listening, setListening] = useState(false);
@@ -101,6 +101,10 @@ const SpeechRecorder = ({
   const sendToWhisperRef = React.useRef(sendToWhisperAPI);
   const isVoiceDetectionLoadedRef = React.useRef(false);
   const { documentVisible } = useWindowFocus();
+  const respondingRef = React.useRef(responding);
+  useEffect(() => {
+    respondingRef.current = responding;
+  }, [responding]);
 
   const {
     isLoaded: isVoiceDetectionLoaded,
@@ -501,7 +505,7 @@ interface Props {
   stopResponding: (audible: boolean) => void;
   setTranscript: (transcript: string) => void;
   defaultMessage: string;
-  respondingRef: React.MutableRefObject<boolean>;
+  responding: boolean;
   awaitSpokenResponse: boolean;
 }
 

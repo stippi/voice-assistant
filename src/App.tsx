@@ -1,7 +1,7 @@
 import "./App.css";
 import { GoogleContextProvider } from "./contexts/GoogleContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
-import VoiceAssistant from "./components/VoiceAssistant";
+import VoiceAssistant from "./components/VoiceAssistantLean";
 import { ChatsProvider } from "./contexts/ChatsContext";
 import { ConfigsProvider } from "./contexts/ConfigsContext";
 import { Sidebar } from "./components/Sidebar";
@@ -82,7 +82,7 @@ function AssistantWithOptionalIntegrations() {
   const { settings } = useSettings();
   const { idle } = useAppContext();
 
-  const idleMode = idle && settings.enableGooglePhotos;
+  const idleMode = idle && settings.enableGoogle && settings.enableGooglePhotos;
 
   return (
     <ChatsProvider>
