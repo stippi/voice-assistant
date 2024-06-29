@@ -1,189 +1,261 @@
 import OpenAI from "openai";
+import { splitIntoSentencesAst } from "../utils/textUtils";
 
 export interface SpeechOptions {
-    voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-    speed: number;
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+  speed: number;
 }
 
 export interface TextToSpeechService {
-    addText(text: string): void;
-    isPlaying(): boolean;
-    stopPlayback(): void;
-    setVolume(volume: number): void;
-    onPlaybackComplete(callback: () => void): void;
+  addText(text: string): void;
+  isPlaying(): boolean;
+  stopPlayback(): void;
+  setVolume(volume: number): void;
+  onPlaybackComplete(callback: () => void): void;
+  finalizePlayback(): void;
 }
 
 abstract class BaseAudioPlaybackService implements TextToSpeechService {
-    protected options: SpeechOptions;
-    protected textBuffer: string = "";
-    protected isCurrentlyPlaying: boolean = false;
-    protected onCompleteCallback: (() => void) | null = null;
+  protected options: SpeechOptions;
+  protected textBuffer: string = "";
+  protected lastPlayedOffset: number = 0;
+  protected isCurrentlyPlaying: boolean = false;
+  protected onCompleteCallback: (() => void) | null = null;
+  protected sentenceQueue: string[] = [];
+  protected audioQueue: HTMLAudioElement[] = [];
+  protected isStreaming: boolean = true;
 
-    protected constructor(options: SpeechOptions) {
-        this.options = options;
+  protected constructor(options: SpeechOptions) {
+    this.options = options;
+  }
+
+  addText(text: string): void {
+    if (this.textBuffer === "" && this.sentenceQueue.length === 0) {
+      document.dispatchEvent(new CustomEvent("reduce-volume"));
     }
+    this.textBuffer += text;
+    this.processSentences();
+  }
 
-    addText(text: string): void {
-        if (this.textBuffer === "") {
-            document.dispatchEvent(new CustomEvent("reduce-volume"));
+  isPlaying(): boolean {
+    return this.isCurrentlyPlaying;
+  }
+
+  abstract stopPlayback(): void;
+
+  abstract setVolume(volume: number): void;
+
+  onPlaybackComplete(callback: () => void): void {
+    this.onCompleteCallback = callback;
+  }
+
+  finalizePlayback(): void {
+    this.isStreaming = false;
+    this.processSentences();
+  }
+
+  protected processSentences(): void {
+    const sentences = splitIntoSentencesAst(
+      this.textBuffer.slice(this.lastPlayedOffset),
+    );
+    // sentenceCount excludes the last, possibly incomplete sentence while we are still streaming
+    const sentenceCount = this.isStreaming
+      ? sentences.length - 1
+      : sentences.length;
+    for (let i = 0; i < sentenceCount; i++) {
+      const sentence = sentences[i];
+      if (sentence.content.trim()) {
+        console.log(`playing segment "${sentence.content}"`);
+        this.sentenceQueue.push(sentence.content);
+        this.lastPlayedOffset += sentence.offset + sentence.content.length;
+        if (!this.isCurrentlyPlaying) {
+          this.playNextSentence();
         }
-        this.textBuffer += text;
-        this.processSentences();
+      }
+    }
+  }
+
+  protected async playNextSentence(): Promise<void> {
+    if (this.sentenceQueue.length === 0) {
+      if (!this.isStreaming) {
+        this.onComplete();
+      }
+      return;
     }
 
-    isPlaying(): boolean {
-        return this.isCurrentlyPlaying;
+    const sentence = this.sentenceQueue.shift()!;
+    this.isCurrentlyPlaying = true;
+
+    const audio = await this.createAudioElement(sentence);
+    this.audioQueue.push(audio);
+
+    if (this.audioQueue.length === 1) {
+      this.playAudioQueue();
+    }
+  }
+
+  protected abstract createAudioElement(
+    sentence: string,
+  ): Promise<HTMLAudioElement>;
+
+  protected playAudioQueue(): void {
+    if (this.audioQueue.length === 0) {
+      this.isCurrentlyPlaying = false;
+      this.playNextSentence();
+      return;
     }
 
-    abstract stopPlayback(): void;
+    const audio = this.audioQueue[0];
+    audio.onended = () => {
+      this.audioQueue.shift();
+      this.playAudioQueue();
+    };
+    audio.play().catch(console.error);
+  }
 
-    abstract setVolume(volume: number): void;
-
-    onPlaybackComplete(callback: () => void): void {
-        this.onCompleteCallback = callback;
+  protected onComplete(): void {
+    this.isCurrentlyPlaying = false;
+    this.textBuffer = "";
+    this.lastPlayedOffset = 0;
+    this.sentenceQueue = [];
+    this.audioQueue = [];
+    this.isStreaming = true;
+    if (this.onCompleteCallback) {
+      this.onCompleteCallback();
+      document.dispatchEvent(new CustomEvent("restore-volume"));
     }
-
-    protected async processSentences(): Promise<void> {
-        const sentences = this.textBuffer.match(/[^.!?]+[.!?]+/g) || [];
-        if (sentences.length > 0 && !this.isCurrentlyPlaying) {
-            const sentence = sentences.shift() as string;
-            this.textBuffer = sentences.join("") + this.textBuffer.slice(sentence.length);
-
-            this.isCurrentlyPlaying = true;
-            await this.playSentence(sentence);
-            this.isCurrentlyPlaying = false;
-
-            if (this.textBuffer.trim().length > 0) {
-                await this.processSentences();
-            } else  {
-                this.onComplete();
-            }
-        }
-    }
-
-    protected onComplete(): void {
-        this.isCurrentlyPlaying = false;
-        this.textBuffer = "";
-        if (this.onCompleteCallback) {
-            this.onCompleteCallback();
-            document.dispatchEvent(new CustomEvent("restore-volume"));
-        }
-    }
-
-    protected abstract playSentence(sentence: string): Promise<void>;
+  }
 }
 
 export class OpenAIAudioPlaybackService extends BaseAudioPlaybackService {
-    private openAi: OpenAI;
-    private currentAudio: HTMLAudioElement | null = null;
+  private openAi: OpenAI;
 
-    constructor(apiKey: string, baseURL: string | undefined, options: SpeechOptions) {
-        super(options);
-        this.openAi = new OpenAI({
-            apiKey: apiKey,
-            dangerouslyAllowBrowser: true,
-            baseURL: baseURL,
-        });
-    }
+  constructor(
+    apiKey: string,
+    baseURL: string | undefined,
+    options: SpeechOptions,
+  ) {
+    super(options);
+    this.openAi = new OpenAI({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true,
+      baseURL: baseURL,
+    });
+  }
 
-    protected async playSentence(sentence: string): Promise<void> {
-        const response = await this.openAi.audio.speech.create({
-            model: "tts-1",
-            voice: this.options.voice,
-            speed: this.options.speed,
-            input: sentence,
-        });
+  protected async createAudioElement(
+    sentence: string,
+  ): Promise<HTMLAudioElement> {
+    console.log(`fetching audio for "${sentence}"`);
+    const response = await this.openAi.audio.speech.create({
+      model: "tts-1",
+      voice: this.options.voice,
+      speed: this.options.speed,
+      input: sentence,
+    });
 
-        const arrayBuffer = await response.arrayBuffer();
-        const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
-        const url = URL.createObjectURL(blob);
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
+    const url = URL.createObjectURL(blob);
 
-        return new Promise((resolve) => {
-            const audio = new Audio(url);
-            this.currentAudio = audio;
+    const audio = new Audio(url);
+    audio.onended = () => URL.revokeObjectURL(url);
+    return audio;
+  }
 
-            audio.onended = () => {
-                URL.revokeObjectURL(url);
-                this.currentAudio = null;
-                resolve();
-            };
+  stopPlayback(): void {
+    this.fadeOutAndStop();
+  }
 
-            audio.play().catch((error) => {
-                console.error("Failed to play audio", error);
-                resolve();
-            });
-        });
-    }
+  setVolume(volume: number): void {
+    this.audioQueue.forEach((audio) => {
+      audio.volume = Math.max(0, Math.min(1, volume));
+    });
+  }
 
-    stopPlayback(): void {
-        if (this.currentAudio) {
-            this.currentAudio.pause();
-            this.currentAudio.currentTime = 0;
+  private fadeOutAndStop(): void {
+    const fadeOutInterval = 50; // ms
+    const fadeOutStep = 0.1;
+
+    const fadeOut = (audio: HTMLAudioElement) => {
+      const fadeOutTimer = setInterval(() => {
+        if (audio.volume > fadeOutStep) {
+          audio.volume -= fadeOutStep;
+        } else {
+          clearInterval(fadeOutTimer);
+          audio.pause();
+          audio.currentTime = 0;
         }
-        this.onComplete();
-    }
+      }, fadeOutInterval);
+    };
 
-    setVolume(volume: number): void {
-        if (this.currentAudio) {
-            this.currentAudio.volume = Math.max(0, Math.min(1, volume));
-        }
-    }
+    this.audioQueue.forEach(fadeOut);
+    this.onComplete();
+  }
 }
 
-export class WebSpeechAudioPlaybackService extends BaseAudioPlaybackService {
-    private synthesis: SpeechSynthesis;
-    private currentUtterance: SpeechSynthesisUtterance | null = null;
+// export class WebSpeechAudioPlaybackService extends BaseAudioPlaybackService {
+//     private synthesis: SpeechSynthesis;
+//     private currentUtterance: SpeechSynthesisUtterance | null = null;
 
-    constructor(options: SpeechOptions) {
-        super(options);
-        this.synthesis = window.speechSynthesis;
-    }
+//     constructor(options: SpeechOptions) {
+//         super(options);
+//         this.synthesis = window.speechSynthesis;
+//     }
 
-    protected async playSentence(sentence: string): Promise<void> {
-        return new Promise((resolve) => {
-            const utterance = new SpeechSynthesisUtterance(sentence);
-            utterance.voice = this.synthesis.getVoices().find(voice => voice.name === this.options.voice) || null;
-            utterance.rate = this.options.speed;
+//     protected async playSentence(sentence: string): Promise<void> {
+//         return new Promise((resolve) => {
+//             const utterance = new SpeechSynthesisUtterance(sentence);
+//             utterance.voice = this.synthesis.getVoices().find(voice => voice.name === this.options.voice) || null;
+//             utterance.rate = this.options.speed;
 
-            utterance.onend = () => {
-                this.currentUtterance = null;
-                resolve();
-            };
+//             utterance.onend = () => {
+//                 this.currentUtterance = null;
+//                 resolve();
+//             };
 
-            this.currentUtterance = utterance;
-            this.synthesis.speak(utterance);
-        });
-    }
+//             this.currentUtterance = utterance;
+//             this.synthesis.speak(utterance);
+//         });
+//     }
 
-    stopPlayback(): void {
-        if (this.currentUtterance) {
-            this.synthesis.cancel();
-        }
-        this.onComplete();
-    }
+//     stopPlayback(): void {
+//         if (this.currentUtterance) {
+//             this.synthesis.cancel();
+//         }
+//         this.onComplete();
+//     }
 
-    setVolume(volume: number): void {
-        if (this.currentUtterance) {
-            this.currentUtterance.volume = Math.max(0, Math.min(1, volume));
-        }
-    }
-}
+//     setVolume(volume: number): void {
+//         if (this.currentUtterance) {
+//             this.currentUtterance.volume = Math.max(0, Math.min(1, volume));
+//         }
+//     }
+// }
 
 export function createTextToSpeechService(config: {
-    type: "OpenAI" | "WebSpeech";
-    apiKey?: string;
-    baseURL?: string;
-    options: SpeechOptions;
+  type: "OpenAI" | "WebSpeech";
+  apiKey?: string;
+  baseURL?: string;
+  options: SpeechOptions;
 }): TextToSpeechService {
-    switch (config.type) {
-        case "OpenAI":
-            if (!config.apiKey) {
-                throw new Error("API key is required for OpenAI audio playback service");
-            }
-            return new OpenAIAudioPlaybackService(config.apiKey, config.baseURL, config.options);
-        case "WebSpeech":
-            return new WebSpeechAudioPlaybackService(config.options);
-        default:
-            throw new Error(`Unsupported audio playback service type: ${config.type}`);
-    }
+  switch (config.type) {
+    case "OpenAI":
+      if (!config.apiKey) {
+        throw new Error(
+          "API key is required for OpenAI audio playback service",
+        );
+      }
+      return new OpenAIAudioPlaybackService(
+        config.apiKey,
+        config.baseURL,
+        config.options,
+      );
+    // case "WebSpeech":
+    //     return new WebSpeechAudioPlaybackService(config.options);
+    default:
+      throw new Error(
+        `Unsupported audio playback service type: ${config.type}`,
+      );
+  }
 }

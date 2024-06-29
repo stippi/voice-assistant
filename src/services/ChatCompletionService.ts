@@ -2,36 +2,39 @@ import OpenAI from "openai";
 // import Anthropic from "@anthropic-ai/sdk";
 // import { VertexAI } from "@google-cloud/vertexai";
 import { LLMConfig } from "../model/llmConfig";
-import {ChatCompletionStream} from "openai/lib/ChatCompletionStream";
+import { ChatCompletionStream } from "openai/lib/ChatCompletionStream";
 
 export abstract class ChatCompletionService {
-    abstract stream(
-        body: OpenAI.ChatCompletionCreateParams,
-        signal: AbortSignal
-    ): ChatCompletionStream;
+  abstract stream(
+    body: OpenAI.ChatCompletionCreateParams,
+    signal: AbortSignal,
+  ): ChatCompletionStream;
 }
 
 export class OpenAIChatCompletionService extends ChatCompletionService {
-    private client: OpenAI;
+  private client: OpenAI;
 
-    constructor(apiKey: string, baseURL?: string) {
-        super();
-        this.client = new OpenAI({
-            apiKey,
-            dangerouslyAllowBrowser: true,
-            baseURL,
-        });
-    }
+  constructor(apiKey: string, baseURL?: string) {
+    super();
+    this.client = new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: true,
+      baseURL,
+    });
+  }
 
-    stream(
-        body: OpenAI.ChatCompletionCreateParams,
-        signal: AbortSignal
-    ): ChatCompletionStream {
-        return this.client.beta.chat.completions.stream({
-            ...body,
-            stream: true,
-        }, { signal });
-    }
+  stream(
+    body: OpenAI.ChatCompletionCreateParams,
+    signal: AbortSignal,
+  ): ChatCompletionStream {
+    return this.client.beta.chat.completions.stream(
+      {
+        ...body,
+        stream: true,
+      },
+      { signal },
+    );
+  }
 }
 
 // export class AnthropicChatCompletionService extends ChatCompletionService {
@@ -103,15 +106,19 @@ export class OpenAIChatCompletionService extends ChatCompletionService {
 //     }
 // }
 
-export function createChatCompletionService(config: LLMConfig): ChatCompletionService {
-    switch (config.apiCompatibility) {
-        case "OpenAI":
-            return new OpenAIChatCompletionService(config.apiKey, config.apiEndPoint);
-        // case "Anthropic":
-        //     return new AnthropicChatCompletionService(config.apiKey);
-        // case "VertexAI":
-        //     return new VertexAIChatCompletionService(config.projectID || "", config.location || "");
-        default:
-            throw new Error(`Unsupported API compatibility: ${config.apiCompatibility}`);
-    }
+export function createChatCompletionService(
+  config: LLMConfig,
+): ChatCompletionService {
+  switch (config.apiCompatibility) {
+    case "OpenAI":
+      return new OpenAIChatCompletionService(config.apiKey, config.apiEndPoint);
+    // case "Anthropic":
+    //     return new AnthropicChatCompletionService(config.apiKey);
+    // case "VertexAI":
+    //     return new VertexAIChatCompletionService(config.projectID || "", config.location || "");
+    default:
+      throw new Error(
+        `Unsupported API compatibility: ${config.apiCompatibility}`,
+      );
+  }
 }
