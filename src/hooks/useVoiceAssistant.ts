@@ -339,9 +339,10 @@ export function useVoiceAssistant() {
     }
     if (textToSpeechServiceRef.current) {
       textToSpeechServiceRef.current.stopPlayback();
+    } else {
+      isRespondingRef.current = false;
+      setResponding(false);
     }
-    isRespondingRef.current = false;
-    setResponding(false);
   }, []);
 
   const deleteMessage = React.useCallback(
