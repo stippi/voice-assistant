@@ -11,7 +11,7 @@ import { playSound } from "../utils/audio";
 import { textToLowerCaseWords } from "../utils/textUtils";
 import useAppContext from "../hooks/useAppContext";
 import { indexDbGet } from "../utils/indexDB";
-import { useVoiceDetection } from "../hooks/useVoiceDetection.tsx";
+import { useVoiceDetection } from "../hooks/useVoiceDetection";
 
 const openai = new OpenAI({
   apiKey: transcriptionApiKey,
@@ -297,7 +297,7 @@ const SpeechRecorder = ({
         recognition.current.stop();
       }
     }
-  }, [settings, isVoiceDetectionLoaded]);
+  }, [settings.openMic, isVoiceDetectionLoaded]);
 
   const handleResult = useCallback(
     (event: SpeechRecognitionEvent) => {
@@ -427,7 +427,7 @@ const SpeechRecorder = ({
   }, [initVoiceDetection, releaseVoiceDetection, speakerProfiles, settings.triggerWord, isVoiceDetectionLoaded]);
 
   useEffect(() => {
-    if (awaitSpokenResponse && !conversationOpen && openMicRef.current) {
+    if (awaitSpokenResponse && !conversationOpen) {
       startConversation();
     }
   }, [awaitSpokenResponse, conversationOpen, startConversation]);
