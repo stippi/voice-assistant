@@ -4,7 +4,12 @@ import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import IconButton from "@mui/material/IconButton";
 import OpenAI, { toFile } from "openai";
 import { EagleProfile } from "@picovoice/eagle-web";
-import { speechApiUrl, speechApiKey, PicoVoiceAccessKey } from "../config";
+import {
+  transcriptionApiUrl,
+  transcriptionApiKey,
+  transcriptionModel,
+  PicoVoiceAccessKey,
+} from "../config";
 import useSettings from "../hooks/useSettings";
 import useWindowFocus from "../hooks/useWindowFocus";
 import { playSound } from "../utils/audio";
@@ -14,9 +19,9 @@ import { indexDbGet } from "../utils/indexDB";
 import { useVoiceDetection } from "../hooks/useVoiceDetection.tsx";
 
 const openai = new OpenAI({
-  apiKey: speechApiKey,
+  apiKey: transcriptionApiKey,
   dangerouslyAllowBrowser: true,
-  baseURL: speechApiUrl,
+  baseURL: transcriptionApiUrl,
 });
 
 let mimeType: string;
@@ -60,20 +65,20 @@ const SpeechRecorder = ({
       console.log(`received ${audioChunks.length} audio chunks`);
       const audioBlob = new Blob(audioChunks, { type: mimeType });
 
-      const blobUrl = URL.createObjectURL(audioBlob);
+      // const blobUrl = URL.createObjectURL(audioBlob);
 
-      const downloadLink = document.createElement("a");
-      downloadLink.href = blobUrl;
-      downloadLink.download = `audio.${audioExt}`;
-      downloadLink.textContent = "Download audio blob";
+      // const downloadLink = document.createElement("a");
+      // downloadLink.href = blobUrl;
+      // downloadLink.download = `audio.${audioExt}`;
+      // downloadLink.textContent = "Download audio blob";
 
-      document.body.appendChild(downloadLink);
+      // document.body.appendChild(downloadLink);
 
       try {
         playSound("sending");
         sendMessage("", true);
         const transcription = await openai.audio.transcriptions.create({
-          model: "whisper-1",
+          model: transcriptionModel || "whisper-1",
           language: settingsRef.current.transcriptionLanguage.substring(0, 2),
           file: await toFile(audioBlob, `audio.${audioExt}`, {
             type: mimeType,

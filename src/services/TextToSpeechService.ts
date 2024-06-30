@@ -10,48 +10,53 @@ export interface TextToSpeechService {
   addText(text: string): void;
   isPlaying(): boolean;
   stopPlayback(): void;
-  setVolume(volume: number): void;
   onPlaybackComplete(callback: () => void): void;
   finalizePlayback(): void;
 }
 
-abstract class BaseAudioPlaybackService implements TextToSpeechService {
+abstract class BaseTextToSpeechService implements TextToSpeechService {
   protected options: SpeechOptions;
+
   protected textBuffer: string = "";
   protected lastPlayedOffset: number = 0;
-  protected isCurrentlyPlaying: boolean = false;
   protected onCompleteCallback: (() => void) | null = null;
   protected sentenceQueue: string[] = [];
-  protected audioQueue: HTMLAudioElement[] = [];
-  protected isStreaming: boolean = true;
+  protected isExpectingMoreText: boolean = true;
 
-  protected constructor(options: SpeechOptions) {
+  protected audioEndedPromise: Promise<unknown> | null = null;
+  protected currentAudio: HTMLAudioElement | null = null;
+  protected firstAudio = true;
+  protected isAudioPlaying = false;
+  protected cancelled = false;
+
+  constructor(options: SpeechOptions) {
     this.options = options;
   }
 
   addText(text: string): void {
-    if (this.textBuffer === "" && this.sentenceQueue.length === 0) {
-      document.dispatchEvent(new CustomEvent("reduce-volume"));
-    }
+    this.isExpectingMoreText = true;
     this.textBuffer += text;
     this.processSentences();
   }
 
   isPlaying(): boolean {
-    return this.isCurrentlyPlaying;
+    return this.isAudioPlaying;
   }
-
-  abstract stopPlayback(): void;
-
-  abstract setVolume(volume: number): void;
 
   onPlaybackComplete(callback: () => void): void {
     this.onCompleteCallback = callback;
   }
 
   finalizePlayback(): void {
-    this.isStreaming = false;
+    this.isExpectingMoreText = false;
     this.processSentences();
+  }
+
+  async stopPlayback(): Promise<void> {
+    this.cancelled = true;
+    this.isExpectingMoreText = false;
+    await this.fadeOutAudio();
+    this.onComplete();
   }
 
   protected processSentences(): void {
@@ -59,7 +64,7 @@ abstract class BaseAudioPlaybackService implements TextToSpeechService {
       this.textBuffer.slice(this.lastPlayedOffset),
     );
     // sentenceCount excludes the last, possibly incomplete sentence while we are still streaming
-    const sentenceCount = this.isStreaming
+    const sentenceCount = this.isExpectingMoreText
       ? sentences.length - 1
       : sentences.length;
     for (let i = 0; i < sentenceCount; i++) {
@@ -68,66 +73,112 @@ abstract class BaseAudioPlaybackService implements TextToSpeechService {
         console.log(`playing segment "${sentence.content}"`);
         this.sentenceQueue.push(sentence.content);
         this.lastPlayedOffset += sentence.offset + sentence.content.length;
-        if (!this.isCurrentlyPlaying) {
-          this.playNextSentence();
+        if (!this.isAudioPlaying) {
+          this.isAudioPlaying = true;
+          this.playSentencesFromQueue().catch((error) => {
+            console.error("Failed to play sentences", error);
+          });
         }
       }
     }
   }
 
-  protected async playNextSentence(): Promise<void> {
-    if (this.sentenceQueue.length === 0) {
-      if (!this.isStreaming) {
-        this.onComplete();
+  protected async playSentencesFromQueue() {
+    while (this.sentenceQueue.length > 0) {
+      const sentence = this.sentenceQueue.shift();
+      if (sentence) {
+        await this.playSentence(sentence);
       }
+    }
+    if (!this.isExpectingMoreText) {
+      this.onComplete();
+    }
+    this.isAudioPlaying = false;
+  }
+
+  protected async playSentence(sentence: string) {
+    if (this.cancelled) {
       return;
     }
 
-    const sentence = this.sentenceQueue.shift()!;
-    this.isCurrentlyPlaying = true;
-
     const audio = await this.createAudioElement(sentence);
-    this.audioQueue.push(audio);
 
-    if (this.audioQueue.length === 1) {
-      this.playAudioQueue();
+    if (this.audioEndedPromise) {
+      // Wait for the previous audio to finish playing before starting the next one
+      await this.audioEndedPromise;
+      if (this.cancelled) {
+        return;
+      }
     }
+
+    if (this.firstAudio) {
+      this.firstAudio = false;
+      document.dispatchEvent(new CustomEvent("reduce-volume"));
+    }
+
+    this.currentAudio = audio;
+    this.audioEndedPromise = new Promise<void>((resolve) => {
+      audio.onended = () => {
+        URL.revokeObjectURL(audio.src);
+        this.currentAudio = null;
+        resolve();
+      };
+    });
+
+    audio.play().catch((error) => {
+      this.currentAudio = null;
+      console.error("Failed to play audio", error);
+    });
   }
 
   protected abstract createAudioElement(
     sentence: string,
   ): Promise<HTMLAudioElement>;
 
-  protected playAudioQueue(): void {
-    if (this.audioQueue.length === 0) {
-      this.isCurrentlyPlaying = false;
-      this.playNextSentence();
-      return;
-    }
-
-    const audio = this.audioQueue[0];
-    audio.onended = () => {
-      this.audioQueue.shift();
-      this.playAudioQueue();
-    };
-    audio.play().catch(console.error);
-  }
-
   protected onComplete(): void {
-    this.isCurrentlyPlaying = false;
+    this.isAudioPlaying = false;
+    this.firstAudio = true;
     this.textBuffer = "";
     this.lastPlayedOffset = 0;
     this.sentenceQueue = [];
-    this.audioQueue = [];
-    this.isStreaming = true;
+    this.currentAudio = null;
+    this.audioEndedPromise = null;
+    this.cancelled = false;
     if (this.onCompleteCallback) {
       this.onCompleteCallback();
       document.dispatchEvent(new CustomEvent("restore-volume"));
     }
   }
+
+  protected async fadeOutAudio(): Promise<void> {
+    if (this.currentAudio === null) {
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      let volume = 1.0;
+      const fadeInterval = window.setInterval(() => {
+        if (this.currentAudio && volume > 0.2) {
+          volume -= 0.2;
+          this.currentAudio.volume = volume;
+        } else {
+          clearInterval(fadeInterval);
+          if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            if (this.currentAudio.onended) {
+              // @ts-expect-error - The onended event listener which we registered above, ignores the event.
+              this.currentAudio.onended();
+            }
+          }
+          resolve();
+        }
+      }, 100);
+    });
+  }
 }
 
-export class OpenAIAudioPlaybackService extends BaseAudioPlaybackService {
+export class OpenAITextToSpeechService extends BaseTextToSpeechService {
   private openAi: OpenAI;
 
   constructor(
@@ -161,36 +212,6 @@ export class OpenAIAudioPlaybackService extends BaseAudioPlaybackService {
     const audio = new Audio(url);
     audio.onended = () => URL.revokeObjectURL(url);
     return audio;
-  }
-
-  stopPlayback(): void {
-    this.fadeOutAndStop();
-  }
-
-  setVolume(volume: number): void {
-    this.audioQueue.forEach((audio) => {
-      audio.volume = Math.max(0, Math.min(1, volume));
-    });
-  }
-
-  private fadeOutAndStop(): void {
-    const fadeOutInterval = 50; // ms
-    const fadeOutStep = 0.1;
-
-    const fadeOut = (audio: HTMLAudioElement) => {
-      const fadeOutTimer = setInterval(() => {
-        if (audio.volume > fadeOutStep) {
-          audio.volume -= fadeOutStep;
-        } else {
-          clearInterval(fadeOutTimer);
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      }, fadeOutInterval);
-    };
-
-    this.audioQueue.forEach(fadeOut);
-    this.onComplete();
   }
 }
 
@@ -246,7 +267,7 @@ export function createTextToSpeechService(config: {
           "API key is required for OpenAI audio playback service",
         );
       }
-      return new OpenAIAudioPlaybackService(
+      return new OpenAITextToSpeechService(
         config.apiKey,
         config.baseURL,
         config.options,

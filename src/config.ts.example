@@ -7,8 +7,12 @@ export const completionsApiKey = "<The API Key used for /completions endpoint>";
 //export const completionsApiUrl = "http://localhost:8080/v1"; // LocalAI server, which needs to be started with --cors
 export const completionsApiUrl = "https://api.openai.com/v1";
 
-export const speechApiKey = "<The API Key used for tts and stt endpoints>";
+export const speechApiKey = "<The API Key used for the TTS endpoint>";
 export const speechApiUrl = "https://api.openai.com/v1";
+
+export const transcriptionApiKey = "<The API Key used for the SST endpoint>";
+export const transcriptionApiUrl = "https://api.openai.com/v1";
+export const transcriptionModel = "whisper-1";
 
 //export const modelName = "mistral-large-latest";
 export const modelName = "gpt-4-turbo-preview";
