@@ -60,13 +60,9 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
   }
 
   protected processSentences(): void {
-    const sentences = splitIntoSentencesAst(
-      this.textBuffer.slice(this.lastPlayedOffset),
-    );
+    const sentences = splitIntoSentencesAst(this.textBuffer.slice(this.lastPlayedOffset));
     // sentenceCount excludes the last, possibly incomplete sentence while we are still streaming
-    const sentenceCount = this.isExpectingMoreText
-      ? sentences.length - 1
-      : sentences.length;
+    const sentenceCount = this.isExpectingMoreText ? sentences.length - 1 : sentences.length;
     for (let i = 0; i < sentenceCount; i++) {
       const sentence = sentences[i];
       if (sentence.content.trim()) {
@@ -131,9 +127,7 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
     });
   }
 
-  protected abstract createAudioElement(
-    sentence: string,
-  ): Promise<HTMLAudioElement>;
+  protected abstract createAudioElement(sentence: string): Promise<HTMLAudioElement>;
 
   protected onComplete(): void {
     this.isAudioPlaying = false;
@@ -181,11 +175,7 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
 export class OpenAITextToSpeechService extends BaseTextToSpeechService {
   private openAi: OpenAI;
 
-  constructor(
-    apiKey: string,
-    baseURL: string | undefined,
-    options: SpeechOptions,
-  ) {
+  constructor(apiKey: string, baseURL: string | undefined, options: SpeechOptions) {
     super(options);
     this.openAi = new OpenAI({
       apiKey: apiKey,
@@ -194,9 +184,7 @@ export class OpenAITextToSpeechService extends BaseTextToSpeechService {
     });
   }
 
-  protected async createAudioElement(
-    sentence: string,
-  ): Promise<HTMLAudioElement> {
+  protected async createAudioElement(sentence: string): Promise<HTMLAudioElement> {
     console.log(`fetching audio for "${sentence}"`);
     const response = await this.openAi.audio.speech.create({
       model: "tts-1",
@@ -263,20 +251,12 @@ export function createTextToSpeechService(config: {
   switch (config.type) {
     case "OpenAI":
       if (!config.apiKey) {
-        throw new Error(
-          "API key is required for OpenAI audio playback service",
-        );
+        throw new Error("API key is required for OpenAI audio playback service");
       }
-      return new OpenAITextToSpeechService(
-        config.apiKey,
-        config.baseURL,
-        config.options,
-      );
+      return new OpenAITextToSpeechService(config.apiKey, config.baseURL, config.options);
     // case "WebSpeech":
     //     return new WebSpeechAudioPlaybackService(config.options);
     default:
-      throw new Error(
-        `Unsupported audio playback service type: ${config.type}`,
-      );
+      throw new Error(`Unsupported audio playback service type: ${config.type}`);
   }
 }

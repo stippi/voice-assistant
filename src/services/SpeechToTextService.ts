@@ -22,12 +22,7 @@ export class OpenAISpeechToTextService extends BaseSpeechToTextService {
   private openAi: OpenAI;
   private model: string | undefined;
 
-  constructor(
-    apiKey: string,
-    baseURL: string | undefined,
-    model: string | undefined,
-    options: TranscriptionOptions,
-  ) {
+  constructor(apiKey: string, baseURL: string | undefined, model: string | undefined, options: TranscriptionOptions) {
     super(options);
     this.openAi = new OpenAI({
       apiKey: apiKey,
@@ -61,15 +56,8 @@ export function createSpeechToTextService(config: {
       if (!config.apiKey) {
         throw new Error("API key is required for OpenAI STT service");
       }
-      return new OpenAISpeechToTextService(
-        config.apiKey,
-        config.baseURL,
-        config.model,
-        config.options,
-      );
+      return new OpenAISpeechToTextService(config.apiKey, config.baseURL, config.model, config.options);
     default:
-      throw new Error(
-        `Unsupported speech to text service type: ${config.type}`,
-      );
+      throw new Error(`Unsupported speech to text service type: ${config.type}`);
   }
 }

@@ -53,13 +53,9 @@ export class AnthropicChatCompletionService extends ChatCompletionService {
     });
   }
 
-  convertFromOpenAIMessage(
-    message: OpenAI.ChatCompletionMessageParam,
-  ): Anthropic.Messages.MessageParam {
+  convertFromOpenAIMessage(message: OpenAI.ChatCompletionMessageParam): Anthropic.Messages.MessageParam {
     const result: Anthropic.Messages.MessageParam = {
-      role: ["user", "system", "tool"].includes(message.role)
-        ? "user"
-        : "assistant",
+      role: ["user", "system", "tool"].includes(message.role) ? "user" : "assistant",
       content: [],
     };
     if (typeof message.content === "string") {
@@ -99,15 +95,12 @@ export class AnthropicChatCompletionService extends ChatCompletionService {
     return result;
   }
 
-  convertFromOpenAiTools(
-    tools: OpenAI.ChatCompletionTool[],
-  ): Anthropic.Messages.Tool[] {
+  convertFromOpenAiTools(tools: OpenAI.ChatCompletionTool[]): Anthropic.Messages.Tool[] {
     return tools.map((tool) => {
       return {
         name: tool.function.name,
         description: tool.function.description,
-        input_schema: tool.function
-          .parameters as Anthropic.Messages.Tool.InputSchema,
+        input_schema: tool.function.parameters as Anthropic.Messages.Tool.InputSchema,
       };
     });
   }
@@ -117,15 +110,11 @@ export class AnthropicChatCompletionService extends ChatCompletionService {
     signal: AbortSignal,
     callback: (chunk: string) => void,
   ): Promise<OpenAI.ChatCompletionMessage> {
-    const systemMessage = body.messages.find(
-      (message) => message.role === "system",
-    );
+    const systemMessage = body.messages.find((message) => message.role === "system");
     const stream = this.client.messages.stream(
       {
         system: systemMessage ? systemMessage.content : undefined,
-        messages: body.messages
-          .filter((message) => message.role != "system")
-          .map(this.convertFromOpenAIMessage),
+        messages: body.messages.filter((message) => message.role != "system").map(this.convertFromOpenAIMessage),
         model: body.model || "claude-3-sonnet-20240229",
         max_tokens: body.max_tokens || 4096,
         tools: body.tools ? this.convertFromOpenAiTools(body.tools) : undefined,
@@ -202,22 +191,15 @@ export class AnthropicChatCompletionService extends ChatCompletionService {
 //     }
 // }
 
-export function createChatCompletionService(
-  config: LLMConfig,
-): ChatCompletionService {
+export function createChatCompletionService(config: LLMConfig): ChatCompletionService {
   switch (config.apiCompatibility) {
     case "OpenAI":
       return new OpenAIChatCompletionService(config.apiKey, config.apiEndPoint);
     case "Anthropic":
-      return new AnthropicChatCompletionService(
-        config.apiKey,
-        config.apiEndPoint,
-      );
+      return new AnthropicChatCompletionService(config.apiKey, config.apiEndPoint);
     // case "VertexAI":
     //   return new VertexAIChatCompletionService(config.projectID || "", config.location || "");
     default:
-      throw new Error(
-        `Unsupported API compatibility: ${config.apiCompatibility}`,
-      );
+      throw new Error(`Unsupported API compatibility: ${config.apiCompatibility}`);
   }
 }

@@ -21,8 +21,7 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
 
 export const LLMConfigs: React.FC = () => {
-  const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } =
-    useConfigs();
+  const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } = useConfigs();
   const [selectedConfig, setSelectedConfig] = useState("");
 
   const handleAddConfig = () => {
@@ -40,10 +39,7 @@ export const LLMConfigs: React.FC = () => {
     setSelectedConfig(newConfig.id);
   };
 
-  const handleConfigChange = <K extends keyof LLMConfig>(
-    field: K,
-    value: LLMConfig[K],
-  ) => {
+  const handleConfigChange = <K extends keyof LLMConfig>(field: K, value: LLMConfig[K]) => {
     if (selectedConfig === "") return;
     const updatedConfigs = llmConfigs.map((config) =>
       config.id === selectedConfig ? { ...config, [field]: value } : config,
@@ -52,9 +48,7 @@ export const LLMConfigs: React.FC = () => {
   };
 
   const disabled =
-    llmConfigs.length === 0 ||
-    !selectedConfig ||
-    llmConfigs.find((config) => config.id === selectedConfig) === null;
+    llmConfigs.length === 0 || !selectedConfig || llmConfigs.find((config) => config.id === selectedConfig) === null;
   const config = llmConfigs.find((config) => config.id === selectedConfig) || {
     name: "",
     apiEndPoint: "",
@@ -114,11 +108,7 @@ export const LLMConfigs: React.FC = () => {
           </List>
         </Paper>
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            startIcon={<AddCircleIcon />}
-            onClick={handleAddConfig}
-            variant="contained"
-          >
+          <Button startIcon={<AddCircleIcon />} onClick={handleAddConfig} variant="contained">
             Add
           </Button>
         </Box>
@@ -161,12 +151,7 @@ export const LLMConfigs: React.FC = () => {
             disabled={disabled}
             label="API compatibility"
             value={config.apiCompatibility}
-            onChange={(e) =>
-              handleConfigChange(
-                "apiCompatibility",
-                e.target.value as LLMConfig["apiCompatibility"],
-              )
-            }
+            onChange={(e) => handleConfigChange("apiCompatibility", e.target.value as LLMConfig["apiCompatibility"])}
           >
             <MenuItem value="OpenAI">OpenAI</MenuItem>
             <MenuItem value="Anthropic">Anthropic</MenuItem>

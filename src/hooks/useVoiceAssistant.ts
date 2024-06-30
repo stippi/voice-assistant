@@ -1,12 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import {
-  ChatCompletionService,
-  createChatCompletionService,
-} from "../services/ChatCompletionService";
-import {
-  TextToSpeechService,
-  createTextToSpeechService,
-} from "../services/TextToSpeechService";
+import { ChatCompletionService, createChatCompletionService } from "../services/ChatCompletionService";
+import { TextToSpeechService, createTextToSpeechService } from "../services/TextToSpeechService";
 import { Message } from "../model/message";
 import useChats from "./useChats";
 import useSettings from "./useSettings";
@@ -61,11 +55,7 @@ export function useVoiceAssistant() {
   // TODO: Remove this hack
   const spotifyContext = useSpotifyContext();
   React.useEffect(() => {
-    if (
-      spotifyContext.player &&
-      spotifyContext.accessToken &&
-      spotifyContext.deviceId
-    ) {
+    if (spotifyContext.player && spotifyContext.accessToken && spotifyContext.deviceId) {
       appContextRef.current.setSpotify({
         player: spotifyContext.player,
         accessToken: spotifyContext.accessToken,
@@ -96,10 +86,7 @@ export function useVoiceAssistant() {
 
   useEffect(() => {
     if (llmConfigs.length > 0) {
-      setLLMConfig(
-        llmConfigs.find((config) => config.id === activeLLMConfig) ||
-          fallbackConfig,
-      );
+      setLLMConfig(llmConfigs.find((config) => config.id === activeLLMConfig) || fallbackConfig);
     } else {
       setLLMConfig(fallbackConfig);
     }
@@ -145,14 +132,8 @@ export function useVoiceAssistant() {
       const appendMessage = (messages: Message[], message: Message) => {
         // Filter out any "empty" messages from the user or assistant which are used to indicate a pending state.
         // Note: This will keep tool_choices messages, because those have content === null.
-        const newMessages = messages.filter(
-          (message) => message.content !== "",
-        );
-        if (
-          messages.length > 0 &&
-          messages[messages.length - 1].content === "" &&
-          message.content === ""
-        ) {
+        const newMessages = messages.filter((message) => message.content !== "");
+        if (messages.length > 0 && messages[messages.length - 1].content === "" && message.content === "") {
           return newMessages;
         }
         newMessages.push(message);
@@ -165,16 +146,12 @@ export function useVoiceAssistant() {
         return newMessages;
       };
 
-      const runCompletionsLoop = async (
-        messages: Message[],
-      ): Promise<Message[]> => {
+      const runCompletionsLoop = async (messages: Message[]): Promise<Message[]> => {
         if (!chatServiceRef.current || !abortControllerRef.current) {
           return messages;
         }
 
-        const tools = llmConfig.useTools
-          ? await getTools(settingsRef.current, appContextRef.current)
-          : undefined;
+        const tools = llmConfig.useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined;
 
         let tries = 0;
         while (tries < 4 && isRespondingRef.current) {
@@ -207,33 +184,30 @@ export function useVoiceAssistant() {
             stats: { timestamp: new Date().toISOString() },
           });
 
-          const finalAssistantMessage =
-            await chatServiceRef.current.getStreamedMessage(
-              {
-                messages: apiMessages,
-                model: llmConfig.modelID,
-                tools,
-              },
-              abortControllerRef.current.signal,
-              (chunk: string) => {
-                if (!isRespondingRef.current) {
-                  console.log("User canceled during streaming");
-                  return false;
-                }
-                content += chunk;
-                messages = updateLastMessage(messages, {
-                  role: "assistant",
-                  content,
-                });
-                setMessages(messages);
-                if (audible && textToSpeechServiceRef.current) {
-                  textToSpeechServiceRef.current.addText(
-                    removeCodeBlocks(chunk),
-                  );
-                }
-                return true;
-              },
-            );
+          const finalAssistantMessage = await chatServiceRef.current.getStreamedMessage(
+            {
+              messages: apiMessages,
+              model: llmConfig.modelID,
+              tools,
+            },
+            abortControllerRef.current.signal,
+            (chunk: string) => {
+              if (!isRespondingRef.current) {
+                console.log("User canceled during streaming");
+                return false;
+              }
+              content += chunk;
+              messages = updateLastMessage(messages, {
+                role: "assistant",
+                content,
+              });
+              setMessages(messages);
+              if (audible && textToSpeechServiceRef.current) {
+                textToSpeechServiceRef.current.addText(removeCodeBlocks(chunk));
+              }
+              return true;
+            },
+          );
 
           if (audible && textToSpeechServiceRef.current) {
             textToSpeechServiceRef.current.finalizePlayback();
@@ -245,10 +219,7 @@ export function useVoiceAssistant() {
           if (finalAssistantMessage.tool_calls) {
             for (const toolCall of finalAssistantMessage.tool_calls) {
               if (toolCall.type !== "function") continue;
-              const result = await callFunction(
-                toolCall.function,
-                appContextRef.current,
-              );
+              const result = await callFunction(toolCall.function, appContextRef.current);
               console.log("function result", result);
               const toolReply: Message = {
                 role: "tool",
@@ -276,9 +247,7 @@ export function useVoiceAssistant() {
         // sendMessage() was called with an empty user message.
         // This is used when a voice recording of the user completed, and we wait for the transcription service.
         // The chat then shows an empty user message with a progress-spinner.
-        setMessages((currentMessages) =>
-          appendMessage(currentMessages, userMessage),
-        );
+        setMessages((currentMessages) => appendMessage(currentMessages, userMessage));
         return;
       }
 
@@ -291,10 +260,7 @@ export function useVoiceAssistant() {
       abortControllerRef.current = new AbortController();
 
       setMessages((currentMessages) => {
-        const newMessages: Message[] = appendMessage(
-          currentMessages,
-          userMessage,
-        );
+        const newMessages: Message[] = appendMessage(currentMessages, userMessage);
 
         runCompletionsLoop(newMessages)
           .then((finalMessages) => {
