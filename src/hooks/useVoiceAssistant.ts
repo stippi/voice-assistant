@@ -200,43 +200,45 @@ export function useVoiceAssistant() {
             }),
           ];
 
-          const stream = chatServiceRef.current.stream(
-            {
-              messages: apiMessages,
-              model: llmConfig.modelID,
-              tools,
-            },
-            abortControllerRef.current.signal,
-          );
-
           let content = "";
           messages.push({
             role: "assistant",
             content,
             stats: { timestamp: new Date().toISOString() },
           });
-          for await (const chunk of stream) {
-            if (!isRespondingRef.current) {
-              console.log("User canceled during streaming");
-              break;
-            }
-            const delta = chunk.choices[0]?.delta?.content || "";
-            content += delta;
-            messages = updateLastMessage(messages, {
-              role: "assistant",
-              content,
-            });
-            setMessages(messages);
-            if (audible && textToSpeechServiceRef.current) {
-              textToSpeechServiceRef.current.addText(removeCodeBlocks(delta));
-            }
-          }
+
+          const finalAssistantMessage =
+            await chatServiceRef.current.getStreamedMessage(
+              {
+                messages: apiMessages,
+                model: llmConfig.modelID,
+                tools,
+              },
+              abortControllerRef.current.signal,
+              (chunk: string) => {
+                if (!isRespondingRef.current) {
+                  console.log("User canceled during streaming");
+                  return false;
+                }
+                content += chunk;
+                messages = updateLastMessage(messages, {
+                  role: "assistant",
+                  content,
+                });
+                setMessages(messages);
+                if (audible && textToSpeechServiceRef.current) {
+                  textToSpeechServiceRef.current.addText(
+                    removeCodeBlocks(chunk),
+                  );
+                }
+                return true;
+              },
+            );
 
           if (audible && textToSpeechServiceRef.current) {
             textToSpeechServiceRef.current.finalizePlayback();
           }
 
-          const finalAssistantMessage = await stream.finalMessage();
           messages = updateLastMessage(messages, finalAssistantMessage);
 
           // Check for tool calls
@@ -310,6 +312,10 @@ export function useVoiceAssistant() {
               console.log("User canceled");
             } else {
               console.error("Failed to stream chat completion", error);
+              isRespondingRef.current = false;
+              setResponding(false);
+              abortControllerRef.current = null;
+              setMessages(appendMessage(currentMessages, userMessage));
             }
           })
           .finally(() => {

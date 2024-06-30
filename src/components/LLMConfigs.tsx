@@ -13,7 +13,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   Switch,
 } from "@mui/material";
 import useConfigs from "../hooks/useConfigs";
@@ -52,9 +51,10 @@ export const LLMConfigs: React.FC = () => {
     setLLMConfigs(updatedConfigs);
   };
 
-  const disabled = llmConfigs.length === 0
-      || !selectedConfig
-      || llmConfigs.find((config) => config.id === selectedConfig) === null;
+  const disabled =
+    llmConfigs.length === 0 ||
+    !selectedConfig ||
+    llmConfigs.find((config) => config.id === selectedConfig) === null;
   const config = llmConfigs.find((config) => config.id === selectedConfig) || {
     name: "",
     apiEndPoint: "",
@@ -66,47 +66,58 @@ export const LLMConfigs: React.FC = () => {
   };
 
   return (
-    <Box style={{ display: "flex", flexDirection: "row", gap: "1rem", alignItems: "stretch" }}>
-      <Box style={{
-        minWidth: "14rem",
-        maxWidth: "14rem",
-        flexGrow: 1,
+    <Box
+      style={{
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
         gap: "1rem",
         alignItems: "stretch",
-        flexShrink: 0
-      }}>
-        <Paper sx={{
-          flex: 1,
-          overflow: "auto"
-        }}>
+      }}
+    >
+      <Box
+        style={{
+          minWidth: "14rem",
+          maxWidth: "14rem",
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          alignItems: "stretch",
+          flexShrink: 0,
+        }}
+      >
+        <Paper
+          sx={{
+            flex: 1,
+            overflow: "auto",
+          }}
+        >
           <List style={{ padding: 0 }}>
             {llmConfigs.map((config, index) => (
-                <ListItemButton
-                    key={index}
-                    selected={selectedConfig === config.id}
-                    onClick={() => setSelectedConfig(config.id)}
-                >
-                  <ListItemIcon>
-                    <Checkbox
-                        edge="start"
-                        checked={activeLLMConfig === config.id}
-                        tabIndex={-1}
-                        disableRipple
-                        onChange={() => setActiveLLMConfig(config.id)}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={config.name || "<unnamed>"} />
-                </ListItemButton>
+              <ListItemButton
+                key={index}
+                selected={selectedConfig === config.id}
+                onClick={() => setSelectedConfig(config.id)}
+              >
+                <ListItemIcon>
+                  <Checkbox
+                    edge="start"
+                    checked={activeLLMConfig === config.id}
+                    tabIndex={-1}
+                    disableRipple
+                    onChange={() => setActiveLLMConfig(config.id)}
+                  />
+                </ListItemIcon>
+                <ListItemText primary={config.name || "<unnamed>"} />
+              </ListItemButton>
             ))}
           </List>
         </Paper>
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
-              startIcon={<AddCircleIcon />}
-              onClick={handleAddConfig}
-              variant="contained"
+            startIcon={<AddCircleIcon />}
+            onClick={handleAddConfig}
+            variant="contained"
           >
             Add
           </Button>
@@ -120,7 +131,7 @@ export const LLMConfigs: React.FC = () => {
           minWidth: "14rem",
           minHeight: "100%",
           gap: "0.5rem",
-          flex: 1
+          flex: 1,
         }}
       >
         <TextField
@@ -158,7 +169,8 @@ export const LLMConfigs: React.FC = () => {
             }
           >
             <MenuItem value="OpenAI">OpenAI</MenuItem>
-            <MenuItem value="VertexAI">VertexAI</MenuItem>
+            <MenuItem value="Anthropic">Anthropic</MenuItem>
+            {/* <MenuItem value="VertexAI">VertexAI</MenuItem> */}
           </Select>
         </FormControl>
         <TextField
@@ -168,32 +180,16 @@ export const LLMConfigs: React.FC = () => {
           value={config.modelID}
           onChange={(e) => handleConfigChange("modelID", e.target.value)}
         />
-        <Stack spacing={2} direction="row" alignItems="center">
-          <FormControl>
-            <FormControlLabel
-              disabled={disabled}
-              checked={config.useTools}
-              control={<Switch color="primary" />}
-              label="Tools"
-              labelPlacement="end"
-              onChange={() =>
-                handleConfigChange("useTools", !config.useTools)
-              }
-            />
-          </FormControl>
-          <FormControl>
-            <FormControlLabel
-              disabled={disabled}
-              checked={config.useStreaming}
-              control={<Switch color="primary" />}
-              label="Streaming"
-              labelPlacement="end"
-              onChange={() =>
-                handleConfigChange("useStreaming", !config.useStreaming)
-              }
-            />
-          </FormControl>
-        </Stack>
+        <FormControl>
+          <FormControlLabel
+            disabled={disabled}
+            checked={config.useTools}
+            control={<Switch color="primary" />}
+            label="Tools"
+            labelPlacement="end"
+            onChange={() => handleConfigChange("useTools", !config.useTools)}
+          />
+        </FormControl>
       </Box>
     </Box>
   );
