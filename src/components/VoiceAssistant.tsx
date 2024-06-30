@@ -189,10 +189,7 @@ async function streamChatCompletion(
       rawContent += newContent;
       content = removeCodeBlocks(rawContent);
       if (rawContent !== "") {
-        setMessages([
-          ...currentMessages,
-          { role: "assistant", content: rawContent },
-        ]);
+        setMessages([...currentMessages, { role: "assistant", content: rawContent }]);
       }
 
       playNextSentences(false);
@@ -200,10 +197,7 @@ async function streamChatCompletion(
   } else {
     rawContent = completionResponse!.choices[0].message.content || "";
     content = removeCodeBlocks(rawContent);
-    setMessages([
-      ...currentMessages,
-      { role: "assistant", content: rawContent },
-    ]);
+    setMessages([...currentMessages, { role: "assistant", content: rawContent }]);
   }
 
   playNextSentences(true);
@@ -257,8 +251,7 @@ async function streamChatCompletionLoop(
   while (tries < 4) {
     let playbackState: Spotify.PlaybackState | null = null;
     if (appContextRef.current.spotify) {
-      playbackState =
-        await appContextRef.current.spotify.player.getCurrentState();
+      playbackState = await appContextRef.current.spotify.player.getCurrentState();
     }
     const systemMessage = generateSystemMessage(
       audible,
@@ -278,9 +271,7 @@ async function streamChatCompletionLoop(
     const options = {
       messages,
       model: llmConfig.modelID,
-      tools: llmConfig.useTools
-        ? await getTools(settingsRef.current, appContextRef.current)
-        : undefined,
+      tools: llmConfig.useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined,
     };
     let response = undefined;
     let stream = undefined;
@@ -305,10 +296,7 @@ async function streamChatCompletionLoop(
       cancelAudioRef,
     );
     const lastMessage = currentMessages[currentMessages.length - 1];
-    if (
-      lastMessage.role === "assistant" &&
-      typeof lastMessage.content === "string"
-    ) {
+    if (lastMessage.role === "assistant" && typeof lastMessage.content === "string") {
       break;
     }
     console.log("Restarting chat completion loop");
@@ -319,11 +307,7 @@ async function streamChatCompletionLoop(
 
 function appendMessage(messages: Message[], message: Message) {
   const newMessages = messages.filter((message) => message.content !== "");
-  if (
-    messages.length > 0 &&
-    messages[messages.length - 1].content === "" &&
-    message.content === ""
-  ) {
+  if (messages.length > 0 && messages[messages.length - 1].content === "" && message.content === "") {
     return newMessages;
   }
   newMessages.push(message);
@@ -345,9 +329,7 @@ export default function VoiceAssistant({ idle }: Props) {
   const openAiRef = React.useRef<OpenAI>(openAi);
   const activeLLMConfigRef = React.useRef<LLMConfig>();
   useEffect(() => {
-    activeLLMConfigRef.current = llmConfigs.find(
-      (config) => config.id === activeLLMConfig,
-    ) || {
+    activeLLMConfigRef.current = llmConfigs.find((config) => config.id === activeLLMConfig) || {
       id: "",
       name: "fallback",
       modelID: modelName,
@@ -381,11 +363,7 @@ export default function VoiceAssistant({ idle }: Props) {
 
   const spotifyContext = useSpotifyContext();
   React.useEffect(() => {
-    if (
-      spotifyContext.player &&
-      spotifyContext.accessToken &&
-      spotifyContext.deviceId
-    ) {
+    if (spotifyContext.player && spotifyContext.accessToken && spotifyContext.deviceId) {
       appContextRef.current.setSpotify({
         player: spotifyContext.player,
         accessToken: spotifyContext.accessToken,
@@ -441,10 +419,7 @@ export default function VoiceAssistant({ idle }: Props) {
         },
       };
       setMessages((currentMessages) => {
-        const newMessages: Message[] = appendMessage(
-          currentMessages,
-          userMessage,
-        );
+        const newMessages: Message[] = appendMessage(currentMessages, userMessage);
 
         streamChatCompletionLoop(
           openAiRef.current,
