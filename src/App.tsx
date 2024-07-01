@@ -1,7 +1,7 @@
 import "./App.css";
 import { GoogleContextProvider } from "./contexts/GoogleContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
-import VoiceAssistant from "./components/VoiceAssistantLean";
+import VoiceAssistant from "./components/VoiceAssistant";
 import { ChatsProvider } from "./contexts/ChatsContext";
 import { ConfigsProvider } from "./contexts/ConfigsContext";
 import { Sidebar } from "./components/Sidebar";
