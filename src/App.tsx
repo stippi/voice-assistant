@@ -1,17 +1,18 @@
-import './App.css';
-import {GoogleContextProvider} from "./contexts/GoogleContext";
-import {SettingsProvider} from "./contexts/SettingsContext";
+import "./App.css";
+import { GoogleContextProvider } from "./contexts/GoogleContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import VoiceAssistant from "./components/VoiceAssistant";
-import {ChatsProvider} from "./contexts/ChatsContext";
-import {Sidebar} from "./components/Sidebar";
-import {WindowFocusProvider} from "./contexts/WindowFocusContext";
-import {AppContextProvider} from "./contexts/AppContext";
-import {createTheme, ThemeProvider} from '@mui/material/styles';
+import { ChatsProvider } from "./contexts/ChatsContext";
+import { ConfigsProvider } from "./contexts/ConfigsContext";
+import { Sidebar } from "./components/Sidebar";
+import { WindowFocusProvider } from "./contexts/WindowFocusContext";
+import { AppContextProvider } from "./contexts/AppContext";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import useSettings from "./hooks/useSettings";
-import {Dashboard} from "./components/Dashboard.tsx";
-import {SpotifyContextProvider} from "./contexts/SpotifyContext.tsx";
-import {MicrosoftContextProvider} from "./contexts/MicrosoftContext.tsx";
-import useAppContext from "./hooks/useAppContext.tsx";
+import { Dashboard } from "./components/Dashboard";
+import { SpotifyContextProvider } from "./contexts/SpotifyContext";
+import { MicrosoftContextProvider } from "./contexts/MicrosoftContext";
+import useAppContext from "./hooks/useAppContext";
 
 const theme = createTheme({
   components: {
@@ -23,76 +24,74 @@ const theme = createTheme({
     MuiFormControlLabel: {
       styleOverrides: {
         label: {
-          fontSize: '14px'
-        }
-      }
+          fontSize: "14px",
+        },
+      },
     },
     MuiFormLabel: {
       styleOverrides: {
         root: {
-          fontSize: '14px'
-        }
-      }
+          fontSize: "14px",
+        },
+      },
     },
     MuiFormHelperText: {
       styleOverrides: {
         root: {
-          fontSize: '11px'
-        }
-      }
+          fontSize: "11px",
+        },
+      },
     },
     MuiInputBase: {
       styleOverrides: {
         input: {
-          fontSize: '14px'
-        }
-      }
+          fontSize: "14px",
+        },
+      },
     },
     MuiMenuItem: {
       styleOverrides: {
         root: {
-          fontSize: '14px'
-        }
-      }
+          fontSize: "14px",
+        },
+      },
     },
     MuiSlider: {
       styleOverrides: {
         markLabel: {
-          fontSize: '14px'
-        }
-      }
+          fontSize: "14px",
+        },
+      },
     },
   },
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: 'rgb(102, 157, 246)'
+      main: "rgb(102, 157, 246)",
     },
     text: {
-      primary: 'rgb(40, 40, 40)',
+      primary: "rgb(40, 40, 40)",
     },
     background: {
-      paper: 'rgb(235, 235, 235)'
+      paper: "rgb(235, 235, 235)",
     },
-  }
+  },
 });
 
 function AssistantWithOptionalIntegrations() {
-  const {settings} = useSettings();
-  const {idle} = useAppContext();
-  
-  const idleMode = idle && settings.enableGooglePhotos;
-  
+  const { settings } = useSettings();
+  const { idle } = useAppContext();
+
+  const idleMode = idle && settings.enableGoogle && settings.enableGooglePhotos;
+
   return (
     <ChatsProvider>
       <GoogleContextProvider enable={settings.enableGoogle}>
         <MicrosoftContextProvider enable={settings.enableMicrosoft}>
           <SpotifyContextProvider enable={settings.enableSpotify}>
-            
             {!idleMode && <Sidebar />}
             <VoiceAssistant idle={idleMode} />
             <Dashboard />
-
           </SpotifyContextProvider>
         </MicrosoftContextProvider>
       </GoogleContextProvider>
@@ -106,7 +105,9 @@ export default function App() {
       <WindowFocusProvider>
         <AppContextProvider>
           <SettingsProvider>
-            <AssistantWithOptionalIntegrations />
+            <ConfigsProvider>
+              <AssistantWithOptionalIntegrations />
+            </ConfigsProvider>
           </SettingsProvider>
         </AppContextProvider>
       </WindowFocusProvider>

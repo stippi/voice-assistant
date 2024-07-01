@@ -1,186 +1,186 @@
 /* Inter Normal */
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Thin.otf) format("opentype");
-  font-weight: 100;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Thin.otf) format("opentype");
+    font-weight: 100;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-ExtraLight.otf) format("opentype");
-  font-weight: 200;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-ExtraLight.otf) format("opentype");
+    font-weight: 200;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Light.otf) format("opentype");
-  font-weight: 300;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Light.otf) format("opentype");
+    font-weight: 300;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Regular.otf) format("opentype");
-  font-weight: 400;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Regular.otf) format("opentype");
+    font-weight: 400;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Medium.otf) format("opentype");
-  font-weight: 500;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Medium.otf) format("opentype");
+    font-weight: 500;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-SemiBold.otf) format("opentype");
-  font-weight: 600;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-SemiBold.otf) format("opentype");
+    font-weight: 600;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Bold.otf) format("opentype");
-  font-weight: 700;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Bold.otf) format("opentype");
+    font-weight: 700;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-ExtraBold.otf) format("opentype");
-  font-weight: 800;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-ExtraBold.otf) format("opentype");
+    font-weight: 800;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Black.otf) format("opentype");
-  font-weight: 900;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Black.otf) format("opentype");
+    font-weight: 900;
+    font-style: normal;
 }
 
 /* Inter Italic */
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-ThinItalic.otf) format("opentype");
-  font-weight: 100;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-ThinItalic.otf) format("opentype");
+    font-weight: 100;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-ExtraLightItalic.otf) format("opentype");
-  font-weight: 200;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-ExtraLightItalic.otf) format("opentype");
+    font-weight: 200;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-LightItalic.otf) format("opentype");
-  font-weight: 300;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-LightItalic.otf) format("opentype");
+    font-weight: 300;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-Italic.otf) format("opentype");
-  font-weight: 400;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-Italic.otf) format("opentype");
+    font-weight: 400;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-MediumItalic.otf) format("opentype");
-  font-weight: 500;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-MediumItalic.otf) format("opentype");
+    font-weight: 500;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-SemiBoldItalic.otf) format("opentype");
-  font-weight: 600;
-  font-style: normal;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-SemiBoldItalic.otf) format("opentype");
+    font-weight: 600;
+    font-style: normal;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-BoldItalic.otf) format("opentype");
-  font-weight: 700;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-BoldItalic.otf) format("opentype");
+    font-weight: 700;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-ExtraBoldItalic.otf) format("opentype");
-  font-weight: 800;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-ExtraBoldItalic.otf) format("opentype");
+    font-weight: 800;
+    font-style: italic;
 }
 @font-face {
-  font-family: Inter;
-  src: url(assets/fonts/inter/Inter-BlackItalic.otf) format("opentype");
-  font-weight: 900;
-  font-style: italic;
+    font-family: Inter;
+    src: url(assets/fonts/inter/Inter-BlackItalic.otf) format("opentype");
+    font-weight: 900;
+    font-style: italic;
 }
 
 @font-face {
-  font-family: KomikaAxis;
-  src: url(assets/fonts/komika-axis/KOMIKAX.ttf) format("truetype");
-  font-weight: 500;
-  font-style: normal;
+    font-family: KomikaAxis;
+    src: url(assets/fonts/komika-axis/KOMIKAX.ttf) format("truetype");
+    font-weight: 500;
+    font-style: normal;
 }
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-size: 18px;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
 
-  --sidebar-width: 230px;
-  --dashboard-width: 0;
+    --sidebar-width: 230px;
+    --dashboard-width: 0;
 }
 
 a {
-  color: rgb(14,138,214);
-  text-decoration: inherit;
+    color: rgb(14, 138, 214);
+    text-decoration: inherit;
 }
 a:hover {
-  color: rgb(58,166,255);
+    color: rgb(58, 166, 255);
 }
 
 html {
-  overflow-y: scroll;
+    overflow-y: scroll;
 }
 
 body {
-  background-color: #e1e1e1;
-  margin: 0;
-  display: flex;
-  min-width: 320px;
-  min-height: 100vh;
+    background-color: #e1e1e1;
+    margin: 0;
+    display: flex;
+    min-width: 320px;
+    min-height: 100vh;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+    font-size: 3.2em;
+    line-height: 1.1;
 }
 
 .gm-style-mtc button {
-  border-radius: 0;
+    border-radius: 0;
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #e1e1e1;
-  }
+    :root {
+        color: #213547;
+        background-color: #e1e1e1;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color: #213547;
+        background-color: #e1e1e1;
+    }
 }
 
 /* The next two blocks are supposed to fix a layout issue on Safari when the LLM streams markdown lists in a certain way. */
 li {
-  margin: 0;
-  padding: 0;
+    margin: 0;
+    padding: 0;
 }
-
-/*li p {
-  display: inline-block;
-  margin: 0;
-  padding: 0;
-}*/

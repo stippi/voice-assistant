@@ -31,10 +31,11 @@ import { Voice, Personality, Settings } from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
 import { BuiltInKeyword } from "@picovoice/porcupine-web";
 import React, { useState } from "react";
-import useAppContext from "../hooks/useAppContext.tsx";
+import useAppContext from "../hooks/useAppContext";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { UserVoiceEnroll } from "./UserVoiceEnroll.tsx";
-import { User } from "../model/user.ts";
+import { LLMConfigs } from "./LLMConfigs";
+import { UserVoiceEnroll } from "./UserVoiceEnroll";
+import { User } from "../model/user";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -322,41 +323,44 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
             <Tab label="Assistant" {...a11yProps(0)} />
             <Tab label="Integrations" {...a11yProps(1)} />
             <Tab label="Users" {...a11yProps(2)} />
+            <Tab label="Models" {...a11yProps(3)} />
           </Tabs>
         </Box>
 
         <CustomTabPanel value={tabIndex} index={0}>
-          <FormControl>
-            <FormControlLabel
-              checked={settings.openMic}
-              control={<Switch color="primary" />}
-              label="Open Mic"
-              labelPlacement="end"
-              onChange={() =>
-                setSettings({ ...settings, openMic: !settings.openMic })
-              }
-            />
-          </FormControl>
-          <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
-            <InputLabel>Wake word</InputLabel>
-            <Select
-              value={settings.triggerWord.valueOf()}
-              label="Personality"
-              disabled={!settings.openMic}
-              onChange={(event) => {
-                setSettings({
-                  ...settings,
-                  triggerWord: event.target.value as BuiltInKeyword,
-                });
-              }}
-            >
-              {triggerWords.map((word, index) => (
-                <MenuItem key={index} value={word}>
-                  {word}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Stack spacing={2} direction="row" alignItems="center">
+            <FormControl>
+              <FormControlLabel
+                checked={settings.openMic}
+                control={<Switch color="primary" />}
+                label="Open Mic"
+                labelPlacement="end"
+                onChange={() =>
+                  setSettings({ ...settings, openMic: !settings.openMic })
+                }
+              />
+            </FormControl>
+            <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
+              <InputLabel>Wake word</InputLabel>
+              <Select
+                value={settings.triggerWord.valueOf()}
+                label="Wake word"
+                disabled={!settings.openMic}
+                onChange={(event) => {
+                  setSettings({
+                    ...settings,
+                    triggerWord: event.target.value as BuiltInKeyword,
+                  });
+                }}
+              >
+                {triggerWords.map((word, index) => (
+                  <MenuItem key={index} value={word}>
+                    {word}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
           <FormControl>
             <FormControlLabel
               checked={settings.expectResponse}
@@ -480,6 +484,9 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
         </CustomTabPanel>
         <CustomTabPanel value={tabIndex} index={2}>
           <UserList />
+        </CustomTabPanel>
+        <CustomTabPanel value={tabIndex} index={3}>
+          <LLMConfigs />
         </CustomTabPanel>
       </Box>
     </Popover>
