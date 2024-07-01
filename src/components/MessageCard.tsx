@@ -105,11 +105,7 @@ const MessageContent = React.memo(({ role, content, tool_calls }: Message) => {
           return <li {...rest}>{convertTextChildrenToMath(children)}</li>;
         },
         hr() {
-          return (
-            <hr
-              style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.2)" }}
-            />
-          );
+          return <hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.2)" }} />;
         },
         a(props) {
           const { children, ...rest } = props;
@@ -127,21 +123,11 @@ const MessageContent = React.memo(({ role, content, tool_calls }: Message) => {
       <>
         {markdown}
         {tool_calls.filter(showToolCallInChat).map((tool_call, index) => {
-          console.log(
-            "Displaying function call in chat:",
-            tool_call.function.name,
-          );
+          console.log("Displaying function call in chat:", tool_call.function.name);
           switch (tool_call.function.name) {
             case "show_image": {
-              const args: { image: string } = JSON.parse(
-                tool_call.function.arguments,
-              );
-              return (
-                <div
-                  key={index}
-                  dangerouslySetInnerHTML={{ __html: args.image }}
-                />
-              );
+              const args: { image: string } = JSON.parse(tool_call.function.arguments);
+              return <div key={index} dangerouslySetInnerHTML={{ __html: args.image }} />;
             }
             case "show_map": {
               const args: {
@@ -150,12 +136,7 @@ const MessageContent = React.memo(({ role, content, tool_calls }: Message) => {
                 zoom: number;
               } = JSON.parse(tool_call.function.arguments);
               return (
-                <GoogleMapsCard
-                  key={index}
-                  latitude={args.latitude}
-                  longitude={args.longitude}
-                  zoom={args.zoom}
-                />
+                <GoogleMapsCard key={index} latitude={args.latitude} longitude={args.longitude} zoom={args.zoom} />
               );
             }
             case "show_directions": {
@@ -191,12 +172,8 @@ const MessageContent = React.memo(({ role, content, tool_calls }: Message) => {
                     origin: args.origin,
                     destination: args.destination,
                     transitOptions: {
-                      arrivalTime: args.arrivalTime
-                        ? new Date(args.arrivalTime)
-                        : undefined,
-                      departureTime: args.departureTime
-                        ? new Date(args.departureTime)
-                        : undefined,
+                      arrivalTime: args.arrivalTime ? new Date(args.arrivalTime) : undefined,
+                      departureTime: args.departureTime ? new Date(args.departureTime) : undefined,
                       modes: args.modes,
                       routingPreference: args.routingPreference,
                     },
@@ -214,31 +191,16 @@ const MessageContent = React.memo(({ role, content, tool_calls }: Message) => {
 });
 
 export const MessageCard = React.forwardRef(
-  (
-    { className, message, deleteMessage, regenerateMessage }: Props,
-    ref: React.ForwardedRef<HTMLDivElement>,
-  ) => {
+  ({ className, message, deleteMessage, regenerateMessage }: Props, ref: React.ForwardedRef<HTMLDivElement>) => {
     const [hovered, setHovered] = React.useState(false);
     const onMouseEnter = () => setHovered(true);
     const onMouseLeave = () => setHovered(false);
 
     return (
       <div className={className} ref={ref}>
-        {message.role === "user" ? (
-          <BsFillPersonFill className="role" />
-        ) : (
-          <RiRobot2Fill className="role" />
-        )}
-        <div
-          className="content"
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-        >
-          <MessageContent
-            role={message.role}
-            content={message.content}
-            tool_calls={message.tool_calls}
-          />
+        {message.role === "user" ? <BsFillPersonFill className="role" /> : <RiRobot2Fill className="role" />}
+        <div className="content" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+          <MessageContent role={message.role} content={message.content} tool_calls={message.tool_calls} />
           <ButtonGroup
             disableElevation
             variant="outlined"
@@ -279,7 +241,7 @@ function toHtml(text: string) {
   text = sections
     .map((section) => {
       // If the section has leading whitespace anywhere, wrap it in <pre>.
-      if (section.match(/(^|\n)[ \t]+/)) {
+      if (sections.length > 1 && section.match(/(^|\n)[ \t]+/)) {
         return `<pre>${section}</pre>`;
       } else {
         // Just regular newlines, wrap in <p>.
