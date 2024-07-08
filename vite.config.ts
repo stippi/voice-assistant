@@ -28,6 +28,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/anthropic/, ""),
       },
+      "/ollama": {
+        target: "http://localhost:11434/v1/",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ollama/, ""),
+      },
     },
   },
 });

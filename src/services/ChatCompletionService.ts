@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
-// import { VertexAI } from "@google-cloud/vertexai";
 import { LLMConfig } from "../model/llmConfig";
+import { loginFlow } from "../integrations/google";
 
 export abstract class ChatCompletionService {
   abstract getStreamedMessage(
@@ -158,38 +158,207 @@ export class AnthropicChatCompletionService extends ChatCompletionService {
   }
 }
 
-// export class VertexAIChatCompletionService extends ChatCompletionService {
-//     private client: VertexAI;
-//
-//     constructor(projectId: string, location: string) {
-//         super();
-//         this.client = new VertexAI({ project: projectId, location });
-//     }
-//
-//     async *streamChatCompletion(
-//         options: ChatCompletionOptions,
-//         signal: AbortSignal
-//     ): AsyncGenerator<StreamChunk, FinalMessage, unknown> {
-//         const model = this.client.preview.getGenerativeModel({ model: options.model });
-//         const chat = model.startChat();
-//         const lastMessage = options.messages[options.messages.length - 1];
-//         const result = await chat.sendMessageStream(lastMessage.content as string);
-//
-//         let finalContent = "";
-//
-//         for await (const chunk of result.stream) {
-//             finalContent += chunk.candidates[0]?.content || "";
-//             yield {
-//                 choices: [{ delta: { content: chunk.candidates[0]?.content || "" } }],
-//             };
-//         }
-//
-//         return {
-//             role: "assistant",
-//             content: finalContent,
-//         } as FinalMessage;
-//     }
-// }
+interface FunctionCall {
+  name: string;
+  args: never;
+}
+
+interface GeminiMessage {
+  role: string;
+  parts: {
+    text?: string;
+    functionResponse?: {
+      name: string;
+      response: {
+        name: string;
+        content: never;
+      };
+    };
+    functionCall?: FunctionCall;
+  }[];
+}
+
+interface Candidate {
+  content: {
+    role: string;
+    parts: {
+      text?: string;
+      functionCall?: FunctionCall;
+    }[];
+  };
+  finishReason: string;
+}
+
+interface GeminiResponse {
+  candidates: Candidate[];
+  usageMetadata: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+}
+
+export class VertexAIChatCompletionService extends ChatCompletionService {
+  private projectId: string;
+  private region: string;
+  constructor(projectId: string, region: string) {
+    super();
+    this.projectId = projectId;
+    this.region = region;
+  }
+
+  private convertRole(role: string) {
+    switch (role) {
+      case "assistant":
+        return "model";
+      case "tool":
+        return "function";
+      default:
+        return "user";
+    }
+  }
+
+  async getStreamedMessage(
+    options: OpenAI.ChatCompletionCreateParams,
+    _: AbortSignal,
+    callback: (chunk: string) => void,
+  ): Promise<OpenAI.ChatCompletionMessage> {
+    const accessToken = await loginFlow.getAccessToken();
+
+    const systemMessage = options.messages.find((message) => message.role === "system");
+
+    const wrappedSystemMessage = "Hi. I'll explain how you should behave:\n" + systemMessage!.content;
+    const transformedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: "user", content: wrappedSystemMessage },
+      { role: "assistant", content: "Ok, let's start! Please continue in your native language." },
+      ...options.messages,
+    ];
+
+    const url = `https://${this.region}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.region}/publishers/google/models/${options.model}:streamGenerateContent?alt=sse`;
+    const body = {
+      contents: transformedMessages.map((message) => {
+        const converted: GeminiMessage = {
+          role: this.convertRole(message.role),
+          parts: [],
+        };
+        if (message.role === "tool") {
+          converted.parts.push({
+            functionResponse: {
+              name: message.name,
+              response: {
+                name: message.name,
+                content: JSON.parse(message.content || "{}") as never,
+              },
+            },
+          });
+        } else if (message.role === "assistant" && message.tool_calls) {
+          for (const toolCall of message.tool_calls) {
+            converted.parts.push({
+              functionCall: {
+                name: toolCall.function.name,
+                args: JSON.parse(toolCall.function.arguments) as never,
+              },
+            });
+          }
+        } else if (message.content) {
+          converted.parts.push({
+            text: message.content,
+          });
+        }
+        return converted;
+      }),
+      tools: [
+        {
+          functionDeclarations: tools.map((tool) => tool.function),
+        },
+      ],
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Failed to fetch from Gemini: ${response.status} ${response.statusText}`);
+    }
+
+    let content = "";
+    let functionCall: FunctionCall | undefined;
+    for await (const event of this.fetchServerSentEvents(response.body.getReader())) {
+      const delta: GeminiResponse = JSON.parse(event.data);
+      if (delta.candidates?.[0].content?.parts?.[0].text) {
+        content += delta.candidates[0].content.parts[0].text;
+        callback(delta.candidates[0].content.parts[0].text);
+      }
+      if (delta.candidates?.[0].content?.parts?.[0].functionCall) {
+        functionCall = delta.candidates[0].content.parts[0].functionCall;
+      }
+    }
+
+    const finalMessage: OpenAI.ChatCompletionMessage = {
+      role: "assistant",
+      content: content ? content : null,
+    };
+    if (functionCall) {
+      finalMessage.tool_calls = [
+        {
+          id: "unused",
+          type: "function",
+          function: {
+            name: functionCall.name,
+            arguments: JSON.stringify(functionCall.args),
+          },
+        },
+      ];
+    }
+
+    return finalMessage;
+  }
+
+  async *fetchServerSentEvents(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncIterableIterator<MessageEvent> {
+    const decoder = new TextDecoder();
+    let data = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          // Server closed the stream
+          break;
+        }
+
+        // Decode the chunk and add it to the data
+        const text = decoder.decode(value, { stream: true });
+        data += text;
+        //console.log('chunk:', text);
+
+        // Split the data into messages
+        let eolIndex;
+        while ((eolIndex = data.indexOf("\r\n\r\n")) >= 0) {
+          const message = data.substring("data: ".length, eolIndex).trim();
+          data = data.substring(eolIndex + 4);
+
+          if (message) {
+            const event = new MessageEvent("message", {
+              data: message.split("\n").pop(),
+            });
+            // Hand the result to the iterator
+            yield event;
+          }
+        }
+      }
+      //console.log("data after exiting loop", data);
+    } finally {
+      reader.releaseLock();
+    }
+  }
+}
 
 export function createChatCompletionService(config: LLMConfig): ChatCompletionService {
   switch (config.apiCompatibility) {
@@ -197,8 +366,8 @@ export function createChatCompletionService(config: LLMConfig): ChatCompletionSe
       return new OpenAIChatCompletionService(config.apiKey, config.apiEndPoint);
     case "Anthropic":
       return new AnthropicChatCompletionService(config.apiKey, config.apiEndPoint);
-    // case "VertexAI":
-    //   return new VertexAIChatCompletionService(config.projectID || "", config.location || "");
+    case "VertexAI":
+      return new VertexAIChatCompletionService(config.projectID || "", config.region || "");
     default:
       throw new Error(`Unsupported API compatibility: ${config.apiCompatibility}`);
   }

@@ -4,8 +4,8 @@ export type LLMConfig = {
 
   apiEndPoint: string;
   apiKey: string;
-  projectID?: string;
-  location?: string;
+  projectID?: string; // Google VertexAI
+  region?: string; // Google VertexAI
 
   apiCompatibility: "Anthropic" | "OpenAI" | "VertexAI";
 

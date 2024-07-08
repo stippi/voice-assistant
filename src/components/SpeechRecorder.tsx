@@ -38,7 +38,7 @@ if (MediaRecorder.isTypeSupported("audio/webm")) {
   console.error("No supported MIME type for MediaRecorder found.");
 }
 
-const silenceTimeout = 2500;
+const silenceTimeout = 1500;
 
 const SpeechRecorder = ({
   sendMessage,
