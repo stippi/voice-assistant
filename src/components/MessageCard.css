@@ -9,7 +9,7 @@
 .role {
     position: absolute;
     left: -2.5rem;
-    top: 1rem;
+    top: 1.33rem;
     width: 1.5rem;
     height: 1.5rem;
     color: rgba(0, 0, 0, 0.25);
@@ -27,17 +27,17 @@
 }
 
 .content pre {
-    font-size: 0.90em;
+    font-size: 0.9em;
 }
 
 .content code {
-    font-size: 0.90em;
+    font-size: 0.9em;
     font-weight: bold;
 }
 
 .content pre code {
     font-weight: normal;
-    background-color: #dadada!important;
+    background-color: #dadada !important;
 }
 
 .content code > span {
