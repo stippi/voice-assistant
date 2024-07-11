@@ -30,6 +30,8 @@ export const LLMConfigs: React.FC = () => {
       name: "",
       apiEndPoint: "",
       apiKey: "",
+      projectID: "",
+      region: "",
       apiCompatibility: "OpenAI",
       modelID: "",
       useTools: true,
@@ -53,6 +55,8 @@ export const LLMConfigs: React.FC = () => {
     name: "",
     apiEndPoint: "",
     apiKey: "",
+    projectID: "",
+    region: "",
     apiCompatibility: "OpenAI",
     modelID: "",
     useTools: true,
@@ -131,20 +135,6 @@ export const LLMConfigs: React.FC = () => {
           value={config.name}
           onChange={(e) => handleConfigChange("name", e.target.value)}
         />
-        <TextField
-          label="API endpoint"
-          variant="filled"
-          disabled={disabled}
-          value={config.apiEndPoint}
-          onChange={(e) => handleConfigChange("apiEndPoint", e.target.value)}
-        />
-        <TextField
-          label="API key"
-          variant="filled"
-          disabled={disabled}
-          value={config.apiKey}
-          onChange={(e) => handleConfigChange("apiKey", e.target.value)}
-        />
         <FormControl fullWidth margin="normal">
           <InputLabel>API compatibility</InputLabel>
           <Select
@@ -153,11 +143,47 @@ export const LLMConfigs: React.FC = () => {
             value={config.apiCompatibility}
             onChange={(e) => handleConfigChange("apiCompatibility", e.target.value as LLMConfig["apiCompatibility"])}
           >
-            <MenuItem value="OpenAI">OpenAI</MenuItem>
             <MenuItem value="Anthropic">Anthropic</MenuItem>
-            {/* <MenuItem value="VertexAI">VertexAI</MenuItem> */}
+            <MenuItem value="OpenAI">OpenAI</MenuItem>
+            <MenuItem value="VertexAI">VertexAI</MenuItem>
           </Select>
         </FormControl>
+        {config.apiCompatibility !== "VertexAI" && (
+          <TextField
+            label="API endpoint"
+            variant="filled"
+            disabled={disabled}
+            value={config.apiEndPoint}
+            onChange={(e) => handleConfigChange("apiEndPoint", e.target.value)}
+          />
+        )}
+        {config.apiCompatibility !== "VertexAI" && (
+          <TextField
+            label="API key"
+            variant="filled"
+            disabled={disabled}
+            value={config.apiKey}
+            onChange={(e) => handleConfigChange("apiKey", e.target.value)}
+          />
+        )}
+        {config.apiCompatibility === "VertexAI" && (
+          <TextField
+            label="Project ID"
+            variant="filled"
+            disabled={disabled}
+            value={config.projectID}
+            onChange={(e) => handleConfigChange("projectID", e.target.value)}
+          />
+        )}
+        {config.apiCompatibility === "VertexAI" && (
+          <TextField
+            label="Region"
+            variant="filled"
+            disabled={disabled}
+            value={config.region}
+            onChange={(e) => handleConfigChange("region", e.target.value)}
+          />
+        )}
         <TextField
           label="Model ID"
           variant="filled"
