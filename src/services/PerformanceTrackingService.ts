@@ -1,17 +1,17 @@
 import { indexDbGet, indexDbPut } from "../utils/indexDB";
 
 export interface PerformanceTrackingService {
-  trackMessageCreation(id: string, timestamp: number): Promise<void>;
+  trackTimestamp(id: string, what: string, timestamp: number): Promise<void>;
 }
 
 type MessageEntry = {
-  creationTime: number;
+  [key: string]: number;
 };
 
 type PerformanceRecords = Record<string, MessageEntry>;
 
 abstract class BasePerformanceTrackingService implements PerformanceTrackingService {
-  abstract trackMessageCreation(id: string, timestamp: number): Promise<void>;
+  abstract trackTimestamp(id: string, what: string, timestamp: number): Promise<void>;
 }
 
 class IndexDbPerformanceTrackingService extends BasePerformanceTrackingService {
@@ -19,9 +19,9 @@ class IndexDbPerformanceTrackingService extends BasePerformanceTrackingService {
     super();
   }
 
-  async trackMessageCreation(id: string, timestamp: number): Promise<void> {
+  async trackTimestamp(id: string, what: string, timestamp: number): Promise<void> {
     const performanceRecords = (await indexDbGet<PerformanceRecords>("performance-records")) || {};
-    performanceRecords[id] = { ...performanceRecords[id], creationTime: timestamp };
+    performanceRecords[id] = { ...performanceRecords[id], [what]: timestamp };
     await indexDbPut("performance-records", performanceRecords);
   }
 }
