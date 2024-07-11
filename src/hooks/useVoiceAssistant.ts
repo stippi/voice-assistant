@@ -21,6 +21,7 @@ import {
 } from "../config";
 import { removeCodeBlocks } from "../utils/removeCodeBlocks.ts";
 import useSpotifyContext from "./useSpotifyContext.tsx";
+import { createPerformanceTrackingService } from "../services/PerformanceTrackingService.ts";
 
 const fallbackConfig: LLMConfig = {
   id: "",
@@ -81,6 +82,7 @@ export function useVoiceAssistant() {
 
   const chatServiceRef = useRef<ChatCompletionService | null>(null);
   const textToSpeechServiceRef = useRef<TextToSpeechService | null>(null);
+  const performanceTrackingServiceRef = useRef(createPerformanceTrackingService());
   const abortControllerRef = useRef<AbortController | null>(null);
   const isRespondingRef = useRef<boolean>(false);
 
@@ -124,7 +126,7 @@ export function useVoiceAssistant() {
   }, [currentChat]);
 
   const sendMessage = useCallback(
-    async (message: string, audible: boolean) => {
+    async (id: string, message: string, audible: boolean) => {
       if (isRespondingRef.current) {
         // Prevent any new user messages while already responding.
         return;
@@ -171,18 +173,20 @@ export function useVoiceAssistant() {
 
           const apiMessages: OpenAI.ChatCompletionMessageParam[] = [
             systemMessage,
-            ...messages.map((m) => {
-              delete m.stats;
+            ...messages.map((m: Partial<Message>) => {
+              delete m.id;
               return m;
             }),
           ];
 
           let content = "";
           messages.push({
+            id,
             role: "assistant",
             content,
-            stats: { timestamp: new Date().toISOString() },
           });
+
+          performanceTrackingServiceRef.current.trackTimestamp(id, "streaming-started", new Date().getTime());
 
           const finalAssistantMessage = await chatServiceRef.current.getStreamedMessage(
             {
@@ -196,8 +200,16 @@ export function useVoiceAssistant() {
                 console.log("User canceled during streaming");
                 return false;
               }
+              if (content === "" && chunk !== "") {
+                performanceTrackingServiceRef.current.trackTimestamp(
+                  id,
+                  "first-content-received",
+                  new Date().getTime(),
+                );
+              }
               content += chunk;
               messages = updateLastMessage(messages, {
+                id,
                 role: "assistant",
                 content,
               });
@@ -209,11 +221,13 @@ export function useVoiceAssistant() {
             },
           );
 
+          performanceTrackingServiceRef.current.trackTimestamp(id, "streaming-finished", new Date().getTime());
+
           if (audible && textToSpeechServiceRef.current) {
             textToSpeechServiceRef.current.finalizePlayback();
           }
 
-          messages = updateLastMessage(messages, finalAssistantMessage);
+          messages = updateLastMessage(messages, { id, ...finalAssistantMessage });
 
           // Check for tool calls
           if (finalAssistantMessage.tool_calls) {
@@ -222,6 +236,7 @@ export function useVoiceAssistant() {
               const result = await callFunction(toolCall.function, appContextRef.current);
               console.log("function result", result);
               const toolReply: Message = {
+                id: crypto.randomUUID(),
                 role: "tool",
                 name: toolCall.function.name,
                 tool_call_id: toolCall.id,
@@ -239,9 +254,9 @@ export function useVoiceAssistant() {
       };
 
       const userMessage: Message = {
+        id,
         role: "user",
         content: message,
-        stats: { timestamp: new Date().toISOString() },
       };
       if (message === "") {
         // sendMessage() was called with an empty user message.
@@ -295,9 +310,9 @@ export function useVoiceAssistant() {
         return [
           ...newMessages,
           {
+            id: id,
             role: "assistant",
             content: "",
-            stats: { timestamp: new Date().toISOString() },
           },
         ];
       });

@@ -18,14 +18,16 @@ const theme = createTheme({
   },
 });
 
+interface Props {
+  sendMessage: (id: string, message: string, audible: boolean) => void;
+  stopResponding: (audible: boolean) => void;
+  responding: boolean;
+  awaitSpokenResponse: boolean;
+  idle: boolean;
+}
+
 export const MessageBar = React.memo(
-  ({
-    sendMessage,
-    stopResponding,
-    responding,
-    awaitSpokenResponse,
-    idle,
-  }: Props) => {
+  ({ sendMessage, stopResponding, responding, awaitSpokenResponse, idle }: Props) => {
     const [message, setMessage] = React.useState("");
     const defaultPlaceHolder = "Type to chat";
     const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
@@ -40,7 +42,7 @@ export const MessageBar = React.memo(
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey && !message.includes("\n")) {
         e.preventDefault();
-        sendMessage(message, false);
+        sendMessage(crypto.randomUUID(), message, false);
         setMessage("");
       }
     };
@@ -67,7 +69,7 @@ export const MessageBar = React.memo(
                   aria-label="send message"
                   onMouseDown={(event) => {
                     event.preventDefault();
-                    sendMessage(message, false);
+                    sendMessage(crypto.randomUUID(), message, false);
                     setMessage("");
                   }}
                 >
@@ -100,11 +102,3 @@ export const MessageBar = React.memo(
     );
   },
 );
-
-interface Props {
-  sendMessage: (message: string, audible: boolean) => void;
-  stopResponding: (audible: boolean) => void;
-  responding: boolean;
-  awaitSpokenResponse: boolean;
-  idle: boolean;
-}

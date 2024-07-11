@@ -12,6 +12,7 @@ import { textToLowerCaseWords } from "../utils/textUtils";
 import useAppContext from "../hooks/useAppContext";
 import { indexDbGet } from "../utils/indexDB";
 import { useVoiceDetection } from "../hooks/useVoiceDetection";
+import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 
 const openai = new OpenAI({
   apiKey: transcriptionApiKey,
@@ -40,6 +41,15 @@ if (MediaRecorder.isTypeSupported("audio/webm")) {
 
 const silenceTimeout = 1500;
 
+interface Props {
+  sendMessage: (id: string, message: string, audible: boolean) => void;
+  stopResponding: (audible: boolean) => void;
+  setTranscript: (transcript: string) => void;
+  defaultMessage: string;
+  responding: boolean;
+  awaitSpokenResponse: boolean;
+}
+
 const SpeechRecorder = ({
   sendMessage,
   stopResponding,
@@ -54,6 +64,8 @@ const SpeechRecorder = ({
 
   const shouldRestartRecognition = useRef(false);
   const recognition = useRef<SpeechRecognition | null>(null);
+
+  const performanceTrackingServiceRef = useRef(createPerformanceTrackingService());
 
   const sendToWhisperAPI = useCallback(
     async (audioChunks: Blob[]) => {
@@ -71,7 +83,13 @@ const SpeechRecorder = ({
 
       try {
         playSound("sending");
-        sendMessage("", true);
+        const userMessageId = crypto.randomUUID();
+        performanceTrackingServiceRef.current.trackTimestamp(
+          userMessageId,
+          "transcription-started",
+          new Date().getTime(),
+        );
+        sendMessage(userMessageId, "", true);
         const transcription = await openai.audio.transcriptions.create({
           model: transcriptionModel || "whisper-1",
           language: settingsRef.current.transcriptionLanguage.substring(0, 2),
@@ -79,13 +97,18 @@ const SpeechRecorder = ({
             type: mimeType,
           }),
         });
+        performanceTrackingServiceRef.current.trackTimestamp(
+          userMessageId,
+          "transcription-finished",
+          new Date().getTime(),
+        );
         const words = textToLowerCaseWords(transcription.text);
         const stopWords = settingsRef.current.stopWords.map((word) => word.toLowerCase());
         if (words.every((word) => stopWords.includes(word))) {
           console.log("conversation cancelled by stop word(s)");
-          sendMessage("", false);
+          sendMessage(userMessageId, "", false);
         } else {
-          sendMessage(transcription.text, true);
+          sendMessage(userMessageId, transcription.text, true);
         }
       } catch (error) {
         console.error("Failed to send request to Whisper API", error);
@@ -331,7 +354,7 @@ const SpeechRecorder = ({
           }
           if (!settingsRef.current.useWhisper) {
             console.log(`transcript after silence: '${currentTranscript}'`);
-            sendMessage(currentTranscript, true);
+            sendMessage(crypto.randomUUID(), currentTranscript, true);
           }
           stopConversation();
         }
@@ -451,14 +474,5 @@ const SpeechRecorder = ({
     </div>
   );
 };
-
-interface Props {
-  sendMessage: (message: string, audible: boolean) => void;
-  stopResponding: (audible: boolean) => void;
-  setTranscript: (transcript: string) => void;
-  defaultMessage: string;
-  responding: boolean;
-  awaitSpokenResponse: boolean;
-}
 
 export default SpeechRecorder;
