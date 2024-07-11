@@ -218,6 +218,38 @@ export class VertexAIChatCompletionService extends ChatCompletionService {
     }
   }
 
+  convertFromOpenAIMessage(message: OpenAI.ChatCompletionMessageParam): GeminiMessage {
+    const converted: GeminiMessage = {
+      role: this.convertRole(message.role),
+      parts: [],
+    };
+    if (message.role === "tool") {
+      converted.parts.push({
+        functionResponse: {
+          name: message.name,
+          response: {
+            name: message.name,
+            content: JSON.parse(message.content || "{}") as never,
+          },
+        },
+      });
+    } else if (message.role === "assistant" && message.tool_calls) {
+      for (const toolCall of message.tool_calls) {
+        converted.parts.push({
+          functionCall: {
+            name: toolCall.function.name,
+            args: JSON.parse(toolCall.function.arguments) as never,
+          },
+        });
+      }
+    } else if (typeof message.content === "string") {
+      converted.parts.push({
+        text: message.content,
+      });
+    }
+    return converted;
+  }
+
   async getStreamedMessage(
     options: OpenAI.ChatCompletionCreateParams,
     _: AbortSignal,
@@ -231,11 +263,19 @@ export class VertexAIChatCompletionService extends ChatCompletionService {
     const transformedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "user", content: wrappedSystemMessage },
       { role: "assistant", content: "Ok, let's start! Please continue in your native language." },
-      ...options.messages,
+      ...options.messages.filter((message) => message.role !== "system"),
     ];
 
     const url = `https://${this.region}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.region}/publishers/google/models/${options.model}:streamGenerateContent?alt=sse`;
-    const body = {
+
+    type GeminiPayload = {
+      contents: GeminiMessage[];
+      tools?: {
+        functionDeclarations: unknown[];
+      }[];
+    };
+
+    const body: GeminiPayload = {
       contents: transformedMessages.map((message) => {
         const converted: GeminiMessage = {
           role: this.convertRole(message.role),
@@ -260,19 +300,22 @@ export class VertexAIChatCompletionService extends ChatCompletionService {
               },
             });
           }
-        } else if (message.content) {
+        } else if (typeof message.content === "string") {
           converted.parts.push({
             text: message.content,
           });
         }
         return converted;
       }),
-      tools: [
-        {
-          functionDeclarations: tools.map((tool) => tool.function),
-        },
-      ],
     };
+
+    if (options.tools) {
+      body.tools = [
+        {
+          functionDeclarations: options.tools.map((tool) => tool.function),
+        },
+      ];
+    }
 
     const response = await fetch(url, {
       method: "POST",
