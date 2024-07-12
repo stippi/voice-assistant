@@ -1,32 +1,33 @@
-// @ts-expect-error - The import works, no idea why the IDE complains
-import {ChatCompletionMessage, ChatCompletionTool} from "openai/resources";
 import {
   OpenWeatherMapApiKey,
   NewsApiOrgKey,
   GoogleApiKey,
   GoogleCustomSearchEngineId,
-  GoogleClientId, GoogleClientSecret
+  GoogleClientId,
+  GoogleClientSecret,
 } from "../config";
-import {create, all} from "mathjs";
-import {Timer} from "../model/timer";
-import {addIsoDurationToDate} from "../utils/timeFormat";
-import {AppContextType, Spotify} from "../contexts/AppContext";
+import { create, all } from "mathjs";
+import { Timer } from "../model/timer";
+import { addIsoDurationToDate } from "../utils/timeFormat";
+import { AppContextType, Spotify } from "../contexts/AppContext";
 import OpenAI from "openai";
+import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
-import {getNews, getTopNews, newsApiCategoryParam, newsApiCountryParam, newsApiLanguageParam} from "./newsApi";
-import {Settings} from "../contexts/SettingsContext";
-import {getCurrentWeather, getWeatherForecast} from "./openWeatherMap";
+import ChatCompletionTool = OpenAI.ChatCompletionTool;
+import { getNews, getTopNews, newsApiCategoryParam, newsApiCountryParam, newsApiLanguageParam } from "./newsApi";
+import { Settings } from "../contexts/SettingsContext";
+import { getCurrentWeather, getWeatherForecast } from "./openWeatherMap";
 import {
   createCalendarEvent,
   deleteCalendarEvent,
   getDirections,
   getPlacesInfo,
   googleCustomSearch,
-  listCalendarEvents, listContacts
-} from "./google.ts";
+  listCalendarEvents,
+  listContacts,
+} from "./google";
 
-const math = create(all, {})
-
+const math = create(all, {});
 
 export async function getTools(settings: Settings, appContext: AppContextType) {
   const tools: ChatCompletionTool[] = [
@@ -40,16 +41,16 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           properties: {
             time: {
               type: "string",
-              description: "The exact time when the timer should go off, in the format 'YYYY-MM-DD HH:MM:SS'."
+              description: "The exact time when the timer should go off, in the format 'YYYY-MM-DD HH:MM:SS'.",
             },
             title: {
               type: "string",
-              description: "Optional title of the timer."
-            }
+              description: "Optional title of the timer.",
+            },
           },
-          required: ["time"]
-        }
-      }
+          required: ["time"],
+        },
+      },
     },
     {
       type: "function",
@@ -61,16 +62,16 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           properties: {
             duration: {
               type: "string",
-              description: "A duration in ISO 8601 format."
+              description: "A duration in ISO 8601 format.",
             },
             title: {
               type: "string",
-              description: "Optional title of the timer."
-            }
+              description: "Optional title of the timer.",
+            },
           },
-          required: ["duration"]
-        }
-      }
+          required: ["duration"],
+        },
+      },
     },
     {
       type: "function",
@@ -81,12 +82,12 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           type: "object",
           properties: {
             id: {
-              type: "string"
-            }
+              type: "string",
+            },
           },
-          required: ["id"]
-        }
-      }
+          required: ["id"],
+        },
+      },
     },
     {
       type: "function",
@@ -99,11 +100,11 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             baseTime: { type: "string", description: "The base time in the format 'YYYY-MM-DD HH:MM:SS'" },
             operation: { type: "string", enum: ["add", "subtract"] },
             value: { type: "number", description: "The duration value to add or subtract" },
-            unit: { type: "string", enum: [ "minutes" , "hours" , "days" ] }
+            unit: { type: "string", enum: ["minutes", "hours", "days"] },
           },
-          required: ["date", "time", "duration"]
-        }
-      }
+          required: ["date", "time", "duration"],
+        },
+      },
     },
     {
       type: "function",
@@ -113,11 +114,11 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
         parameters: {
           type: "object",
           properties: {
-            expression: { type: "string" }
+            expression: { type: "string" },
           },
-          required: ["expression"]
-        }
-      }
+          required: ["expression"],
+        },
+      },
     },
     {
       type: "function",
@@ -130,19 +131,19 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             category: {
               type: "string",
               enum: [
-                'About the User',
-                'User Preferences',
-                'User Interests',
-                'Shared Knowledge',
-                'Agreed Facts',
-                'Other'
-              ]
+                "About the User",
+                "User Preferences",
+                "User Interests",
+                "Shared Knowledge",
+                "Agreed Facts",
+                "Other",
+              ],
             },
-            information: { type: "string" }
+            information: { type: "string" },
           },
-          required: ["category", "information"]
-        }
-      }
+          required: ["category", "information"],
+        },
+      },
     },
     {
       type: "function",
@@ -155,19 +156,19 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             category: {
               type: "string",
               enum: [
-                'About the User',
-                'User Preferences',
-                'User Interests',
-                'Shared Knowledge',
-                'Agreed Facts',
-                'Other'
-              ]
+                "About the User",
+                "User Preferences",
+                "User Interests",
+                "Shared Knowledge",
+                "Agreed Facts",
+                "Other",
+              ],
             },
-            information: { type: "string" }
+            information: { type: "string" },
           },
-          required: ["category", "information"]
-        }
-      }
+          required: ["category", "information"],
+        },
+      },
     },
     {
       type: "function",
@@ -179,15 +180,15 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           properties: {
             image: {
               type: "string",
-              description: "The SVG image's XML code as a string"
-            }
+              description: "The SVG image's XML code as a string",
+            },
           },
-          required: ["image"]
-        }
-      }
-    }
+          required: ["image"],
+        },
+      },
+    },
   ];
-  
+
   if (settings.enableOpenWeatherMap && OpenWeatherMapApiKey) {
     tools.push({
       type: "function",
@@ -198,11 +199,11 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           type: "object",
           properties: {
             latitude: { type: "number" },
-            longitude: { type: "number" }
+            longitude: { type: "number" },
           },
-          required: ["latitude", "longitude"]
-        }
-      }
+          required: ["latitude", "longitude"],
+        },
+      },
     });
     tools.push({
       type: "function",
@@ -213,11 +214,11 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           type: "object",
           properties: {
             latitude: { type: "number" },
-            longitude: { type: "number" }
+            longitude: { type: "number" },
           },
-          required: ["latitude", "longitude"]
-        }
-      }
+          required: ["latitude", "longitude"],
+        },
+      },
     });
   }
   if (settings.enableNewsApiOrg && NewsApiOrgKey) {
@@ -232,12 +233,12 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             language: newsApiLanguageParam,
             country: newsApiCountryParam,
             category: newsApiCategoryParam,
-            query: {type: "string", description: "Keywords or phrases to search for"},
-            sortBy: {type: "string", enum: ["relevancy", "popularity", "publishedAt"]}
+            query: { type: "string", description: "Keywords or phrases to search for" },
+            sortBy: { type: "string", enum: ["relevancy", "popularity", "publishedAt"] },
           },
-          required: ["language", "category"]
-        }
-      }
+          required: ["language", "category"],
+        },
+      },
     });
     tools.push({
       type: "function",
@@ -251,14 +252,14 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             country: newsApiCountryParam,
             query: { type: "string", description: "Keywords or phrases to search for" },
             sources: { type: "string", description: "A comma-seperated list of news sources to retrieve news from" },
-            searchIn: { type: "string", enum: [ "title", "description", "content" ] },
+            searchIn: { type: "string", enum: ["title", "description", "content"] },
             from: { type: "string", description: "The earliest date to retrieve news from in ISO 8601 format" },
             to: { type: "string", description: "The latest date to retrieve news from in ISO 8601 format" },
-            sortBy: { type: "string", enum: [ "relevancy", "popularity", "publishedAt" ] }
+            sortBy: { type: "string", enum: ["relevancy", "popularity", "publishedAt"] },
           },
-          required: ["language"]
-        }
-      }
+          required: ["language"],
+        },
+      },
     });
   }
   if (settings.enableGoogle && GoogleApiKey && GoogleCustomSearchEngineId) {
@@ -270,12 +271,12 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
         parameters: {
           type: "object",
           properties: {
-            query: {type: "string", description: "The query terms in any language."},
-            maxResults: {type: "number"}
+            query: { type: "string", description: "The query terms in any language." },
+            maxResults: { type: "number" },
           },
-          required: ["query"]
-        }
-      }
+          required: ["query"],
+        },
+      },
     });
     if (settings.enableGoogleMaps) {
       tools.push({
@@ -286,20 +287,21 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           parameters: {
             type: "object",
             properties: {
-              latitude: {type: "number"},
-              longitude: {type: "number"},
-              radius: {type: "number", description: "The radius in meters around the given location"},
-              query: {type: "string", description: "A text query like the name of a nearby place"},
+              latitude: { type: "number" },
+              longitude: { type: "number" },
+              radius: { type: "number", description: "The radius in meters around the given location" },
+              query: { type: "string", description: "A text query like the name of a nearby place" },
               fields: {
                 type: "array",
-                items: {type: "string"},
-                description: "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating' and 'websiteUri'"
+                items: { type: "string" },
+                description:
+                  "A list of fields to retrieve for each place. Available fields are 'formattedAddress', 'regularOpeningHours', 'currentOpeningHours', 'types', 'rating' and 'websiteUri'",
               },
-              maxResults: {type: "number"}
+              maxResults: { type: "number" },
             },
-            required: ["latitude", "longitude", "query", "fields"]
-          }
-        }
+            required: ["latitude", "longitude", "query", "fields"],
+          },
+        },
       });
       tools.push({
         type: "function",
@@ -309,13 +311,13 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           parameters: {
             type: "object",
             properties: {
-              latitude: {type: "number"},
-              longitude: {type: "number"},
-              zoom: {type: "number"}
+              latitude: { type: "number" },
+              longitude: { type: "number" },
+              zoom: { type: "number" },
             },
-            required: ["latitude", "longitude"]
-          }
-        }
+            required: ["latitude", "longitude"],
+          },
+        },
       });
       tools.push({
         type: "function",
@@ -327,19 +329,19 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             properties: {
               origin: {
                 type: "string",
-                description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place"
+                description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place",
               },
               destination: {
                 type: "string",
-                description: "Name of a place, address, or latitude and longitude in the format 'latitude,longitude'"
+                description: "Name of a place, address, or latitude and longitude in the format 'latitude,longitude'",
               },
-              travelMode: {type: "string", enum: ["DRIVING", "BICYCLING", "TRANSIT", "WALKING"]},
-              arrivalTime: {type: "string", description: "Desired arrival time in ISO 8601 format"},
-              departureTime: {type: "string", description: "Desired departure time in ISO 8601 format"},
+              travelMode: { type: "string", enum: ["DRIVING", "BICYCLING", "TRANSIT", "WALKING"] },
+              arrivalTime: { type: "string", description: "Desired arrival time in ISO 8601 format" },
+              departureTime: { type: "string", description: "Desired departure time in ISO 8601 format" },
             },
-            required: ["origin", "destination", "travelMode"]
-          }
-        }
+            required: ["origin", "destination", "travelMode"],
+          },
+        },
       });
       tools.push({
         type: "function",
@@ -351,24 +353,24 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             properties: {
               origin: {
                 type: "string",
-                description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place"
+                description: "Latitude and longitude in the format 'latitude,longitude', address or name of a place",
               },
               destination: {
                 type: "string",
-                description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'"
+                description: "Name of a place, or latitude and longitude in the format 'latitude,longitude'",
               },
-              arrivalTime: {type: "string", description: "Desired arrival time in ISO 8601 format"},
-              departureTime: {type: "string", description: "Desired departure time in ISO 8601 format"},
+              arrivalTime: { type: "string", description: "Desired arrival time in ISO 8601 format" },
+              departureTime: { type: "string", description: "Desired departure time in ISO 8601 format" },
               modes: {
                 type: "array",
-                items: {type: "string"},
-                description: "Preferred modes of transport. Available are 'BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'"
+                items: { type: "string" },
+                description: "Preferred modes of transport. Available are 'BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'",
               },
-              routingPreference: {type: "string", enum: ["FEWER_TRANSFERS", "LESS_WALKING"]},
+              routingPreference: { type: "string", enum: ["FEWER_TRANSFERS", "LESS_WALKING"] },
             },
-            required: ["origin", "destination"]
-          }
-        }
+            required: ["origin", "destination"],
+          },
+        },
       });
     }
   }
@@ -382,37 +384,39 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           parameters: {
             type: "object",
             properties: {
-              calendarId: {type: "string", description: "The ID of the calendar (defaults to 'primary')"},
-              summary: {type: "string", description: "Summary of the event"},
-              description: {type: "string", description: "Optional description of the event"},
-              location: {type: "string", description: "Optional location of the event"},
+              calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
+              summary: { type: "string", description: "Summary of the event" },
+              description: { type: "string", description: "Optional description of the event" },
+              location: { type: "string", description: "Optional location of the event" },
               attendees: {
                 type: "array",
-                items: {type: "object", properties: {email: {type: "string"}}},
-                description: "Optional list of attendees"
+                items: { type: "object", properties: { email: { type: "string" } } },
+                description: "Optional list of attendees",
               },
-              startTime: {type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'"},
+              startTime: { type: "string", description: "Start time in the format 'YYYY-MM-DD HH:MM:SS'" },
               timeZone: {
                 type: "string",
-                description: "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)"
+                description:
+                  "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.)",
               },
-              duration: {type: "string", description: "Duration in minutes"},
+              duration: { type: "string", description: "Duration in minutes" },
               recurrence: {
                 type: "array",
-                items: {type: "string"},
-                description: "Optional recurrence rules in RRULE format"
+                items: { type: "string" },
+                description: "Optional recurrence rules in RRULE format",
               },
               reminders: {
-                type: "array", items: {
+                type: "array",
+                items: {
                   type: "object",
-                  properties: {minutes: {type: "integer"}, method: {type: "string", enum: ["popup", "email"]}}
+                  properties: { minutes: { type: "integer" }, method: { type: "string", enum: ["popup", "email"] } },
                 },
-                description: "Optional reminders in minutes before the event"
-              }
+                description: "Optional reminders in minutes before the event",
+              },
             },
-            required: ["summary", "startTime", "timeZone", "duration"]
-          }
-        }
+            required: ["summary", "startTime", "timeZone", "duration"],
+          },
+        },
       });
       tools.push({
         type: "function",
@@ -422,12 +426,12 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           parameters: {
             type: "object",
             properties: {
-              calendarId: {type: "string", description: "The ID of the calendar (defaults to 'primary')"},
-              eventId: {type: "string", description: "The ID of the event to delete"},
+              calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
+              eventId: { type: "string", description: "The ID of the event to delete" },
             },
-            required: ["eventId"]
-          }
-        }
+            required: ["eventId"],
+          },
+        },
       });
       tools.push({
         type: "function",
@@ -437,18 +441,18 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           parameters: {
             type: "object",
             properties: {
-              calendarId: {type: "string", description: "The ID of the calendar (defaults to 'primary')"},
-              query: {type: "string", description: "Text search over events"},
-              timeMin: {type: "string", description: "Start time of the search (inclusive), in ISO format"},
-              timeMax: {type: "string", description: "End time of the search (exclusive), in ISO format"},
-              maxResults: {type: "integer", description: "Maximum number of results to return"},
-              singleEvents: {type: "boolean", description: "Whether to return single events from recurring events"},
-              orderBy: {type: "string", enum: ["startTime", "updated"], description: "Order of the results"},
-              showDeleted: {type: "boolean", description: "Whether to include deleted events in the results"}
+              calendarId: { type: "string", description: "The ID of the calendar (defaults to 'primary')" },
+              query: { type: "string", description: "Text search over events" },
+              timeMin: { type: "string", description: "Start time of the search (inclusive), in ISO format" },
+              timeMax: { type: "string", description: "End time of the search (exclusive), in ISO format" },
+              maxResults: { type: "integer", description: "Maximum number of results to return" },
+              singleEvents: { type: "boolean", description: "Whether to return single events from recurring events" },
+              orderBy: { type: "string", enum: ["startTime", "updated"], description: "Order of the results" },
+              showDeleted: { type: "boolean", description: "Whether to include deleted events in the results" },
             },
-            required: ["singleEvents"]
-          }
-        }
+            required: ["singleEvents"],
+          },
+        },
       });
     }
     tools.push({
@@ -459,11 +463,11 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
         parameters: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Text search over contacts" }
+            query: { type: "string", description: "Text search over contacts" },
           },
-          required: []
-        }
-      }
+          required: [],
+        },
+      },
     });
   }
   if (settings.enableSpotify) {
@@ -471,33 +475,39 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
       type: "function",
       function: {
         name: "play_on_spotify",
-        description: "Start playing tracks, an album, artist or a playlist on Spotify. " +
+        description:
+          "Start playing tracks, an album, artist or a playlist on Spotify. " +
           "Calling this function replaces the current playlist!",
         parameters: {
           type: "object",
           properties: {
             trackIds: { type: "array", items: { type: "string" }, description: "Optional. An array of track IDs" },
-            contextUri: { type: "string", description: "Optional. The Spotify URI of an album, artist, or playlist." }
+            contextUri: { type: "string", description: "Optional. The Spotify URI of an album, artist, or playlist." },
           },
-          required: []
-        }
-      }
+          required: [],
+        },
+      },
     });
     tools.push({
       type: "function",
       function: {
         name: "find_artists_and_play_top_songs_on_spotify",
-        description: "Searches for 'queries' on Spotify and plays top songs of the found artist(s). " +
+        description:
+          "Searches for 'queries' on Spotify and plays top songs of the found artist(s). " +
           "Calling this function replaces the current playlist! " +
           "Pass multiple artists to one tool invocation to play a mix of top songs from different artists.",
         parameters: {
           type: "object",
           properties: {
-            queries: { type: "array", items: { type: "string" }, description: "One or more queries to find artists by." },
+            queries: {
+              type: "array",
+              items: { type: "string" },
+              description: "One or more queries to find artists by.",
+            },
           },
-          required: ["queries"]
-        }
-      }
+          required: ["queries"],
+        },
+      },
     });
     tools.push({
       type: "function",
@@ -511,13 +521,14 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             types: {
               type: "array",
               items: { type: "string" },
-              description: "Types to search across. Valid types are: 'track', 'artist', 'album', 'playlist', 'show', and 'episode'."
+              description:
+                "Types to search across. Valid types are: 'track', 'artist', 'album', 'playlist', 'show', and 'episode'.",
             },
-            limit: { type: "integer", description: "The maximum number of items to return" }
+            limit: { type: "integer", description: "The maximum number of items to return" },
           },
-          required: ["query", "types"]
-        }
-      }
+          required: ["query", "types"],
+        },
+      },
     });
     if (appContext.spotify?.player) {
       const playbackState = await appContext.spotify.player.getCurrentState();
@@ -530,9 +541,9 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             parameters: {
               type: "object",
               properties: {},
-              required: []
-            }
-          }
+              required: [],
+            },
+          },
         });
         tools.push({
           type: "function",
@@ -542,9 +553,9 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             parameters: {
               type: "object",
               properties: {},
-              required: []
-            }
-          }
+              required: [],
+            },
+          },
         });
         tools.push({
           type: "function",
@@ -554,9 +565,9 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             parameters: {
               type: "object",
               properties: {},
-              required: []
-            }
-          }
+              required: [],
+            },
+          },
         });
         tools.push({
           type: "function",
@@ -566,9 +577,9 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             parameters: {
               type: "object",
               properties: {},
-              required: []
-            }
-          }
+              required: [],
+            },
+          },
         });
       }
     }
@@ -576,92 +587,146 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
   return tools;
 }
 
-export function showToolCallInChat(toolCall:  ChatCompletionMessageToolCall): boolean {
+export function showToolCallInChat(toolCall: ChatCompletionMessageToolCall): boolean {
   return ["show_image", "show_map", "show_directions", "show_transit_directions"].includes(toolCall.function.name);
 }
 
-export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall, appContext: AppContextType): Promise<object> {
+export async function callFunction(
+  functionCall: ChatCompletionMessage.FunctionCall,
+  appContext: AppContextType,
+): Promise<object> {
   try {
     const args = JSON.parse(functionCall.arguments || "{}");
     console.log("calling function:", functionCall.name, args);
     switch (functionCall.name) {
-      case 'add_alarm':
+      case "add_alarm":
         return await addTimer("alarm", args.time, args.title || "", appContext);
-      case 'add_countdown':
-        return await addTimer("countdown", addIsoDurationToDate(new Date(), args.duration).toString(), args.title || "", appContext);
-      case 'delete_timer':
+      case "add_countdown":
+        return await addTimer(
+          "countdown",
+          addIsoDurationToDate(new Date(), args.duration).toString(),
+          args.title || "",
+          appContext,
+        );
+      case "delete_timer":
         return await removeTimer(args.id, appContext);
-      case 'calculate_time':
+      case "calculate_time":
         return await calculateTime(args.baseTime, args.operation, args.value, args.unit);
-      case 'evaluate_expression':
+      case "evaluate_expression":
         return await evaluateExpression(args.expression);
-      case 'add_memory_entry':
+      case "add_memory_entry":
         return await memorize(args.category, args.information);
-      case 'delete_memory_entry':
+      case "delete_memory_entry":
         return await deleteInformation(args.category, args.information);
-      case 'show_image':
+      case "show_image":
         return { result: "image displayed" };
-      
-      case 'get_current_weather':
-        return await getCurrentWeather(args.latitude, args.longitude);
-      case 'get_weather_forecast':
-        return await getWeatherForecast(args.latitude, args.longitude);
-      
-      case 'get_top_headlines':
-        return await getTopNews(args.language, args.country, args.category, args.query, args.sortBy);
-      case 'get_news':
-        return await getNews(args.language, args.country, args.query, args.sources, args.searchIn, args.from, args.to, args.sortBy);
-      
-      case 'search_the_internet':
-        return await googleCustomSearch(args.query, args.maxResults)
-      case 'get_places_info':
-        return await getPlacesInfo(args.query, args.fields, args.latitude, args.longitude, args.radius, args.maxResults);
-      case 'add_google_calendar_event':
-        return await createCalendarEvent(args.calendarId, args.summary, args.description, args.location, args.attendees, args.startTime, args.timeZone, args.duration, args.recurrence, args.reminders);
-      case 'delete_google_calendar_event':
-        return await deleteCalendarEvent(args.calendarId, args.eventId);
-      case 'list_google_calendar_events':
-        return await listCalendarEvents(args.calendarId, args.query, args.timeMin, args.timeMax, args.maxResults, args.singleEvents, args.orderBy, args.showDeleted);
-      case 'list_google_contacts':
-        return await listContacts(args.query);
-      case 'show_map':
-        return { result: "map displayed" };
-      case 'show_directions':
-        return await getDirections(
-          args.origin, args.destination, [],
-          args.travelMode, args.arrivalTime, args.departureTime);
-      case 'show_transit_directions':
-        return await getDirections(
-          args.origin, args.destination, [],
-          "TRANSIT", args.arrivalTime, args.departureTime,
-          undefined, undefined,
-          args.mode || args.routingPreference ?
-            { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
-            : undefined);
 
-      case 'play_on_spotify':
+      case "get_current_weather":
+        return await getCurrentWeather(args.latitude, args.longitude);
+      case "get_weather_forecast":
+        return await getWeatherForecast(args.latitude, args.longitude);
+
+      case "get_top_headlines":
+        return await getTopNews(args.language, args.country, args.category, args.query, args.sortBy);
+      case "get_news":
+        return await getNews(
+          args.language,
+          args.country,
+          args.query,
+          args.sources,
+          args.searchIn,
+          args.from,
+          args.to,
+          args.sortBy,
+        );
+
+      case "search_the_internet":
+        return await googleCustomSearch(args.query, args.maxResults);
+      case "get_places_info":
+        return await getPlacesInfo(
+          args.query,
+          args.fields,
+          args.latitude,
+          args.longitude,
+          args.radius,
+          args.maxResults,
+        );
+      case "add_google_calendar_event":
+        return await createCalendarEvent(
+          args.calendarId,
+          args.summary,
+          args.description,
+          args.location,
+          args.attendees,
+          args.startTime,
+          args.timeZone,
+          args.duration,
+          args.recurrence,
+          args.reminders,
+        );
+      case "delete_google_calendar_event":
+        return await deleteCalendarEvent(args.calendarId, args.eventId);
+      case "list_google_calendar_events":
+        return await listCalendarEvents(
+          args.calendarId,
+          args.query,
+          args.timeMin,
+          args.timeMax,
+          args.maxResults,
+          args.singleEvents,
+          args.orderBy,
+          args.showDeleted,
+        );
+      case "list_google_contacts":
+        return await listContacts(args.query);
+      case "show_map":
+        return { result: "map displayed" };
+      case "show_directions":
+        return await getDirections(
+          args.origin,
+          args.destination,
+          [],
+          args.travelMode,
+          args.arrivalTime,
+          args.departureTime,
+        );
+      case "show_transit_directions":
+        return await getDirections(
+          args.origin,
+          args.destination,
+          [],
+          "TRANSIT",
+          args.arrivalTime,
+          args.departureTime,
+          undefined,
+          undefined,
+          args.mode || args.routingPreference
+            ? { allowedTravelModes: args.modes, routingPreference: args.routingPreference }
+            : undefined,
+        );
+
+      case "play_on_spotify":
         return await playOnSpotify(appContext.spotify, args.trackIds || [], args.contextUri);
-      case 'find_artists_and_play_top_songs_on_spotify':
+      case "find_artists_and_play_top_songs_on_spotify":
         return await playTopTracksOnSpotify(appContext.spotify, args.queries);
-      case 'find_on_spotify':
+      case "find_on_spotify":
         return await findOnSpotify(appContext.spotify, args.query, args.types, args.limit);
-      case 'resume_spotify_playback':
+      case "resume_spotify_playback":
         return await playOnSpotify(appContext.spotify, []);
-      case 'pause_spotify_playback':
+      case "pause_spotify_playback":
         return await pauseSpotifyPlayback(appContext.spotify);
-      case 'spotify_skip_next':
+      case "spotify_skip_next":
         return await skipSpotifyPlaybackNext(appContext.spotify);
-      case 'spotify_skip_previous':
+      case "spotify_skip_previous":
         return await skipSpotifyPlaybackPrevious(appContext.spotify);
 
       default:
-        return { error: `unknown function '${functionCall.name}'`};
+        return { error: `unknown function '${functionCall.name}'` };
     }
   } catch (error) {
     return { error: error instanceof Error ? error.message : "unknown error" };
   }
 }
-
 
 async function addTimer(type: "countdown" | "alarm", time: string, title: string, appContext: AppContextType) {
   console.log(`Adding timer: ${type} at ${time} with title '${title}'`);
@@ -669,30 +734,35 @@ async function addTimer(type: "countdown" | "alarm", time: string, title: string
     id: Math.random().toString(36).substring(7),
     type,
     time,
-    title
-  }
+    title,
+  };
   appContext.setTimers([...appContext.timers, timer]);
   return { result: `timer created with ID ${timer.id}` };
 }
 
 async function removeTimer(id: string, appContext: AppContextType) {
   console.log(`Removing timer: ${id}`);
-  appContext.setTimers(appContext.timers.filter(timer => timer.id !== id))
+  appContext.setTimers(appContext.timers.filter((timer) => timer.id !== id));
   return { result: "timer deleted" };
 }
 
-async function calculateTime(baseTime: string, operation: "add" | "subtract", value: number, unit: "minutes" | "hours" | "days")  {
+async function calculateTime(
+  baseTime: string,
+  operation: "add" | "subtract",
+  value: number,
+  unit: "minutes" | "hours" | "days",
+) {
   try {
     const time = new Date(baseTime);
     switch (unit) {
-      case 'minutes':
-        time.setMinutes(time.getMinutes() + (operation === 'add' ? value : -value));
+      case "minutes":
+        time.setMinutes(time.getMinutes() + (operation === "add" ? value : -value));
         break;
-      case 'hours':
-        time.setHours(time.getHours() + (operation === 'add' ? value : -value));
+      case "hours":
+        time.setHours(time.getHours() + (operation === "add" ? value : -value));
         break;
-      case 'days':
-        time.setDate(time.getDate() + (operation === 'add' ? value : -value));
+      case "days":
+        time.setDate(time.getDate() + (operation === "add" ? value : -value));
         break;
     }
     return { result: time.toISOString() };
@@ -702,11 +772,11 @@ async function calculateTime(baseTime: string, operation: "add" | "subtract", va
 }
 
 async function evaluateExpression(expression: string) {
-  return { result: math.evaluate(expression) }
+  return { result: math.evaluate(expression) };
 }
 
 function loadMemory(): Record<string, string[]> {
-  const memoryString = window.localStorage.getItem('memory');
+  const memoryString = window.localStorage.getItem("memory");
   if (memoryString) {
     return JSON.parse(memoryString);
   }
@@ -714,18 +784,23 @@ function loadMemory(): Record<string, string[]> {
 }
 
 function saveMemory(memory: Record<string, string[]>) {
-  window.localStorage.setItem('memory', JSON.stringify(memory));
+  window.localStorage.setItem("memory", JSON.stringify(memory));
 }
 
 async function memorize(category: string, information: string) {
-  console.log(`Memorizing: # ${category}\n${information.split('\n').map((line: string) => `- ${line}`).join('\n')}`);
-  
+  console.log(
+    `Memorizing: # ${category}\n${information
+      .split("\n")
+      .map((line: string) => `- ${line}`)
+      .join("\n")}`,
+  );
+
   const memory = loadMemory();
-  
+
   if (!Array.isArray(memory[category])) {
     memory[category] = [];
   }
-  memory[category].push(...information.split('\n'));
+  memory[category].push(...information.split("\n"));
 
   saveMemory(memory);
   return { result: "information stored" };
@@ -733,9 +808,9 @@ async function memorize(category: string, information: string) {
 
 async function deleteInformation(category: string, information: string) {
   console.log(`Erasing memory: # ${category}: "${information}"`);
-  
+
   const memory = loadMemory();
-  
+
   for (let i = 0; i < memory[category].length; i++) {
     if (memory[category][i].startsWith(information)) {
       memory[category].splice(i, 1);
