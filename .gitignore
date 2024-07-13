@@ -25,4 +25,4 @@ dist-ssr
 *.sw?
 
 # Config and secrets
-src/config.ts
+packages/frontend/src/config.ts
