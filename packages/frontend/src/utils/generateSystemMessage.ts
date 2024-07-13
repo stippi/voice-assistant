@@ -1,6 +1,5 @@
-import { GeoLocation } from "../model/location";
+import { GeoLocation, Timer } from "@shared/types";
 import { Personality } from "../contexts/SettingsContext";
-import { Timer } from "../model/timer";
 // @ts-expect-error - The import works, no idea why the IDE complains
 import { ChatCompletionMessage } from "openai/resources";
 

@@ -1,12 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { ChatCompletionService, createChatCompletionService } from "../services/ChatCompletionService";
 import { TextToSpeechService, createTextToSpeechService } from "../services/TextToSpeechService";
-import { Message } from "../model/message";
+import { LLMConfig, Message } from "@shared/types";
 import useChats from "./useChats";
 import useSettings from "./useSettings";
 import useConfigs from "./useConfigs";
 import useAppContext from "./useAppContext";
-import { LLMConfig } from "../model/llmConfig";
 import { getTools, callFunction } from "../integrations/tools";
 import generateSystemMessage from "../utils/generateSystemMessage";
 import OpenAI from "openai";

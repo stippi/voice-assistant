@@ -1,40 +1,40 @@
-import React, {useEffect, useState} from "react";
-import './ChatSelection.css'
+import React, { useEffect, useState } from "react";
+import "./ChatSelection.css";
 import useChats from "../hooks/useChats";
-import {List, ListItem, ListItemText, IconButton, Input, ListItemButton} from '@mui/material';
+import { List, ListItem, ListItemText, IconButton, Input, ListItemButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DoneIcon from '@mui/icons-material/Done';
-import EditIcon from '@mui/icons-material/Edit';
-import {ChatInfo} from "../model/chat.ts";
+import DoneIcon from "@mui/icons-material/Done";
+import EditIcon from "@mui/icons-material/Edit";
+import { ChatInfo } from "@shared/types";
 
 const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, isSelected }: ItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentName, setCurrentName] = useState(chat.name);
-  const [ hovered, setHovered ] = React.useState(false);
+  const [hovered, setHovered] = React.useState(false);
   const onMouseEnter = () => {
     setHovered(true);
   };
   const onMouseLeave = () => {
     setHovered(false);
   };
-  
+
   useEffect(() => {
     if (!isSelected) {
       setIsEditing(false);
     }
   }, [isSelected]);
-  
+
   const doneRenaming = () => {
     onRename(currentName);
     setIsEditing(false);
   };
-  
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       doneRenaming();
     }
-  }
-  
+  };
+
   return (
     <ListItem
       disablePadding
@@ -43,27 +43,30 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, isSelected }: Ite
       secondaryAction={
         isEditing ? (
           <IconButton edge="end" aria-label="done" size="small" onClick={doneRenaming}>
-            <DoneIcon fontSize="inherit"/>
+            <DoneIcon fontSize="inherit" />
           </IconButton>
         ) : isSelected ? (
           <div
             style={{
               opacity: hovered ? 1 : 0,
-              transition: 'opacity 0.2s ease-in-out',
-              backgroundColor: 'inherit',
+              transition: "opacity 0.2s ease-in-out",
+              backgroundColor: "inherit",
             }}
           >
             <IconButton edge="end" aria-label="rename" size="small" onClick={() => setIsEditing(true)}>
-              <EditIcon fontSize="inherit"/>
+              <EditIcon fontSize="inherit" />
             </IconButton>
             <IconButton
-              edge="end" aria-label="delete" size="small" onClick={onDelete}
+              edge="end"
+              aria-label="delete"
+              size="small"
+              onClick={onDelete}
               style={{
                 opacity: hovered ? 1 : 0,
-                transition: 'opacity 0.2s ease-in-out'
+                transition: "opacity 0.2s ease-in-out",
               }}
             >
-              <DeleteIcon fontSize="inherit"/>
+              <DeleteIcon fontSize="inherit" />
             </IconButton>
           </div>
         ) : (
@@ -84,19 +87,16 @@ const ChatInfoListItem = ({ chat, onClick, onRename, onDelete, isSelected }: Ite
           }}
         />
       ) : (
-        <ListItemButton
-          disableRipple
-          selected={isSelected}
-          onClick={onClick}
-        >
+        <ListItemButton disableRipple selected={isSelected} onClick={onClick}>
           <ListItemText
             id={chat.id}
             primary={chat.name || new Date(chat.lastUpdated).toLocaleString()}
             primaryTypographyProps={{
-              fontSize: 14, fontWeight: 'medium',
+              fontSize: 14,
+              fontWeight: "medium",
               whiteSpace: "nowrap",
               overflow: "hidden",
-              textOverflow: "ellipsis"
+              textOverflow: "ellipsis",
             }}
           />
         </ListItemButton>
@@ -114,12 +114,12 @@ interface ItemProps {
 }
 
 export function ChatSelection() {
-  const { chats, setCurrentChat, currentChatID, renameChat, deleteChat} = useChats();
-  
+  const { chats, setCurrentChat, currentChatID, renameChat, deleteChat } = useChats();
+
   const sortedChats = chats.sort((a, b) => {
     return b.lastUpdated - a.lastUpdated;
   });
-  
+
   return (
     <List className="chat-selection" dense>
       {sortedChats.map((chat) => (

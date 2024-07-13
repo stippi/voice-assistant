@@ -16,7 +16,7 @@ import {
   Switch,
 } from "@mui/material";
 import useConfigs from "../hooks/useConfigs";
-import { LLMConfig } from "../model/llmConfig";
+import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
 

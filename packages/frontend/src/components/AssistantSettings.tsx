@@ -35,7 +35,7 @@ import useAppContext from "../hooks/useAppContext";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { LLMConfigs } from "./LLMConfigs";
 import { UserVoiceEnroll } from "./UserVoiceEnroll";
-import { User } from "../model/user";
+import { User } from "@shared/types";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -47,13 +47,7 @@ function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
 
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`tabpanel-${index}`}
-      aria-labelledby={`tab-${index}`}
-      {...other}
-    >
+    <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`} {...other}>
       {value === index && <Box className="settingsColumn">{children}</Box>}
     </div>
   );
@@ -93,11 +87,7 @@ const UserList = () => {
   };
 
   const handleNameSubmit = () => {
-    setUsers(
-      users.map((user) =>
-        user.id != editUserId ? user : { ...user, name: editedName },
-      ),
-    );
+    setUsers(users.map((user) => (user.id != editUserId ? user : { ...user, name: editedName })));
     setEditUserId("");
     setEditedName("");
   };
@@ -157,10 +147,7 @@ const UserList = () => {
                 <TableCell>
                   <IconButton onClick={() => setEnrollingUser(user)}>
                     {user.voiceProfileId ? (
-                      <Badge
-                        color="success"
-                        badgeContent={<CheckCircleOutlineIcon />}
-                      >
+                      <Badge color="success" badgeContent={<CheckCircleOutlineIcon />}>
                         <RecordVoiceOverIcon color="action" />
                       </Badge>
                     ) : (
@@ -171,9 +158,7 @@ const UserList = () => {
                 <TableCell>
                   <IconButton
                     onClick={() => {
-                      setUsers(
-                        users.filter((otherUser) => otherUser.id != user.id),
-                      );
+                      setUsers(users.filter((otherUser) => otherUser.id != user.id));
                     }}
                   >
                     <DeleteIcon />
@@ -185,11 +170,7 @@ const UserList = () => {
         </Table>
       </TableContainer>
       <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
-        <Button
-          startIcon={<AddCircleIcon />}
-          onClick={onAddUser}
-          variant="contained"
-        >
+        <Button startIcon={<AddCircleIcon />} onClick={onAddUser} variant="contained">
           Add user
         </Button>
       </Box>
@@ -198,11 +179,7 @@ const UserList = () => {
           user={enrollingUser}
           setUserVoiceProfileId={(profileId: string) => {
             setUsers(
-              users.map((user) =>
-                user.id != enrollingUser.id
-                  ? user
-                  : { ...user, voiceProfileId: profileId },
-              ),
+              users.map((user) => (user.id != enrollingUser.id ? user : { ...user, voiceProfileId: profileId })),
             );
             setEnrollingUser(null);
           }}
@@ -240,15 +217,7 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
   };
 
   const voices = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"];
-  const personalities = [
-    "Curious",
-    "Professional",
-    "Friendly",
-    "Peppy",
-    "Snarky",
-    "Silly",
-    "Zen",
-  ];
+  const personalities = ["Curious", "Professional", "Friendly", "Peppy", "Snarky", "Silly", "Zen"];
   const triggerWords = [
     "Alexa",
     "Americano",
@@ -315,11 +284,7 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
     >
       <Box style={{ display: "flex", flexDirection: "column" }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs
-            value={tabIndex}
-            onChange={handleTabChange}
-            aria-label="assistant settings"
-          >
+          <Tabs value={tabIndex} onChange={handleTabChange} aria-label="assistant settings">
             <Tab label="Assistant" {...a11yProps(0)} />
             <Tab label="Integrations" {...a11yProps(1)} />
             <Tab label="Users" {...a11yProps(2)} />
@@ -335,9 +300,7 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
                 control={<Switch color="primary" />}
                 label="Open Mic"
                 labelPlacement="end"
-                onChange={() =>
-                  setSettings({ ...settings, openMic: !settings.openMic })
-                }
+                onChange={() => setSettings({ ...settings, openMic: !settings.openMic })}
               />
             </FormControl>
             <FormControl sx={{ m: 1, minWidth: 120, margin: 0 }} size="small">
@@ -381,9 +344,7 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
               control={<Switch color="primary" />}
               label="Use Whisper Transcription"
               labelPlacement="end"
-              onChange={() =>
-                setSettings({ ...settings, useWhisper: !settings.useWhisper })
-              }
+              onChange={() => setSettings({ ...settings, useWhisper: !settings.useWhisper })}
             />
           </FormControl>
           <TextField
@@ -453,9 +414,7 @@ export function AssistantSettings({ anchorEl, onClose }: Props) {
             <Slider
               aria-label="Custom marks"
               value={settings.audioSpeed}
-              onChange={(_event, newValue) =>
-                setSettings({ ...settings, audioSpeed: newValue as number })
-              }
+              onChange={(_event, newValue) => setSettings({ ...settings, audioSpeed: newValue as number })}
               min={0.25}
               max={2.0}
               step={0.05}

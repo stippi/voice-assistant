@@ -1,5 +1,5 @@
 {
-  "name": "voice-assistant",
+  "name": "voice-assistant-frontend",
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
@@ -14,6 +14,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
+    "voice-assistant-shared": "workspace:*",
     "@anthropic-ai/sdk": "^0.24.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",

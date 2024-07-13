@@ -1,18 +1,18 @@
 import ListItemText from "@mui/material/ListItemText";
 import ListItem from "@mui/material/ListItem";
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import {IconButton} from "@mui/material";
-import {CalendarEvent} from "../model/event";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { IconButton } from "@mui/material";
+import { CalendarEvent } from "@shared/types";
 import React from "react";
 
 interface MonthDivider {
-  type: 'month';
+  type: "month";
   id: string;
   monthAndYear: string;
 }
 
 interface EventItem {
-  type: 'event';
+  type: "event";
   id: string;
   monthDay: string;
   weekday: string;
@@ -28,8 +28,8 @@ const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): Li
   const pimpedList: ListItem[] = [];
   let currentMonth: string | null = null;
   let currentDay: string | null = null;
-  
-  events.forEach(event => {
+
+  events.forEach((event) => {
     let startDate: Date;
     let endDate: Date;
     if (event.start.dateTime) {
@@ -46,36 +46,36 @@ const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): Li
     } else {
       return;
     }
-    const monthYear = startDate.toLocaleString(lang, { month: 'long', year: 'numeric' });
-    
+    const monthYear = startDate.toLocaleString(lang, { month: "long", year: "numeric" });
+
     if (currentMonth !== monthYear) {
       pimpedList.push({
-        type: 'month',
+        type: "month",
         id: monthYear,
         monthAndYear: monthYear,
       });
       currentMonth = monthYear;
     }
-    
+
     const newMonthDay = currentMonth + startDate.getDate().toString();
     let monthDay = startDate.getDate().toString();
-    let weekday = startDate.toLocaleString(lang, { weekday: 'short' });
+    let weekday = startDate.toLocaleString(lang, { weekday: "short" });
     if (currentDay !== newMonthDay) {
       currentDay = newMonthDay;
     } else {
-      monthDay = '';
-      weekday = '';
+      monthDay = "";
+      weekday = "";
     }
-    
+
     let startString = "";
     let endString = "";
     if (event.start.dateTime && event.end.dateTime) {
-      startString = startDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
-      endString = endDate.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+      startString = startDate.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+      endString = endDate.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
     }
-    
+
     pimpedList.push({
-      type: 'event',
+      type: "event",
       id: event.id,
       monthDay,
       weekday,
@@ -85,69 +85,71 @@ const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): Li
       uiLink: event.htmlLink,
     });
   });
-  
+
   return pimpedList;
 };
 
-function Event({monthDay, weekday, summary, startTime, endTime, uiLink}: EventProps) {
+function Event({ monthDay, weekday, summary, startTime, endTime, uiLink }: EventProps) {
   const openEvent = () => {
-    window.open(uiLink, '_blank');
-  }
-  
+    window.open(uiLink, "_blank");
+  };
+
   return (
     <ListItem
       alignItems={"flex-start"}
       sx={{
-        '&:hover .MuiIconButton-root': {
+        "&:hover .MuiIconButton-root": {
           opacity: 1,
         },
       }}
-      secondaryAction={uiLink &&
-        <IconButton
-          aria-label="open event"
-          size="small"
-          onClick={openEvent}
-          sx={{
-            opacity: 0,
-            transition: 'opacity 0.2s ease-in-out',
-          }}
-        >
-          <OpenInNewIcon fontSize="inherit" />
-        </IconButton>
+      secondaryAction={
+        uiLink && (
+          <IconButton
+            aria-label="open event"
+            size="small"
+            onClick={openEvent}
+            sx={{
+              opacity: 0,
+              transition: "opacity 0.2s ease-in-out",
+            }}
+          >
+            <OpenInNewIcon fontSize="inherit" />
+          </IconButton>
+        )
       }
     >
       <ListItemText
-        style={{textAlign: 'center'}}
+        style={{ textAlign: "center" }}
         primary={monthDay}
         primaryTypographyProps={{
           fontSize: 18,
-          fontWeight: 'bold',
-          lineHeight: '20px',
-          mb: '2px',
+          fontWeight: "bold",
+          lineHeight: "20px",
+          mb: "2px",
         }}
         secondary={weekday}
         secondaryTypographyProps={{
           noWrap: true,
           fontSize: 12,
-          lineHeight: '16px'
+          lineHeight: "16px",
         }}
       />
       <ListItemText
         primary={summary}
         primaryTypographyProps={{
           fontSize: 15,
-          fontWeight: 'medium',
-          lineHeight: '20px',
-          mb: '2px',
+          fontWeight: "medium",
+          lineHeight: "20px",
+          mb: "2px",
           whiteSpace: "nowrap",
           overflow: "hidden",
-          textOverflow: "ellipsis"
+          textOverflow: "ellipsis",
         }}
         secondary={startTime != endTime ? `${startTime} - ${endTime}` : startTime}
         secondaryTypographyProps={{
           noWrap: true,
           fontSize: 12,
-          lineHeight: '16px'
+          lineHeight: "16px",
         }}
       />
     </ListItem>
@@ -163,24 +165,21 @@ interface EventProps {
   uiLink?: string;
 }
 
-export const Events = React.memo(({events}: Props) => {
+export const Events = React.memo(({ events }: Props) => {
   const pimpedEvents = pimpedEventList(events);
-  
+
   return (
     <>
-      {pimpedEvents.map((item/*, index, array*/) => {
-        if (item.type === 'month') {
+      {pimpedEvents.map((item /*, index, array*/) => {
+        if (item.type === "month") {
           return (
-            <ListItem
-              key={item.id}
-              style={{paddingTop: 2, paddingBottom: 2}}
-            >
+            <ListItem key={item.id} style={{ paddingTop: 2, paddingBottom: 2 }}>
               <div></div>
               <ListItemText
                 primary={item.monthAndYear}
                 primaryTypographyProps={{
                   fontSize: 13,
-                  fontWeight: 'bold'
+                  fontWeight: "bold",
                 }}
               />
             </ListItem>

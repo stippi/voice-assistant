@@ -7,7 +7,7 @@ import {
   GoogleClientSecret,
 } from "../config";
 import { create, all } from "mathjs";
-import { Timer } from "../model/timer";
+import { Timer } from "@shared/types";
 import { addIsoDurationToDate } from "../utils/timeFormat";
 import { AppContextType, Spotify } from "../contexts/AppContext";
 import OpenAI from "openai";

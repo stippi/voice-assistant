@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { LLMConfig } from "../model/llmConfig";
+import { LLMConfig } from "@shared/types";
 
 type ConfigsContextType = {
   llmConfigs: LLMConfig[];
@@ -15,16 +15,13 @@ export const ConfigsContext = createContext<ConfigsContextType>({
   setActiveLLMConfig: () => {},
 });
 
-export const ConfigsProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const ConfigsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [llmConfigs, setLLMConfigs] = useState<LLMConfig[]>([]);
   const [activeLLMConfig, setActiveLLMConfig] = useState("");
 
   useEffect(() => {
     const savedConfigs = localStorage.getItem("voice-assistant-configs");
-    const savedActiveConfig =
-      localStorage.getItem("voice-assistant-active-config") || "";
+    const savedActiveConfig = localStorage.getItem("voice-assistant-active-config") || "";
 
     if (savedConfigs) {
       try {

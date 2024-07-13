@@ -7,7 +7,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { InlineMath, BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
-import { Message } from "../model/message";
+import { Message } from "@shared/types";
 import { BsFillPersonFill } from "react-icons/bs";
 import { RiRobot2Fill } from "react-icons/ri";
 import { GoogleMapsCard } from "./GoogleMapsCard";

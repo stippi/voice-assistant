@@ -1,6 +1,6 @@
-import React, {createContext, useState, useEffect, ReactNode, useCallback} from 'react';
-import {loginFlow} from "../integrations/microsoft.ts";
-import {CalendarEvent, EventTime} from "../model/event.ts";
+import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { loginFlow } from "../integrations/microsoft";
+import { CalendarEvent, EventTime } from "@shared/types";
 
 export type MicrosoftContextType = {
   accessToken: string;
@@ -9,36 +9,36 @@ export type MicrosoftContextType = {
 
 export const MicrosoftContext = createContext<MicrosoftContextType>({
   accessToken: "",
-  upcomingEvents: []
+  upcomingEvents: [],
 });
 
 interface Props {
-  children: ReactNode
-  enable: boolean
+  children: ReactNode;
+  enable: boolean;
 }
 
-export const MicrosoftContextProvider: React.FC<Props>  = ({ enable, children }) => {
+export const MicrosoftContextProvider: React.FC<Props> = ({ enable, children }) => {
   const [accessToken, setAccessToken] = useState("");
-  
+
   useEffect(() => {
     if (!enable) return;
-    loginFlow.getAccessToken().then(accessToken => {
+    loginFlow.getAccessToken().then((accessToken) => {
       setAccessToken(accessToken);
     });
   }, [enable]);
-  
+
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
-  
+
   const fetchUpcomingEvents = useCallback(async () => {
     if (!enable) return;
     const accessToken = await loginFlow.getAccessToken();
     const url = "https://graph.microsoft.com/v1.0/me/calendar/events?$top=5&$select=subject,start,end,location";
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    })
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch upcoming events: ${response.status} ${response.statusText}`);
     }
@@ -49,43 +49,49 @@ export const MicrosoftContextProvider: React.FC<Props>  = ({ enable, children })
       end: EventTime;
       subject: string;
     }
-    
+
     const result: { value: GraphEvent[] } = await response.json();
-    setUpcomingEvents(result.value.map((event) => ({
-      id: event.id,
-      start: event.start,
-      end: event.end,
-      summary: event.subject,
-    })));
+    setUpcomingEvents(
+      result.value.map((event) => ({
+        id: event.id,
+        start: event.start,
+        end: event.end,
+        summary: event.subject,
+      })),
+    );
   }, [enable]);
-  
+
   useEffect(() => {
     if (!accessToken) return;
     fetchUpcomingEvents().catch((error) => {
       console.error("Error fetching upcoming events from Microsoft", error);
     });
-    const interval = setInterval(async () => {
-      const accessToken = await loginFlow.getAccessToken(true);
-      setAccessToken(accessToken);
-      await fetchUpcomingEvents();
-    }, 1000 * 60 * 15);
+    const interval = setInterval(
+      async () => {
+        const accessToken = await loginFlow.getAccessToken(true);
+        setAccessToken(accessToken);
+        await fetchUpcomingEvents();
+      },
+      1000 * 60 * 15,
+    );
     return () => clearInterval(interval);
   }, [accessToken, fetchUpcomingEvents]);
-  
+
   useEffect(() => {
-    window.addEventListener('refresh-upcoming-events', fetchUpcomingEvents);
-    
+    window.addEventListener("refresh-upcoming-events", fetchUpcomingEvents);
+
     return () => {
-      window.removeEventListener('refresh-upcoming-events', fetchUpcomingEvents);
+      window.removeEventListener("refresh-upcoming-events", fetchUpcomingEvents);
     };
   }, [fetchUpcomingEvents]);
-  
+
   return (
     <MicrosoftContext.Provider
       value={{
         accessToken,
-        upcomingEvents
-      }}>
+        upcomingEvents,
+      }}
+    >
       {children}
     </MicrosoftContext.Provider>
   );

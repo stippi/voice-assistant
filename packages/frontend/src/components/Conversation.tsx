@@ -1,11 +1,11 @@
 import React from "react";
-import './Conversation.css'
+import "./Conversation.css";
 
-import {MessageCard} from "./MessageCard";
-import {Message} from "../model/message";
+import { MessageCard } from "./MessageCard";
+import { Message } from "@shared/types";
 import OpenAI from "openai";
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
-import {showToolCallInChat} from "../integrations/tools";
+import { showToolCallInChat } from "../integrations/tools";
 
 function showInline(toolCalls: ChatCompletionMessageToolCall[] | undefined): boolean {
   if (!Array.isArray(toolCalls)) {
@@ -14,7 +14,7 @@ function showInline(toolCalls: ChatCompletionMessageToolCall[] | undefined): boo
   return toolCalls.some(showToolCallInChat);
 }
 
-export const Conversation = React.memo(({chat, deleteMessage}: Props) => {
+export const Conversation = React.memo(({ chat, deleteMessage }: Props) => {
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
   const messageCountRef = React.useRef(0);
   React.useEffect(() => {
@@ -28,27 +28,30 @@ export const Conversation = React.memo(({chat, deleteMessage}: Props) => {
     }
   }, [chat]);
   const visibleRoles = ["user", "assistant"];
-  const filteredChat = chat && chat
-    .filter(message => visibleRoles.includes(message.role) &&
-      (message.content !== null || showInline(message.tool_calls)));
-  
-  return <div className="messages">
-    {filteredChat && filteredChat
-      .map((message, index) => (
-        <MessageCard
-          key={index}
-          className="message"
-          message={message}
-          deleteMessage={() => deleteMessage(message)}
-          regenerateMessage={index === filteredChat.length - 1 && message.role === "assistant" ? () => {} : undefined}
-          ref={index === filteredChat.length - 1 ? messagesEndRef : undefined}
-        />
-      ))
-    }
-  </div>
+  const filteredChat =
+    chat &&
+    chat.filter(
+      (message) => visibleRoles.includes(message.role) && (message.content !== null || showInline(message.tool_calls)),
+    );
+
+  return (
+    <div className="messages">
+      {filteredChat &&
+        filteredChat.map((message, index) => (
+          <MessageCard
+            key={index}
+            className="message"
+            message={message}
+            deleteMessage={() => deleteMessage(message)}
+            regenerateMessage={index === filteredChat.length - 1 && message.role === "assistant" ? () => {} : undefined}
+            ref={index === filteredChat.length - 1 ? messagesEndRef : undefined}
+          />
+        ))}
+    </div>
+  );
 });
 
 interface Props {
-  chat: Message[] | undefined
-  deleteMessage: (message: Message) => void
+  chat: Message[] | undefined;
+  deleteMessage: (message: Message) => void;
 }

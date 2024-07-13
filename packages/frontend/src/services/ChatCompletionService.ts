@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
-import { LLMConfig } from "../model/llmConfig";
+import { LLMConfig } from "@shared/types";
 import { loginFlow } from "../integrations/google";
 
 export interface ChatCompletionService {
