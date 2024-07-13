@@ -224,8 +224,10 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
     if (message.role === "tool") {
       converted.parts.push({
         functionResponse: {
+          //@ts-expect-error "name" is present, since it's actually Messages in the array'
           name: message.name,
           response: {
+            //@ts-expect-error "name" is present, since it's actually Messages in the array
             name: message.name,
             content: JSON.parse(message.content || "{}") as never,
           },

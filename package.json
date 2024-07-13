@@ -6,9 +6,12 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "concurrently \"yarn workspace frontend dev\" \"yarn workspace backend start\"",
-    "build": "yarn workspace shared build && yarn workspace frontend build && yarn workspace backend build",
-    "test": "yarn workspace frontend test && yarn workspace backend test"
+    "start": "concurrently \"yarn workspace voice-assistant-frontend dev\" \"yarn workspace voice-assistant-backend start\"",
+    "build": "yarn build:shared && yarn build:frontend && yarn build:backend",
+    "build:shared": "yarn workspace voice-assistant-shared build",
+    "build:frontend": "yarn workspace voice-assistant-frontend build",
+    "build:backend": "yarn workspace voice-assistant-backend build",
+    "test": "yarn workspace voice-assistant-frontend test && yarn workspace voice-assistant-backend test"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

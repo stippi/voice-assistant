@@ -56,7 +56,7 @@ function convertTextChildrenToMath(children: React.ReactNode) {
   });
 }
 
-const MessageContent = React.memo(({ role, content, tool_calls }: Message) => {
+const MessageContent = React.memo(({ role, content, tool_calls }: Partial<Message>) => {
   if (content === "") {
     return (
       <Discuss
