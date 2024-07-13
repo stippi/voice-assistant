@@ -202,6 +202,7 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
   constructor(projectId: string, region: string) {
     this.projectId = projectId;
     this.region = region;
+    console.log(`VertexAIChatCompletionService initialized with projectId: ${projectId}, region: ${region}`);
   }
 
   private convertRole(role: string) {
@@ -255,7 +256,6 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
     const accessToken = await loginFlow.getAccessToken();
 
     const systemMessage = options.messages.find((message) => message.role === "system");
-
     const wrappedSystemMessage = "Hi. I'll explain how you should behave:\n" + systemMessage!.content;
     const transformedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "user", content: wrappedSystemMessage },
