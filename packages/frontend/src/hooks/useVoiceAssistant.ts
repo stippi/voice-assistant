@@ -18,9 +18,9 @@ import {
   speechApiUrl,
   speechApiKey,
 } from "../config";
-import { removeCodeBlocks } from "../utils/removeCodeBlocks.ts";
-import useSpotifyContext from "./useSpotifyContext.tsx";
-import { createPerformanceTrackingService } from "../services/PerformanceTrackingService.ts";
+import { removeCodeBlocks } from "../utils/removeCodeBlocks";
+import useSpotifyContext from "./useSpotifyContext";
+import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 
 const fallbackConfig: LLMConfig = {
   id: "",
