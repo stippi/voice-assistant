@@ -1,10 +1,5 @@
 import { LoginFlow } from "../utils/loginFlow";
-import {
-  GoogleApiKey,
-  GoogleClientId,
-  GoogleClientSecret,
-  GoogleCustomSearchEngineId,
-} from "../config";
+import { GoogleApiKey, GoogleClientId, GoogleClientSecret, GoogleCustomSearchEngineId } from "../config";
 
 export const loginFlow = new LoginFlow({
   authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
@@ -22,16 +17,13 @@ export const loginFlow = new LoginFlow({
   scopes: [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/contacts.readonly",
-    //"https://www.googleapis.com/auth/cloud-platform", // For testing Gemini Pro
+    "https://www.googleapis.com/auth/cloud-platform", // For testing Gemini Pro
     "https://www.googleapis.com/auth/photoslibrary.readonly",
   ],
   storagePrefix: "google",
 });
 
-export async function googleCustomSearch(
-  query: string,
-  maxResults: number = 1,
-) {
+export async function googleCustomSearch(query: string, maxResults: number = 1) {
   const queryParams = new URLSearchParams();
   queryParams.append("key", GoogleApiKey);
   queryParams.append("cx", GoogleCustomSearchEngineId);
@@ -87,9 +79,7 @@ export async function getPlacesInfo(
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GoogleApiKey,
-      "X-Goog-FieldMask": ["displayName", "location", ...fields]
-        .map((field) => `places.${field}`)
-        .join(","),
+      "X-Goog-FieldMask": ["displayName", "location", ...fields].map((field) => `places.${field}`).join(","),
     },
     body: JSON.stringify(requestBody),
   });
@@ -107,10 +97,7 @@ export async function getPlacesInfo(
 
 type TravelMode = "DRIVE" | "BICYCLE" | "TRANSIT" | "WALK";
 type TransitType = "BUS" | "SUBWAY" | "TRAIN" | "RAIL" | "LIGHT_RAIL";
-type RoutingPreference =
-  | "TRAFFIC_UNAWARE"
-  | "TRAFFIC_AWARE"
-  | "TRAFFIC_AWARE_OPTIMAL";
+type RoutingPreference = "TRAFFIC_UNAWARE" | "TRAFFIC_AWARE" | "TRAFFIC_AWARE_OPTIMAL";
 type TrafficModel = "BEST_GUESS" | "OPTIMISTIC" | "PESSIMISTIC";
 
 interface TransitPreferences {
@@ -185,9 +172,7 @@ export async function getDirections(
     //    regionCode: "de",
   };
   if (intermediates.length > 0) {
-    request.intermediates = intermediates.map((intermediate) =>
-      toWayPoint(intermediate),
-    );
+    request.intermediates = intermediates.map((intermediate) => toWayPoint(intermediate));
   }
   if (arrivalTime) {
     request.arrivalTime = new Date(arrivalTime).toISOString();
@@ -214,12 +199,7 @@ export async function getDirections(
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GoogleApiKey,
-      "X-Goog-FieldMask": [
-        "description",
-        "duration",
-        "distanceMeters",
-        ...fields,
-      ]
+      "X-Goog-FieldMask": ["description", "duration", "distanceMeters", ...fields]
         .map((field) => `routes.${field}`)
         .join(","),
     },
@@ -261,14 +241,12 @@ export async function createCalendarEvent(
 ) {
   if (!gapi) {
     return {
-      error:
-        "Google integration is not enabled in the settings, or Google API failed to load",
+      error: "Google integration is not enabled in the settings, or Google API failed to load",
     };
   }
   if (!gapi.client.getToken()) {
     return {
-      error:
-        "User is not signed into Google account, or has not given Calendar access permissions",
+      error: "User is not signed into Google account, or has not given Calendar access permissions",
     };
   }
   const start = new Date(startTime);
@@ -282,9 +260,7 @@ export async function createCalendarEvent(
       timeZone: timeZone,
     },
     end: {
-      dateTime: toISOStringNoTimezone(
-        new Date(start.getTime() + durationInMinutes * 60000),
-      ),
+      dateTime: toISOStringNoTimezone(new Date(start.getTime() + durationInMinutes * 60000)),
       timeZone: timeZone,
     },
   };
@@ -316,20 +292,15 @@ export async function createCalendarEvent(
   };
 }
 
-export async function deleteCalendarEvent(
-  calendarId: string = "primary",
-  eventId: string,
-) {
+export async function deleteCalendarEvent(calendarId: string = "primary", eventId: string) {
   if (!gapi) {
     return {
-      error:
-        "Google integration is not enabled in the settings, or Google API failed to load",
+      error: "Google integration is not enabled in the settings, or Google API failed to load",
     };
   }
   if (!gapi.client.getToken()) {
     return {
-      error:
-        "User is not signed into Google account, or has not given Calendar access permissions",
+      error: "User is not signed into Google account, or has not given Calendar access permissions",
     };
   }
   const request = await gapi.client.calendar.events.delete({
@@ -339,9 +310,7 @@ export async function deleteCalendarEvent(
     sendUpdates: "all",
   });
   window.dispatchEvent(new CustomEvent("refresh-upcoming-events"));
-  return request.status === 204
-    ? { result: "event deleted" }
-    : { error: "unknown error" };
+  return request.status === 204 ? { result: "event deleted" } : { error: "unknown error" };
 }
 
 export async function listCalendarEvents(
@@ -356,14 +325,12 @@ export async function listCalendarEvents(
 ) {
   if (!gapi) {
     return {
-      error:
-        "Google integration is not enabled in the settings, or Google API failed to load",
+      error: "Google integration is not enabled in the settings, or Google API failed to load",
     };
   }
   if (!gapi.client.getToken()) {
     return {
-      error:
-        "User is not signed into Google account, or has not given Calendar access permissions",
+      error: "User is not signed into Google account, or has not given Calendar access permissions",
     };
   }
   const parameters: gapi.client.calendar.EventsListParameters = {
@@ -399,14 +366,12 @@ export async function listCalendarEvents(
 export async function listContacts(query: string) {
   if (!gapi) {
     return {
-      error:
-        "Google integration is not enabled in the settings, or Google API failed to load",
+      error: "Google integration is not enabled in the settings, or Google API failed to load",
     };
   }
   if (!gapi.client.getToken()) {
     return {
-      error:
-        "User is not signed into Google account, or has not given Contacts access permissions",
+      error: "User is not signed into Google account, or has not given Contacts access permissions",
     };
   }
   type Contact = {
@@ -423,8 +388,7 @@ export async function listContacts(query: string) {
   };
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const response =
-      await gapi.client.people.people.connections.list(requestOptions);
+    const response = await gapi.client.people.people.connections.list(requestOptions);
     if (!response?.result?.connections) {
       break;
     }
@@ -437,9 +401,7 @@ export async function listContacts(query: string) {
           contact.displayName = connection.names[0].displayName;
         }
         if (connection.emailAddresses) {
-          contact.emailAddresses = connection.emailAddresses.map(
-            (email) => email.value,
-          );
+          contact.emailAddresses = connection.emailAddresses.map((email) => email.value);
         }
         if (connection.biographies) {
           // @ts-expect-error - biographies is not in the types
@@ -464,21 +426,15 @@ export async function listContacts(query: string) {
         }
       }
       return (
-        !!(
-          contact.displayName &&
-          contact.displayName.toLowerCase().includes(query)
-        ) || !!(contact.notes && contact.notes.toLowerCase().includes(query))
+        !!(contact.displayName && contact.displayName.toLowerCase().includes(query)) ||
+        !!(contact.notes && contact.notes.toLowerCase().includes(query))
       );
     });
   }
   return contacts;
 }
 
-async function callApi<T>(
-  url: string,
-  options: RequestInit = {},
-  expectResponse = true,
-): Promise<T> {
+async function callApi<T>(url: string, options: RequestInit = {}, expectResponse = true): Promise<T> {
   const accessToken = await loginFlow.getAccessToken();
   options.headers = {
     ...options.headers,
@@ -491,9 +447,7 @@ async function callApi<T>(
     }
     return await response.json();
   } else {
-    throw new Error(
-      `Google API error: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Google API error: ${response.status} ${response.statusText}`);
   }
 }
 
