@@ -3,19 +3,18 @@ import Anthropic from "@anthropic-ai/sdk";
 import { LLMConfig } from "../model/llmConfig";
 import { loginFlow } from "../integrations/google";
 
-export abstract class ChatCompletionService {
-  abstract getStreamedMessage(
+export interface ChatCompletionService {
+  getStreamedMessage(
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
     callback: (chunk: string) => void,
   ): Promise<OpenAI.ChatCompletionMessage>;
 }
 
-export class OpenAIChatCompletionService extends ChatCompletionService {
+export class OpenAIChatCompletionService implements ChatCompletionService {
   private client: OpenAI;
 
   constructor(apiKey: string, baseURL?: string) {
-    super();
     this.client = new OpenAI({
       apiKey,
       dangerouslyAllowBrowser: true,
@@ -42,11 +41,10 @@ export class OpenAIChatCompletionService extends ChatCompletionService {
   }
 }
 
-export class AnthropicChatCompletionService extends ChatCompletionService {
+export class AnthropicChatCompletionService implements ChatCompletionService {
   private client: Anthropic;
 
   constructor(apiKey: string, baseURL?: string) {
-    super();
     this.client = new Anthropic({
       apiKey,
       baseURL,
@@ -198,11 +196,10 @@ interface GeminiResponse {
   };
 }
 
-export class VertexAIChatCompletionService extends ChatCompletionService {
+export class VertexAIChatCompletionService implements ChatCompletionService {
   private projectId: string;
   private region: string;
   constructor(projectId: string, region: string) {
-    super();
     this.projectId = projectId;
     this.region = region;
   }
@@ -276,37 +273,7 @@ export class VertexAIChatCompletionService extends ChatCompletionService {
     };
 
     const body: GeminiPayload = {
-      contents: transformedMessages.map((message) => {
-        const converted: GeminiMessage = {
-          role: this.convertRole(message.role),
-          parts: [],
-        };
-        if (message.role === "tool") {
-          converted.parts.push({
-            functionResponse: {
-              name: message.name,
-              response: {
-                name: message.name,
-                content: JSON.parse(message.content || "{}") as never,
-              },
-            },
-          });
-        } else if (message.role === "assistant" && message.tool_calls) {
-          for (const toolCall of message.tool_calls) {
-            converted.parts.push({
-              functionCall: {
-                name: toolCall.function.name,
-                args: JSON.parse(toolCall.function.arguments) as never,
-              },
-            });
-          }
-        } else if (typeof message.content === "string") {
-          converted.parts.push({
-            text: message.content,
-          });
-        }
-        return converted;
-      }),
+      contents: transformedMessages.map((message) => this.convertFromOpenAIMessage(message)),
     };
 
     if (options.tools) {
