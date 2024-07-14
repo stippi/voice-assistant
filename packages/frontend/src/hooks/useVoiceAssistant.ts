@@ -172,9 +172,10 @@ export function useVoiceAssistant() {
 
           const apiMessages: OpenAI.ChatCompletionMessageParam[] = [
             systemMessage,
-            ...messages.map((m: Partial<Message>) => {
-              delete m.id;
-              return m;
+            ...messages.map((message) => {
+              const messageCopy: Partial<Message> = { ...message };
+              delete messageCopy.id;
+              return messageCopy;
             }),
           ];
 
@@ -235,7 +236,7 @@ export function useVoiceAssistant() {
               const result = await callFunction(toolCall.function, appContextRef.current);
               console.log("function result", result);
               const toolReply: Message = {
-                id: crypto.randomUUID(),
+                id,
                 role: "tool",
                 name: toolCall.function.name,
                 tool_call_id: toolCall.id,
@@ -309,7 +310,7 @@ export function useVoiceAssistant() {
         return [
           ...newMessages,
           {
-            id: id,
+            id,
             role: "assistant",
             content: "",
           },
