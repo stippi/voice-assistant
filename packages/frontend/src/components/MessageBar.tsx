@@ -5,6 +5,7 @@ import { createTheme, IconButton, ThemeProvider } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import CancelIcon from "@mui/icons-material/Cancel";
 import SpeechRecorder from "./SpeechRecorder";
+import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 
 const theme = createTheme({
   components: {},
@@ -32,6 +33,7 @@ export const MessageBar = React.memo(
     const defaultPlaceHolder = "Type to chat";
     const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
     const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
+    const performanceTrackingServiceRef = React.useRef(createPerformanceTrackingService());
 
     const focusTextArea = (e: MouseEvent) => {
       if (textAreaRef.current && e.target !== textAreaRef.current) {
@@ -39,11 +41,19 @@ export const MessageBar = React.memo(
       }
     };
 
+    const sendTextMessage = (message: string) => {
+      const userMessageId = crypto.randomUUID();
+      const now = new Date().getTime();
+      performanceTrackingServiceRef.current.trackTimestamp(userMessageId, "transcription-started", now);
+      performanceTrackingServiceRef.current.trackTimestamp(userMessageId, "transcription-finished", now);
+      sendMessage(userMessageId, message, false);
+      setMessage("");
+    };
+
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey && !message.includes("\n")) {
         e.preventDefault();
-        sendMessage(crypto.randomUUID(), message, false);
-        setMessage("");
+        sendTextMessage(message);
       }
     };
 
@@ -69,8 +79,7 @@ export const MessageBar = React.memo(
                   aria-label="send message"
                   onMouseDown={(event) => {
                     event.preventDefault();
-                    sendMessage(crypto.randomUUID(), message, false);
-                    setMessage("");
+                    sendTextMessage(message);
                   }}
                 >
                   <SendIcon />

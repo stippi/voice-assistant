@@ -15,6 +15,8 @@ import { showToolCallInChat } from "../integrations/tools";
 import { ButtonGroup, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
+import PerformanceTooltip from "./PerformanceTooltip";
 
 function parseMath(text: string) {
   const result = [];
@@ -195,6 +197,15 @@ export const MessageCard = React.forwardRef(
     const [hovered, setHovered] = React.useState(false);
     const onMouseEnter = () => setHovered(true);
     const onMouseLeave = () => setHovered(false);
+    const performanceTrackingService = React.useRef(createPerformanceTrackingService());
+
+    const fetchPerformanceData = async () => {
+      if (!message.id) {
+        console.log("Message ID not found");
+        return {};
+      }
+      return await performanceTrackingService.current.getStats(message.id);
+    };
 
     return (
       <div className={className} ref={ref}>
@@ -218,6 +229,7 @@ export const MessageCard = React.forwardRef(
                 <ReplayIcon fontSize="inherit" />
               </IconButton>
             )}
+            <PerformanceTooltip fetchPerformanceData={fetchPerformanceData} />
           </ButtonGroup>
         </div>
       </div>
