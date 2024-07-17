@@ -6,6 +6,8 @@ export interface PerformanceData {
   "streaming-started": number;
   "first-content-received": number;
   "streaming-finished": number;
+  "tool-execution-started": number;
+  "tool-execution-finished": number;
   "spoken-response-started": number;
   "spoken-response-finished": number;
 }
@@ -23,14 +25,20 @@ abstract class BasePerformanceTrackingService implements PerformanceTrackingServ
 }
 
 class IndexDbPerformanceTrackingService extends BasePerformanceTrackingService {
+  private lastOperation = Promise.resolve();
+
   constructor() {
     super();
   }
 
   async trackTimestamp(id: string, what: keyof PerformanceData, timestamp: number): Promise<void> {
-    const performanceRecords = (await indexDbGet<PerformanceRecords>("performance-records")) || {};
-    performanceRecords[id] = { ...performanceRecords[id], [what]: timestamp };
-    await indexDbPut("performance-records", performanceRecords);
+    this.lastOperation = this.lastOperation.then(async () => {
+      const performanceRecords = (await indexDbGet<PerformanceRecords>("performance-records")) || {};
+      console.log("tracking", id, what, new Date(timestamp).toISOString());
+      performanceRecords[id] = { ...performanceRecords[id], [what]: timestamp };
+      await indexDbPut("performance-records", performanceRecords);
+    });
+    return this.lastOperation;
   }
 
   async getStats(id: string): Promise<PerformanceData> {

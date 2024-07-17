@@ -27,6 +27,7 @@ const phaseColors = {
   transcription: "#FFD700",
   firstContent: "#FF4500",
   streaming: "#32CD32",
+  toolExecution: "#8A2BE2",
   spokenResponse: "#1E90FF",
 };
 
@@ -53,6 +54,7 @@ const PerformanceTooltip: React.FC<PerformanceTooltipProps> = ({ fetchPerformanc
         const data = await fetchPerformanceData();
         const calculatedMetrics: Metric[] = [];
         if (data) {
+          console.log("Performance data:", data);
           if (data["transcription-finished"] && data["transcription-started"]) {
             calculatedMetrics.push({
               phase: "Time to Transcription",
@@ -72,6 +74,13 @@ const PerformanceTooltip: React.FC<PerformanceTooltipProps> = ({ fetchPerformanc
               phase: "Streaming Duration",
               duration: data["streaming-finished"] - data["first-content-received"],
               color: phaseColors.streaming,
+            });
+          }
+          if (data["tool-execution-finished"] && data["tool-execution-started"]) {
+            calculatedMetrics.push({
+              phase: "Tool Execution",
+              duration: data["tool-execution-finished"] - data["tool-execution-started"],
+              color: phaseColors.toolExecution,
             });
           }
           if (data["spoken-response-finished"] && data["spoken-response-started"]) {

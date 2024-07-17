@@ -10,6 +10,7 @@ export interface TextToSpeechService {
   addText(text: string): void;
   isPlaying(): boolean;
   stopPlayback(): void;
+  onPlaybackStart(callback: () => void): void;
   onPlaybackComplete(callback: () => void): void;
   finalizePlayback(): void;
 }
@@ -19,6 +20,7 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
 
   protected textBuffer: string = "";
   protected lastPlayedOffset: number = 0;
+  protected onStartCallback: (() => void) | null = null;
   protected onCompleteCallback: (() => void) | null = null;
   protected sentenceQueue: string[] = [];
   protected isExpectingMoreText: boolean = true;
@@ -41,6 +43,10 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
 
   isPlaying(): boolean {
     return this.isAudioPlaying;
+  }
+
+  onPlaybackStart(callback: () => void): void {
+    this.onStartCallback = callback;
   }
 
   onPlaybackComplete(callback: () => void): void {
@@ -74,6 +80,8 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
           this.playSentencesFromQueue().catch((error) => {
             console.error("Failed to play sentences", error);
           });
+        } else {
+          console.log(`processSentences(): audio is already playing - queueing "${sentence.content}"`);
         }
       }
     }
@@ -86,7 +94,8 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
         await this.playSentence(sentence);
       }
     }
-    if (!this.isExpectingMoreText) {
+    if (this.currentAudio === null && !this.isExpectingMoreText) {
+      console.log("playSentencesFromQueue(): playback complete");
       this.onComplete();
     }
     this.isAudioPlaying = false;
@@ -109,7 +118,9 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
 
     if (this.firstAudio) {
       this.firstAudio = false;
-      document.dispatchEvent(new CustomEvent("reduce-volume"));
+      if (this.onStartCallback) {
+        this.onStartCallback();
+      }
     }
 
     this.currentAudio = audio;
@@ -117,6 +128,9 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
       audio.onended = () => {
         URL.revokeObjectURL(audio.src);
         this.currentAudio = null;
+        if (this.sentenceQueue.length === 0 && !this.isExpectingMoreText) {
+          this.onComplete();
+        }
         resolve();
       };
     });
@@ -130,6 +144,7 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
   protected abstract createAudioElement(sentence: string): Promise<HTMLAudioElement>;
 
   protected onComplete(): void {
+    console.log("Playback complete");
     this.isAudioPlaying = false;
     this.firstAudio = true;
     this.textBuffer = "";
@@ -140,7 +155,6 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
     this.cancelled = false;
     if (this.onCompleteCallback) {
       this.onCompleteCallback();
-      document.dispatchEvent(new CustomEvent("restore-volume"));
     }
   }
 

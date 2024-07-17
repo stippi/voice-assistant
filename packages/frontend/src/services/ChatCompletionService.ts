@@ -7,7 +7,7 @@ export interface ChatCompletionService {
   getStreamedMessage(
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
-    callback: (chunk: string) => void,
+    callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage>;
 }
 
@@ -25,7 +25,7 @@ export class OpenAIChatCompletionService implements ChatCompletionService {
   async getStreamedMessage(
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
-    callback: (chunk: string) => void,
+    callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
     const stream = this.client.beta.chat.completions.stream(
       {
@@ -35,7 +35,10 @@ export class OpenAIChatCompletionService implements ChatCompletionService {
       { signal },
     );
     for await (const chunk of stream) {
-      callback(chunk.choices[0].delta.content || "");
+      const keepStreaming = await callback(chunk.choices[0].delta.content || "");
+      if (!keepStreaming) {
+        break;
+      }
     }
     return stream.finalMessage();
   }
@@ -106,7 +109,7 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
   async getStreamedMessage(
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
-    callback: (chunk: string) => void,
+    callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
     const systemMessage = body.messages.find((message) => message.role === "system");
     const stream = this.client.messages.stream(
@@ -121,8 +124,8 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
       { signal },
     );
 
-    stream.on("text", (text) => {
-      callback(text);
+    stream.on("text", async (text) => {
+      await callback(text);
     });
 
     const finalMessage = await stream.finalMessage();
@@ -253,7 +256,7 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
   async getStreamedMessage(
     options: OpenAI.ChatCompletionCreateParams,
     _: AbortSignal,
-    callback: (chunk: string) => void,
+    callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
     const accessToken = await loginFlow.getAccessToken();
 
@@ -306,7 +309,10 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
       const delta: GeminiResponse = JSON.parse(event.data);
       if (delta.candidates?.[0].content?.parts?.[0].text) {
         content += delta.candidates[0].content.parts[0].text;
-        callback(delta.candidates[0].content.parts[0].text);
+        const keepStreaming = await callback(delta.candidates[0].content.parts[0].text);
+        if (!keepStreaming) {
+          break;
+        }
       }
       if (delta.candidates?.[0].content?.parts?.[0].functionCall) {
         functionCall = delta.candidates[0].content.parts[0].functionCall;

@@ -84,6 +84,7 @@ export function useVoiceAssistant() {
   const performanceTrackingServiceRef = useRef(createPerformanceTrackingService());
   const abortControllerRef = useRef<AbortController | null>(null);
   const isRespondingRef = useRef<boolean>(false);
+  const assistantMessageIdRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (llmConfigs.length > 0) {
@@ -106,7 +107,21 @@ export function useVoiceAssistant() {
     });
 
     if (textToSpeechServiceRef.current) {
-      textToSpeechServiceRef.current.onPlaybackComplete(() => {
+      textToSpeechServiceRef.current.onPlaybackStart(async () => {
+        await performanceTrackingServiceRef.current.trackTimestamp(
+          assistantMessageIdRef.current,
+          "spoken-response-started",
+          new Date().getTime(),
+        );
+        document.dispatchEvent(new CustomEvent("reduce-volume"));
+      });
+      textToSpeechServiceRef.current.onPlaybackComplete(async () => {
+        await performanceTrackingServiceRef.current.trackTimestamp(
+          assistantMessageIdRef.current,
+          "spoken-response-finished",
+          new Date().getTime(),
+        );
+        document.dispatchEvent(new CustomEvent("restore-volume"));
         isRespondingRef.current = false;
         setResponding(false);
         abortControllerRef.current = null;
@@ -125,7 +140,7 @@ export function useVoiceAssistant() {
   }, [currentChat]);
 
   const sendMessage = useCallback(
-    async (id: string, message: string, audible: boolean) => {
+    async (userMessageId: string, message: string, audible: boolean) => {
       if (isRespondingRef.current) {
         // Prevent any new user messages while already responding.
         return;
@@ -146,6 +161,8 @@ export function useVoiceAssistant() {
         newMessages.push(message);
         return newMessages;
       };
+
+      assistantMessageIdRef.current = crypto.randomUUID();
 
       const runCompletionsLoop = async (messages: Message[]): Promise<Message[]> => {
         if (!chatServiceRef.current || !abortControllerRef.current) {
@@ -181,12 +198,16 @@ export function useVoiceAssistant() {
 
           let content = "";
           messages.push({
-            id,
+            id: assistantMessageIdRef.current,
             role: "assistant",
             content,
           });
 
-          performanceTrackingServiceRef.current.trackTimestamp(id, "streaming-started", new Date().getTime());
+          await performanceTrackingServiceRef.current.trackTimestamp(
+            assistantMessageIdRef.current,
+            "streaming-started",
+            new Date().getTime(),
+          );
 
           const finalAssistantMessage = await chatServiceRef.current.getStreamedMessage(
             {
@@ -195,21 +216,21 @@ export function useVoiceAssistant() {
               tools,
             },
             abortControllerRef.current.signal,
-            (chunk: string) => {
+            async (chunk: string) => {
               if (!isRespondingRef.current) {
                 console.log("User canceled during streaming");
                 return false;
               }
               if (content === "" && chunk !== "") {
-                performanceTrackingServiceRef.current.trackTimestamp(
-                  id,
+                await performanceTrackingServiceRef.current.trackTimestamp(
+                  assistantMessageIdRef.current,
                   "first-content-received",
                   new Date().getTime(),
                 );
               }
               content += chunk;
               messages = updateLastMessage(messages, {
-                id,
+                id: assistantMessageIdRef.current,
                 role: "assistant",
                 content,
               });
@@ -221,22 +242,27 @@ export function useVoiceAssistant() {
             },
           );
 
-          performanceTrackingServiceRef.current.trackTimestamp(id, "streaming-finished", new Date().getTime());
+          await performanceTrackingServiceRef.current.trackTimestamp(
+            assistantMessageIdRef.current,
+            "streaming-finished",
+            new Date().getTime(),
+          );
 
-          if (audible && textToSpeechServiceRef.current) {
-            textToSpeechServiceRef.current.finalizePlayback();
-          }
-
-          messages = updateLastMessage(messages, { id, ...finalAssistantMessage });
+          messages = updateLastMessage(messages, { ...finalAssistantMessage, id: assistantMessageIdRef.current });
 
           // Check for tool calls
           if (finalAssistantMessage.tool_calls) {
+            await performanceTrackingServiceRef.current.trackTimestamp(
+              assistantMessageIdRef.current,
+              "tool-execution-started",
+              new Date().getTime(),
+            );
             for (const toolCall of finalAssistantMessage.tool_calls) {
               if (toolCall.type !== "function") continue;
               const result = await callFunction(toolCall.function, appContextRef.current);
               console.log("function result", result);
               const toolReply: Message = {
-                id,
+                id: crypto.randomUUID(),
                 role: "tool",
                 name: toolCall.function.name,
                 tool_call_id: toolCall.id,
@@ -244,6 +270,13 @@ export function useVoiceAssistant() {
               };
               messages.push(toolReply);
             }
+            await performanceTrackingServiceRef.current.trackTimestamp(
+              assistantMessageIdRef.current,
+              "tool-execution-finished",
+              new Date().getTime(),
+            );
+            // Update the assistant message ID for the next loop iteration
+            assistantMessageIdRef.current = crypto.randomUUID();
           } else {
             // If there are no tool calls, we're done and can exit this loop
             break;
@@ -254,7 +287,7 @@ export function useVoiceAssistant() {
       };
 
       const userMessage: Message = {
-        id,
+        id: userMessageId,
         role: "user",
         content: message,
       };
@@ -304,13 +337,17 @@ export function useVoiceAssistant() {
               isRespondingRef.current = false;
               setResponding(false);
               abortControllerRef.current = null;
+            } else {
+              if (textToSpeechServiceRef.current) {
+                textToSpeechServiceRef.current.finalizePlayback();
+              }
             }
           });
         // Add empty assistant message. This causes the chat to show an empty assistant message with a progress spinner.
         return [
           ...newMessages,
           {
-            id,
+            id: assistantMessageIdRef.current,
             role: "assistant",
             content: "",
           },
