@@ -19,6 +19,7 @@ import useConfigs from "../hooks/useConfigs";
 import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
+import EditableListItem from "./common/EditableListItem";
 
 export const LLMConfigs: React.FC = () => {
   const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } = useConfigs();
@@ -92,22 +93,30 @@ export const LLMConfigs: React.FC = () => {
         >
           <List style={{ padding: 0 }}>
             {llmConfigs.map((config, index) => (
-              <ListItemButton
+              <EditableListItem
                 key={index}
-                selected={selectedConfig === config.id}
+                item={config}
+                fallbackName="<unnamed>"
+                isSelected={selectedConfig === config.id}
                 onClick={() => setSelectedConfig(config.id)}
-              >
-                <ListItemIcon>
-                  <Checkbox
-                    edge="start"
-                    checked={activeLLMConfig === config.id}
-                    tabIndex={-1}
-                    disableRipple
-                    onChange={() => setActiveLLMConfig(config.id)}
-                  />
-                </ListItemIcon>
-                <ListItemText primary={config.name || "<unnamed>"} />
-              </ListItemButton>
+                onDuplicate={() => {
+                  const newConfig: LLMConfig = {
+                    ...config,
+                    id: crypto.randomUUID(),
+                    name: `${config.name} (copy)`,
+                  };
+                  setLLMConfigs([...llmConfigs, newConfig]);
+                  setSelectedConfig(newConfig.id);
+                }}
+                onRename={(name) => handleConfigChange("name", name)}
+                onDelete={() => {
+                  const updatedConfigs = llmConfigs.filter((c) => c.id !== config.id);
+                  setLLMConfigs(updatedConfigs);
+                  setSelectedConfig(updatedConfigs[0]?.id || "");
+                }}
+                isActive={config.id === activeLLMConfig}
+                onActivate={() => setActiveLLMConfig(config.id)}
+              />
             ))}
           </List>
         </Paper>
