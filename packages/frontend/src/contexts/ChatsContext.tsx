@@ -171,7 +171,7 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const downloadChats = React.useCallback(async () => {
     const allData: Record<string, Chat> = {};
     for (const chatInfo of chats) {
-      allData[chatInfo.id] = await indexDbGet<Chat>(chatInfo.id);
+      allData[chatInfo.id] = { ...(await indexDbGet<Chat>(chatInfo.id)), ...chatInfo};
     }
     
     const jsonData = JSON.stringify(allData, null, 2);

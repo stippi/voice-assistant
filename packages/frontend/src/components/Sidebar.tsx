@@ -18,6 +18,7 @@ import './Sidebar.css'
 import {ChatSelection} from "./ChatSelection";
 import {AssistantSettings} from "./AssistantSettings";
 import {RiRobot2Fill} from "react-icons/ri";
+import {Button} from "@mui/material";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
   '& .MuiListItemButton-root': {
@@ -32,6 +33,12 @@ const SidebarList = styled(List)<{ component?: React.ElementType }>({
     fontSize: 20,
   },
 });
+
+const DownloadChatsButton: React.FC = () => {
+  const { downloadChats } = useChats();
+  return <Button onClick={downloadChats}>Download chats</Button>;
+};
+
 
 const theme = createTheme({
   components: {
@@ -212,6 +219,7 @@ export function Sidebar() {
             <Divider />
           </SidebarList>
           <ChatSelection/>
+          <DownloadChatsButton/>
         </Paper>
       </Box>
     </ThemeProvider>
