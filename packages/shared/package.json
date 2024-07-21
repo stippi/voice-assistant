@@ -2,6 +2,8 @@
   "name": "voice-assistant-shared",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "packageManager": "yarn@1.22.19",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
