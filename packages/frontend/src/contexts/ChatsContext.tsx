@@ -13,6 +13,7 @@ type ChatsContextType = {
   renameChat: (chatID: string, newName: string) => void;
   deleteChat: (chatID: string) => void;
   syncChats: () => void;
+  downloadChats: () => Promise<void>;
 };
 
 export const ChatsContext = createContext<ChatsContextType>({
@@ -28,6 +29,7 @@ export const ChatsContext = createContext<ChatsContextType>({
   renameChat: () => {},
   deleteChat: () => {},
   syncChats: () => {},
+  downloadChats: async () => {},
 });
 
 export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -166,6 +168,27 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     await indexDbPut("chats", chatInfos);
   }, []);
 
+  const downloadChats = React.useCallback(async () => {
+    const allData: Record<string, Chat> = {};
+    for (const chatInfo of chats) {
+      allData[chatInfo.id] = await indexDbGet<Chat>(chatInfo.id);
+    }
+    
+    const jsonData = JSON.stringify(allData, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `chat_data.json`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  }, [chats]);
+  
   return (
     <ChatsContext.Provider
       value={{
@@ -179,6 +202,7 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         renameChat,
         deleteChat,
         syncChats,
+        downloadChats
       }}
     >
       {children}
