@@ -34,7 +34,7 @@ class IndexDbPerformanceTrackingService extends BasePerformanceTrackingService {
   async trackTimestamp(id: string, what: keyof PerformanceData, timestamp: number): Promise<void> {
     this.lastOperation = this.lastOperation.then(async () => {
       const performanceRecords = (await indexDbGet<PerformanceRecords>("performance-records")) || {};
-      console.log("tracking", id, what, new Date(timestamp).toISOString());
+      //console.log("tracking", id, what, new Date(timestamp).toISOString());
       performanceRecords[id] = { ...performanceRecords[id], [what]: timestamp };
       await indexDbPut("performance-records", performanceRecords);
     });
