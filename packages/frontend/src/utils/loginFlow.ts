@@ -70,7 +70,7 @@ export class LoginFlow {
     const authUrl = new URL(this.options.authorizationEndpoint);
     authUrl.search = new URLSearchParams(params).toString();
     // Redirect the user to the authorization server for login
-    //window.location.href = authUrl.toString();
+    window.location.href = authUrl.toString();
   }
 
   async getToken(code: string) {
