@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import {
   Box,
-  List,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
-  Checkbox,
+  //List,
   Button,
   TextField,
   FormControl,
@@ -20,10 +16,20 @@ import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
 import EditableListItem from "./common/EditableListItem";
+import DraggableList from "./common/DraggableList";
+import { OnDragEndResponder } from "react-beautiful-dnd";
 
 export const LLMConfigs: React.FC = () => {
   const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } = useConfigs();
   const [selectedConfig, setSelectedConfig] = useState("");
+
+  const handleDragEnd: OnDragEndResponder = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(llmConfigs);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setLLMConfigs(items);
+  };
 
   const handleAddConfig = () => {
     const newConfig: LLMConfig = {
@@ -91,34 +97,43 @@ export const LLMConfigs: React.FC = () => {
             overflow: "auto",
           }}
         >
-          <List style={{ padding: 0 }}>
-            {llmConfigs.map((config, index) => (
+          <DraggableList
+            items={llmConfigs.map((config, index) => ({ ...config, index }))}
+            onDragEnd={handleDragEnd}
+            renderItem={(provided, snapshot, item) => (
               <EditableListItem
-                key={index}
-                item={config}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+                ref={provided.innerRef}
+                item={item}
                 fallbackName="<unnamed>"
-                isSelected={selectedConfig === config.id}
-                onClick={() => setSelectedConfig(config.id)}
+                isSelected={selectedConfig === item.id}
+                onClick={() => setSelectedConfig(item.id)}
                 onDuplicate={() => {
                   const newConfig: LLMConfig = {
-                    ...config,
+                    ...item,
                     id: crypto.randomUUID(),
-                    name: `${config.name} (copy)`,
+                    name: `${item.name} (copy)`,
                   };
                   setLLMConfigs([...llmConfigs, newConfig]);
                   setSelectedConfig(newConfig.id);
                 }}
-                onRename={(name) => handleConfigChange("name", name)}
+                onRename={(name) => {
+                  const updatedConfigs = llmConfigs.map((config) =>
+                    config.id === item.id ? { ...config, name } : config,
+                  );
+                  setLLMConfigs(updatedConfigs);
+                }}
                 onDelete={() => {
-                  const updatedConfigs = llmConfigs.filter((c) => c.id !== config.id);
+                  const updatedConfigs = llmConfigs.filter((c) => c.id !== item.id);
                   setLLMConfigs(updatedConfigs);
                   setSelectedConfig(updatedConfigs[0]?.id || "");
                 }}
-                isActive={config.id === activeLLMConfig}
-                onActivate={() => setActiveLLMConfig(config.id)}
+                isActive={item.id === activeLLMConfig}
+                onActivate={() => setActiveLLMConfig(item.id)}
               />
-            ))}
-          </List>
+            )}
+          />
         </Paper>
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
           <Button startIcon={<AddCircleIcon />} onClick={handleAddConfig} variant="contained">

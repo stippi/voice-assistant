@@ -14,7 +14,6 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "voice-assistant-shared": "1.0.0",
     "@anthropic-ai/sdk": "^0.24.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -33,6 +32,7 @@
     "openai": "^4.28.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",
     "react-katex": "^3.0.1",
@@ -41,7 +41,8 @@
     "react-syntax-highlighter": "^15.5.0",
     "react-transition-group": "^4.4.5",
     "sentence-splitter": "^5.0.0",
-    "swr": "^2.2.5"
+    "swr": "^2.2.5",
+    "voice-assistant-shared": "1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
@@ -51,6 +52,7 @@
     "@types/gapi.people": "^1.0.13",
     "@types/google.accounts": "^0.0.14",
     "@types/react": "^18.2.56",
+    "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.2.19",
     "@types/react-katex": "^3.0.4",
     "@types/react-syntax-highlighter": "^15.5.10",

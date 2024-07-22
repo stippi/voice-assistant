@@ -18,73 +18,73 @@ interface Options {
 export class LoginFlow {
   options: Options;
   redirectUrl: string;
-  
+
   constructor(options: Options) {
     this.options = options;
     this.redirectUrl = window.origin + options.callbackPath;
   }
-  
+
   private codeVerifierKey() {
     return `${this.options.storagePrefix}-code-verifier`;
   }
-  
+
   private tokenSetKey() {
     return `${this.options.storagePrefix}-token-set`;
   }
-  
+
   private stateKey() {
     return `${this.options.storagePrefix}-state`;
   }
-  
+
   private getRandomString(length: number): string {
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     const randomValues = crypto.getRandomValues(new Uint8Array(length));
     return randomValues.reduce((acc, x) => acc + possible[x % possible.length], "");
   }
-  
+
   async redirectToAuthorize() {
     const codeVerifier = this.getRandomString(64);
     const data = new TextEncoder().encode(codeVerifier);
-    const hashed = await crypto.subtle.digest('SHA-256', data);
-    const state = this.getRandomString(16)
-    
+    const hashed = await crypto.subtle.digest("SHA-256", data);
+    const state = this.getRandomString(16);
+
     const codeChallengeBase64 = btoa(String.fromCharCode(...new Uint8Array(hashed)))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-    
+      .replace(/=/g, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+
     window.localStorage.setItem(this.codeVerifierKey(), codeVerifier);
     window.localStorage.setItem(this.stateKey(), state);
-    
+
     const params = {
       ...this.options.additionalParams,
-      response_type: 'code',
+      response_type: "code",
       client_id: this.options.clientId,
-      scope: this.options.scopes.join(' '),
-      code_challenge_method: 'S256',
+      scope: this.options.scopes.join(" "),
+      code_challenge_method: "S256",
       code_challenge: codeChallengeBase64,
       state: state,
       redirect_uri: this.redirectUrl,
     };
-    
-    const authUrl = new URL(this.options.authorizationEndpoint)
+
+    const authUrl = new URL(this.options.authorizationEndpoint);
     authUrl.search = new URLSearchParams(params).toString();
     // Redirect the user to the authorization server for login
-    window.location.href = authUrl.toString();
+    //window.location.href = authUrl.toString();
   }
 
   async getToken(code: string) {
     const codeVerifier = localStorage.getItem(this.codeVerifierKey()) || "";
-    
+
     const response = await fetch(this.options.tokenEndpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
         client_id: this.options.clientId,
         ...this.options.additionalTokenParams,
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         code: code,
         redirect_uri: this.redirectUrl,
         code_verifier: codeVerifier,
@@ -95,17 +95,17 @@ export class LoginFlow {
     }
     return await response.json();
   }
-  
+
   async runLoginFlow() {
     // On page load, try to fetch auth code from current browser search URL
     const args = new URLSearchParams(window.location.search);
-    const code = args.get('code');
+    const code = args.get("code");
     if (!code) {
       console.log(`no code found in URL, redirecting to ${this.options.storagePrefix} authorize`);
       await this.redirectToAuthorize();
       return "";
     }
-    const state = args.get('state');
+    const state = args.get("state");
     const storedState = window.localStorage.getItem(this.stateKey());
     window.localStorage.removeItem(this.stateKey());
     if (!storedState || state !== storedState) {
@@ -129,15 +129,15 @@ export class LoginFlow {
         expires: Date.now() + json.expires_in * 1000,
       };
       localStorage.setItem(this.tokenSetKey(), JSON.stringify(newTokenSet));
-      
+
       // Remove query and callback path from URL so that we can refresh correctly.
       const url = new URL(window.location.href);
       url.search = "";
       url.pathname = "";
-      
-      const updatedUrl = url.search ? url.href : url.href.replace('?', '');
+
+      const updatedUrl = url.search ? url.href : url.href.replace("?", "");
       window.history.replaceState({}, document.title, updatedUrl);
-      
+
       return newTokenSet.accessToken;
     } catch (error) {
       console.error(`failed to exchange ${this.options.storagePrefix} code for token`, error);
@@ -145,7 +145,7 @@ export class LoginFlow {
       return "";
     }
   }
-  
+
   async getAccessToken(forceRefresh = false) {
     const storedTokenSet = localStorage.getItem(this.tokenSetKey());
     if (!storedTokenSet) {
@@ -157,20 +157,20 @@ export class LoginFlow {
     }
     // Try to refresh the access token, it may fail if the refresh token has expired, too.
     const response = await fetch(this.options.tokenEndpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
         ...this.options.additionalTokenParams,
         client_id: this.options.clientId,
-        grant_type: 'refresh_token',
-        refresh_token: tokenSet.refreshToken
+        grant_type: "refresh_token",
+        refresh_token: tokenSet.refreshToken,
       }),
     });
     if (!response.ok) {
       // If we failed to refresh the token, re-run the login flow
-      console.error("failed to refresh token!")
+      console.error("failed to refresh token!");
       return await this.runLoginFlow();
     }
     const json = await response.json();
