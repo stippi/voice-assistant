@@ -152,13 +152,6 @@ export const LLMConfigs: React.FC = () => {
           flex: 1,
         }}
       >
-        <TextField
-          label="Name"
-          variant="filled"
-          disabled={disabled}
-          value={config.name}
-          onChange={(e) => handleConfigChange("name", e.target.value)}
-        />
         <FormControl fullWidth margin="normal">
           <InputLabel>API compatibility</InputLabel>
           <Select
