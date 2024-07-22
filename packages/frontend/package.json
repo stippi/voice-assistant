@@ -14,7 +14,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "voice-assistant-shared": "workspace:*",
+    "voice-assistant-shared": "1.0.0",
     "@anthropic-ai/sdk": "^0.24.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
