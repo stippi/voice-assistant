@@ -7,7 +7,7 @@ export type LLMConfig = {
   projectID?: string; // Google VertexAI
   region?: string; // Google VertexAI
 
-  apiCompatibility: "Anthropic" | "OpenAI" | "VertexAI";
+  apiCompatibility: "Anthropic" | "OpenAI" | "VertexAI" | "Ollama";
 
   modelID: string;
 

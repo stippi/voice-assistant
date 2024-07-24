@@ -161,6 +161,7 @@ export const LLMConfigs: React.FC = () => {
             onChange={(e) => handleConfigChange("apiCompatibility", e.target.value as LLMConfig["apiCompatibility"])}
           >
             <MenuItem value="Anthropic">Anthropic</MenuItem>
+            <MenuItem value="Ollama">Ollama</MenuItem>
             <MenuItem value="OpenAI">OpenAI</MenuItem>
             <MenuItem value="VertexAI">VertexAI</MenuItem>
           </Select>
@@ -174,7 +175,7 @@ export const LLMConfigs: React.FC = () => {
             onChange={(e) => handleConfigChange("apiEndPoint", e.target.value)}
           />
         )}
-        {config.apiCompatibility !== "VertexAI" && (
+        {config.apiCompatibility !== "VertexAI" && config.apiCompatibility !== "Ollama" && (
           <TextField
             label="API key"
             variant="filled"

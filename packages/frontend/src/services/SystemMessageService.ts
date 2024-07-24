@@ -35,7 +35,7 @@ class BaseSystemMessageService implements SystemMessageService {
     if (!timers) {
       return "";
     }
-    return `You have ${timers.length} active timer${timers.length > 1 ? "s" : ""}:\n${timers.map((timer) => `- ID: ${timer.id}, title '${timer.title}' at ${timer.time}`).join("\n")}\n`;
+    return `You have ${timers.length} active timer${timers.length != 1 ? "s" : ""}:\n${timers.map((timer) => `- ID: ${timer.id}, title '${timer.title}' at ${timer.time}`).join("\n")}`;
   }
 
   private generateCurrentTimeAndDate() {
@@ -99,16 +99,29 @@ IMPORTANT: Make your first sentence short, since speech output will be delayed u
     location: GeoLocation | undefined,
     playbackState: Spotify.PlaybackState | null,
   ): string {
-    return `${this.personalities[personality]} Always stay in character even when the user asks you to generate stories or other content. Be concise.\n
-${this.generateVoiceOptimization(optimizeForVoiceOutput)}\n
-Remember to memorize information that seems like it could be relevant in the future, also when the user only mentions it.\n
-When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.\n
-When finding a track on Spotify, always start playing the first result instead of assuming it didn't match the query.\n
+    return `# Instructions
+
+## Personality
+
+${this.personalities[personality]} Always stay in character even when the user asks you to generate stories or other content. Be concise.
+
+## General
+
+${this.generateVoiceOptimization(optimizeForVoiceOutput)}
+Remember to memorize information that seems like it could be relevant in the future, also when the user only mentions it.
+When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.
+When finding a track on Spotify, always start playing the first result instead of assuming it didn't match the query.
+
+## Realtime Data
+
 You have access to some realtime data as provided below:
-${this.generateCurrentTimeAndDate()}\n
-${this.generateLocationSentence(location)}\n
-${this.generateSpotifyPlaybackState(playbackState)}\n
-${this.generateTimersSection(timers)}\n
+${this.generateCurrentTimeAndDate()}
+${this.generateLocationSentence(location)}
+
+${this.generateSpotifyPlaybackState(playbackState)}
+
+${this.generateTimersSection(timers)}
+
 ${this.restoreMemory()}`;
   }
 }
