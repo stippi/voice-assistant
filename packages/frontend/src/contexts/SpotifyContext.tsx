@@ -102,6 +102,7 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
     previousTracks: [],
     nextTracks: [],
   });
+  //const [idleTime, setIdleTime] = useState(0);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -270,6 +271,17 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
     );
     return () => clearInterval(interval);
   }, [accessToken]);
+
+  // Disconnect Spotify player after 20 seconds of inactivity
+  // useEffect(() => {
+  //   if (connected && idleTime > 20) {
+  //     if (spotifyPlayer) {
+  //       console.log("disconnecting idle Spotify player");
+  //       spotifyPlayer.disconnect();
+  //       setIdleTime(0);
+  //     }
+  //   }
+  // }, [connected, spotifyPlayer, idleTime]);
 
   useEffect(() => {
     // Reduce the volume while the user is speaking
