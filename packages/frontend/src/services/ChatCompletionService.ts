@@ -5,6 +5,7 @@ import { loginFlow } from "../integrations/google";
 
 export interface ChatCompletionService {
   getStreamedMessage(
+    systemMessage: string,
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
     callback: (chunk: string) => Promise<boolean>,
@@ -23,10 +24,12 @@ export class OpenAIChatCompletionService implements ChatCompletionService {
   }
 
   async getStreamedMessage(
+    systemMessage: string,
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
     callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
+    body.messages = [{ role: "system", content: systemMessage }, ...body.messages];
     const stream = this.client.beta.chat.completions.stream(
       {
         ...body,
@@ -107,14 +110,14 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
   }
 
   async getStreamedMessage(
+    systemMessage: string,
     body: OpenAI.ChatCompletionCreateParams,
     signal: AbortSignal,
     callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
-    const systemMessage = body.messages.find((message) => message.role === "system");
     const stream = this.client.messages.stream(
       {
-        system: systemMessage ? systemMessage.content : undefined,
+        system: systemMessage,
         messages: body.messages.filter((message) => message.role != "system").map(this.convertFromOpenAIMessage),
         model: body.model || "claude-3-sonnet-20240229",
         max_tokens: body.max_tokens || 4096,
@@ -254,14 +257,14 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
   }
 
   async getStreamedMessage(
+    systemMessage: string,
     options: OpenAI.ChatCompletionCreateParams,
     _: AbortSignal,
     callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
     const accessToken = await loginFlow.getAccessToken();
 
-    const systemMessage = options.messages.find((message) => message.role === "system");
-    const wrappedSystemMessage = "Hi. I'll explain how you should behave:\n" + systemMessage!.content;
+    const wrappedSystemMessage = "Hi. I'll explain how you should behave:\n" + systemMessage;
     const transformedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "user", content: wrappedSystemMessage },
       { role: "assistant", content: "Ok, let's start! Please continue in your native language." },

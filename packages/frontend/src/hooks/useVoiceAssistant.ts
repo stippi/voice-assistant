@@ -1,13 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { ChatCompletionService, createChatCompletionService } from "../services/ChatCompletionService";
 import { TextToSpeechService, createTextToSpeechService } from "../services/TextToSpeechService";
+import { SystemMessageService, createSystemMessageService } from "../services/SystemMessageService";
 import { LLMConfig, Message } from "@shared/types";
 import useChats from "./useChats";
 import useSettings from "./useSettings";
 import useConfigs from "./useConfigs";
 import useAppContext from "./useAppContext";
 import { getTools, callFunction } from "../integrations/tools";
-import generateSystemMessage from "../utils/generateSystemMessage";
 import OpenAI from "openai";
 import {
   completionsApiUrl,
@@ -79,6 +79,7 @@ export function useVoiceAssistant() {
   ]);
   // End hack
 
+  const systemMessageServiceRef = useRef<SystemMessageService>(createSystemMessageService());
   const chatServiceRef = useRef<ChatCompletionService | null>(null);
   const textToSpeechServiceRef = useRef<TextToSpeechService | null>(null);
   const performanceTrackingServiceRef = useRef(createPerformanceTrackingService());
@@ -179,7 +180,7 @@ export function useVoiceAssistant() {
           const playbackState = appContextRef.current.spotify
             ? await appContextRef.current.spotify.player.getCurrentState()
             : null;
-          const systemMessage = generateSystemMessage(
+          const systemMessage = systemMessageServiceRef.current.generateSystemMessage(
             audible,
             settingsRef.current.personality,
             appContextRef.current.timers,
@@ -187,14 +188,11 @@ export function useVoiceAssistant() {
             playbackState,
           );
 
-          const apiMessages: OpenAI.ChatCompletionMessageParam[] = [
-            systemMessage,
-            ...messages.map((message) => {
-              const messageCopy: Partial<Message> = { ...message };
-              delete messageCopy.id;
-              return messageCopy;
-            }),
-          ];
+          const apiMessages: OpenAI.ChatCompletionMessageParam[] = messages.map((message) => {
+            const messageCopy: Partial<Message> = { ...message };
+            delete messageCopy.id;
+            return messageCopy as OpenAI.ChatCompletionMessageParam;
+          });
 
           let content = "";
           messages.push({
@@ -210,6 +208,7 @@ export function useVoiceAssistant() {
           );
 
           const finalAssistantMessage = await chatServiceRef.current.getStreamedMessage(
+            systemMessage,
             {
               messages: apiMessages,
               model: llmConfig.modelID,
