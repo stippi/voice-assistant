@@ -12,7 +12,6 @@ type Props<T extends DraggableItemProps> = {
 };
 
 const DraggableListItem = <T extends DraggableItemProps>({ item, children }: Props<T>) => {
-  console.log("rendering DraggableListItem", item.id, item.index);
   return (
     <Draggable draggableId={item.id} index={item.index}>
       {(provided, snapshot) => children(provided, snapshot, item)}

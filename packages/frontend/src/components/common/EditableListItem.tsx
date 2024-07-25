@@ -116,7 +116,14 @@ const EditableListItem = forwardRef<HTMLLIElement, ItemProps & React.HTMLAttribu
           <ListItemButton disableRipple selected={isSelected} onClick={onClick}>
             {onActivate && (
               <ListItemIcon sx={{ minWidth: 0 }}>
-                <Checkbox edge="start" checked={isActive} onClick={onActivate} tabIndex={-1} disableRipple />
+                <Checkbox
+                  edge="start"
+                  checked={isActive}
+                  onClick={onActivate}
+                  tabIndex={-1}
+                  disableRipple
+                  sx={{ paddingX: "0.75rem", paddingY: 0 }}
+                />
               </ListItemIcon>
             )}
             <ListItemText
