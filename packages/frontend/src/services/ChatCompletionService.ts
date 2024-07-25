@@ -50,9 +50,9 @@ export class OpenAIChatCompletionService implements ChatCompletionService {
 export class OllamaChatCompletionService implements ChatCompletionService {
   private client: OpenAI;
 
-  constructor(baseURL?: string) {
+  constructor(apiKey?: string, baseURL?: string) {
     this.client = new OpenAI({
-      apiKey: "ignored",
+      apiKey: apiKey,
       dangerouslyAllowBrowser: true,
       baseURL,
     });
@@ -74,10 +74,9 @@ export class OllamaChatCompletionService implements ChatCompletionService {
     return cleanedText;
   }
 
-  appendToolExplanation(systemMessage: string, tools: OpenAI.ChatCompletionTool[]): string {
-    return (
-      systemMessage +
-      `\n
+  insertToolExplanation(systemMessage: string, tools: OpenAI.ChatCompletionTool[]): string {
+    const realTimeDataSectionOffset = systemMessage.indexOf("## Realtime Data");
+    const toolsSection = `\n
 ## Tools
 
 A number of tools are available to you, which help you accomplish the user's request.
@@ -124,7 +123,10 @@ Again, the flow in simplified form:
 2. You reply with a JSON object between <tool> and </tool> as explained above. This is the tool invocation and is not shown to the user.
 3. The system inserts a message on the user's behalf containing the result of the tool.
 4. You extract the relevant information and formulate a reply to the user. This is then shown to the user.
-`
+
+`;
+    return (
+      systemMessage.slice(0, realTimeDataSectionOffset) + toolsSection + systemMessage.slice(realTimeDataSectionOffset)
     );
   }
 
@@ -135,11 +137,21 @@ Again, the flow in simplified form:
     callback: (chunk: string) => Promise<boolean>,
   ): Promise<OpenAI.ChatCompletionMessage> {
     if (body.tools) {
-      systemMessage = this.appendToolExplanation(systemMessage, body.tools);
+      systemMessage = this.insertToolExplanation(systemMessage, body.tools);
     }
     body.messages = [{ role: "system", content: systemMessage }, ...body.messages];
     delete body.tools;
     body.messages = body.messages.map((message) => {
+      if (message.role === "assistant" && message.content === null && message.tool_calls) {
+        return {
+          role: "assistant",
+          content: message.tool_calls
+            .map((toolCall) => {
+              return `<tool>${JSON.stringify({ tool: toolCall.function.name, tool_input: toolCall.function.arguments })}</tool>`;
+            })
+            .join("\n"),
+        } as OpenAI.ChatCompletionMessageParam;
+      }
       return {
         role: message.role === "tool" ? "user" : message.role,
         content: message.content,
@@ -196,9 +208,10 @@ Again, the flow in simplified form:
         });
       }
       finalMessage.content = this.removeToolBlocks(finalMessage.content);
-      if (!finalMessage.content.trim()) {
+      if (finalMessage.content.trim() === "") {
         finalMessage.content = null;
       }
+      console.log("Final message", finalMessage.content);
     }
 
     return finalMessage;
@@ -544,7 +557,7 @@ export function createChatCompletionService(config: LLMConfig): ChatCompletionSe
     case "OpenAI":
       return new OpenAIChatCompletionService(config.apiKey, config.apiEndPoint);
     case "Ollama":
-      return new OllamaChatCompletionService(config.apiEndPoint);
+      return new OllamaChatCompletionService(config.apiKey, config.apiEndPoint);
     case "Anthropic":
       return new AnthropicChatCompletionService(config.apiKey, config.apiEndPoint);
     case "VertexAI":

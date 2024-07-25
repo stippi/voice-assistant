@@ -112,6 +112,10 @@ Remember to memorize information that seems like it could be relevant in the fut
 When describing the weather, only mention the most important information and use familiar units of measurement, rounded to the nearest integer.
 When finding a track on Spotify, always start playing the first result instead of assuming it didn't match the query.
 
+## Long-Term Memory
+
+${this.restoreMemory()}
+
 ## Realtime Data
 
 You have access to some realtime data as provided below:
@@ -120,9 +124,7 @@ ${this.generateLocationSentence(location)}
 
 ${this.generateSpotifyPlaybackState(playbackState)}
 
-${this.generateTimersSection(timers)}
-
-${this.restoreMemory()}`;
+${this.generateTimersSection(timers)}`;
   }
 }
 
