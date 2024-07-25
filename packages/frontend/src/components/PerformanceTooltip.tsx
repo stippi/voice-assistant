@@ -54,7 +54,6 @@ const PerformanceTooltip: React.FC<PerformanceTooltipProps> = ({ fetchPerformanc
         const data = await fetchPerformanceData();
         const calculatedMetrics: Metric[] = [];
         if (data) {
-          console.log("Performance data:", data);
           if (data["transcription-finished"] && data["transcription-started"]) {
             calculatedMetrics.push({
               phase: "Time to Transcription",
