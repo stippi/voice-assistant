@@ -15,7 +15,7 @@ import { showToolCallInChat } from "../integrations/tools";
 import { ButtonGroup, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
+import { createPerformanceTrackingService, PerformanceData } from "../services/PerformanceTrackingService";
 import PerformanceTooltip from "./PerformanceTooltip";
 
 function parseMath(text: string) {
@@ -202,7 +202,7 @@ export const MessageCard = React.forwardRef(
     const fetchPerformanceData = async () => {
       if (!message.id) {
         console.log("Message ID not found");
-        return {};
+        return {} as PerformanceData;
       }
       return await performanceTrackingService.current.getStats(message.id);
     };

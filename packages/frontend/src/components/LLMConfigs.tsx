@@ -95,12 +95,13 @@ export const LLMConfigs: React.FC = () => {
           sx={{
             flex: 1,
             overflow: "auto",
+            maxHeight: "20rem",
           }}
         >
           <DraggableList
             items={llmConfigs.map((config, index) => ({ ...config, index }))}
             onDragEnd={handleDragEnd}
-            renderItem={(provided, snapshot, item) => (
+            renderItem={(provided, _snapshot, item) => (
               <EditableListItem
                 {...provided.draggableProps}
                 {...provided.dragHandleProps}
