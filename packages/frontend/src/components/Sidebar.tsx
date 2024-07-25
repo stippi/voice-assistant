@@ -18,7 +18,6 @@ import "./Sidebar.css";
 import { ChatSelection } from "./ChatSelection";
 import { AssistantSettings } from "./AssistantSettings";
 import { RiRobot2Fill } from "react-icons/ri";
-import { Button } from "@mui/material";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
