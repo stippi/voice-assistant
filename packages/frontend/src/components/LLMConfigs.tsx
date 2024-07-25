@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  //List,
   Button,
   TextField,
   FormControl,
@@ -16,8 +15,7 @@ import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
 import EditableListItem from "./common/EditableListItem";
-import DraggableList from "./common/DraggableList";
-import { OnDragEndResponder } from "react-beautiful-dnd";
+import { DraggableList, OnDragEndResponder } from "./common/DraggableList";
 
 export const LLMConfigs: React.FC = () => {
   const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } = useConfigs();

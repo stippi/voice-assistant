@@ -9,13 +9,15 @@ import {
 } from "react-beautiful-dnd";
 import { List } from "@mui/material";
 
+export type { OnDragEndResponder } from "react-beautiful-dnd";
+
 type DraggableListProps<T extends DraggableItemProps> = {
   items: T[];
   onDragEnd: OnDragEndResponder;
   renderItem: (provided: DraggableProvided, snapshot: DraggableStateSnapshot, item: T) => ReactElement;
 };
 
-function DraggableList<T extends DraggableItemProps>({ items, onDragEnd, renderItem }: DraggableListProps<T>) {
+export function DraggableList<T extends DraggableItemProps>({ items, onDragEnd, renderItem }: DraggableListProps<T>) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable-list">
@@ -33,5 +35,3 @@ function DraggableList<T extends DraggableItemProps>({ items, onDragEnd, renderI
     </DragDropContext>
   );
 }
-
-export default DraggableList;
