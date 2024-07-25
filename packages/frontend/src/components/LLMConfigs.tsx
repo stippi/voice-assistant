@@ -175,7 +175,7 @@ export const LLMConfigs: React.FC = () => {
             onChange={(e) => handleConfigChange("apiEndPoint", e.target.value)}
           />
         )}
-        {config.apiCompatibility !== "VertexAI" && config.apiCompatibility !== "Ollama" && (
+        {config.apiCompatibility !== "VertexAI" && (
           <TextField
             label="API key"
             variant="filled"
