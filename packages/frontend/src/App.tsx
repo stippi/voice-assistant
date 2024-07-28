@@ -1,4 +1,5 @@
 import "./App.css";
+import React from "react";
 import { GoogleContextProvider } from "./contexts/GoogleContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import VoiceAssistant from "./components/VoiceAssistant";
@@ -13,6 +14,7 @@ import { Dashboard } from "./components/Dashboard";
 import { SpotifyContextProvider } from "./contexts/SpotifyContext";
 import { MicrosoftContextProvider } from "./contexts/MicrosoftContext";
 import useAppContext from "./hooks/useAppContext";
+import useWindowFocus from "./hooks/useWindowFocus";
 
 const theme = createTheme({
   components: {
@@ -83,6 +85,15 @@ function AssistantWithOptionalIntegrations() {
   const { idle } = useAppContext();
 
   const idleMode = idle && settings.enableGoogle && settings.enableGooglePhotos;
+
+  const { windowFocused } = useWindowFocus();
+  React.useEffect(() => {
+    if (windowFocused) {
+      document.body.classList.add("window-focused");
+    } else {
+      document.body.classList.remove("window-focused");
+    }
+  }, [windowFocused]);
 
   return (
     <ChatsProvider>

@@ -6,6 +6,7 @@ import SendIcon from "@mui/icons-material/Send";
 import CancelIcon from "@mui/icons-material/Cancel";
 import SpeechRecorder from "./SpeechRecorder";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
+import useChats from "../hooks/useChats";
 
 const theme = createTheme({
   components: {},
@@ -29,7 +30,8 @@ interface Props {
 
 export const MessageBar = React.memo(
   ({ sendMessage, stopResponding, responding, awaitSpokenResponse, idle }: Props) => {
-    const [message, setMessage] = React.useState("");
+    //const [message, setMessage] = React.useState("");
+    const { currentlyTypedMessage, setCurrentlyTypedMessage } = useChats();
     const defaultPlaceHolder = "Type to chat";
     const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
     const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -47,13 +49,13 @@ export const MessageBar = React.memo(
       performanceTrackingServiceRef.current.trackTimestamp(userMessageId, "transcription-started", now);
       performanceTrackingServiceRef.current.trackTimestamp(userMessageId, "transcription-finished", now);
       sendMessage(userMessageId, message, false);
-      setMessage("");
+      setCurrentlyTypedMessage("");
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey && !message.includes("\n")) {
+      if (e.key === "Enter" && !e.shiftKey && !currentlyTypedMessage.includes("\n")) {
         e.preventDefault();
-        sendTextMessage(message);
+        sendTextMessage(currentlyTypedMessage);
       }
     };
 
@@ -66,8 +68,8 @@ export const MessageBar = React.memo(
               className="textArea"
               ref={textAreaRef}
               placeholder={placeHolder}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              value={currentlyTypedMessage}
+              onChange={(e) => setCurrentlyTypedMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               minRows={1}
               maxRows={10}
@@ -75,11 +77,11 @@ export const MessageBar = React.memo(
             <div className="buttonContainer">
               {!responding && (
                 <IconButton
-                  disabled={message.trim() === ""}
+                  disabled={currentlyTypedMessage.trim() === ""}
                   aria-label="send message"
                   onMouseDown={(event) => {
                     event.preventDefault();
-                    sendTextMessage(message);
+                    sendTextMessage(currentlyTypedMessage);
                   }}
                 >
                   <SendIcon />

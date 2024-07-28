@@ -4,6 +4,10 @@ import { indexDbDelete, indexDbGet, indexDbGetAllKeys, indexDbPut } from "../uti
 
 type ChatsContextType = {
   loading: boolean;
+
+  currentlyTypedMessage: string;
+  setCurrentlyTypedMessage: (message: string) => void;
+
   chats: ChatInfo[];
   currentChatID: string;
   currentChat: Chat | null;
@@ -18,6 +22,10 @@ type ChatsContextType = {
 
 export const ChatsContext = createContext<ChatsContextType>({
   loading: true,
+
+  currentlyTypedMessage: "",
+  setCurrentlyTypedMessage: () => {},
+
   chats: [],
   currentChatID: "",
   currentChat: null,
@@ -34,6 +42,8 @@ export const ChatsContext = createContext<ChatsContextType>({
 
 export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(true);
+  const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState("");
+  const currentlyTypedMessageRef = React.useRef(currentlyTypedMessage);
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [currentChatID, setCurrentChatID] = useState<string>("");
   const [currentChat, setChat] = useState<Chat | null>(null);
@@ -58,6 +68,22 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   useEffect(() => {
+    currentlyTypedMessageRef.current = currentlyTypedMessage;
+  }, [currentlyTypedMessage]);
+
+  useEffect(() => {
+    if (currentChat) {
+      setCurrentlyTypedMessage(currentChat.currentlyTypedMessage || "");
+    }
+    return () => {
+      if (currentChat) {
+        currentChat.currentlyTypedMessage = currentlyTypedMessageRef.current;
+        indexDbPut(currentChat.id, currentChat);
+      }
+    };
+  }, [currentChat]);
+
+  useEffect(() => {
     if (currentChatID) {
       indexDbGet<Chat>(currentChatID).then((chat) => {
         setChat(chat);
@@ -65,10 +91,10 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [currentChatID]);
 
-  const setCurrentChat = async (chatID: string) => {
+  const setCurrentChat = React.useCallback(async (chatID: string) => {
     await indexDbPut("currentChatID", chatID);
     setCurrentChatID(chatID);
-  };
+  }, []);
 
   const newChat = React.useCallback(
     async (messages: Message[]) => {
@@ -171,28 +197,30 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const downloadChats = React.useCallback(async () => {
     const allData: Record<string, Chat> = {};
     for (const chatInfo of chats) {
-      allData[chatInfo.id] = { ...(await indexDbGet<Chat>(chatInfo.id)), ...chatInfo};
+      allData[chatInfo.id] = { ...(await indexDbGet<Chat>(chatInfo.id)), ...chatInfo };
     }
-    
+
     const jsonData = JSON.stringify(allData, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json' });
+    const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
+
+    const link = document.createElement("a");
     link.href = url;
     link.download = `chat_data.json`;
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     URL.revokeObjectURL(url);
   }, [chats]);
-  
+
   return (
     <ChatsContext.Provider
       value={{
         loading,
+        currentlyTypedMessage,
+        setCurrentlyTypedMessage,
         chats,
         newChat,
         currentChatID,
@@ -202,7 +230,7 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         renameChat,
         deleteChat,
         syncChats,
-        downloadChats
+        downloadChats,
       }}
     >
       {children}

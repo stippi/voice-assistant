@@ -5,6 +5,7 @@ export type ChatInfo = {
   name: string;
   created: number;
   lastUpdated: number;
+  currentlyTypedMessage?: string;
 };
 
 export type Chat = ChatInfo & {
