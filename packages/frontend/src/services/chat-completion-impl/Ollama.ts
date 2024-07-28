@@ -140,7 +140,6 @@ Again, the flow in simplified form:
         finalMessage.tool_calls = matches.map((match) => {
           try {
             const toolCall = JSON.parse(match.slice(6, -7));
-            console.log("Found tool call", toolCall);
             return {
               type: "function",
               id: crypto.randomUUID(),
@@ -165,7 +164,6 @@ Again, the flow in simplified form:
       if (finalMessage.content.trim() === "") {
         finalMessage.content = null;
       }
-      console.log("Final message", finalMessage.content);
     }
 
     return finalMessage;
