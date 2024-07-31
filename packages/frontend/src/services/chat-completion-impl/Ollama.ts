@@ -34,15 +34,15 @@ export class OllamaChatCompletionService implements ChatCompletionService {
 ## Tools
 
 A number of tools are available to you, which help you accomplish the user's request.
-A description of each tool is given below.
+
 You detect when to use a tool and choose the best tool for the task (see "How Tools Work" for how to invoke tools).
 You never hallucinate input parameters for the tools.
 Instead, if you do not already know the value for a parameter, you ask the user.
 You only use a tool when it is necessary to accomplish what the user is asking for.
 
-### Tool Declarations
+### Available Tools
 
-What follows is a formal declaration of all available tools in JSON Object Schema notation:
+This is the list of all available tools:
 
 ${JSON.stringify(
   tools.map((tool) => tool.function),
@@ -57,23 +57,21 @@ To invoke a tool, reply with a JSON object between the '<tool>' tags like shown 
 
 <tool>
 {
-  "tool": <name of the selected tool>,
-  "tool_input": <parameters for the selected tool, matching the tool's JSON schema>
+  "tool": <name of the tool>,
+  "tool_input": <parameters for the tool according to its JSON schema>
 }
 </tool>
 
-When you need the result of a tool to complete your task, reply with ONLY the JSON object that contains the name of the tool and the input parameters according to the specification of the tool in the tools array.
-
 It is important that you do not explain to the user that you will use a tool.
-Do not append any text after the tool invocation JSON object.
-The system will detect your use of a tool by intercepting your message, meaning the user will not read your message that contains the JSON object.
-The system will call the respective tool's implementation with your input parameters.
+The user will not see the part of your message between <tool> and </tool>.
+The system will call the respective tool's implementation with the input parameters you provided.
 It will then insert the result of the tool as a message into the chat and it will look like a message from the user.
 Your task is then to extract the relevant information from the tool's result and use it in your reply to the user.
+If required, you can use the result of a tool as input for another tool.
 
 Again, the flow in simplified form:
 
-1. The user is asking you for some information that can be retrieved with one of the tools.
+1. The user is asking you for something that can be done with one of the tools.
 2. You reply with a JSON object between <tool> and </tool> as explained above. This is the tool invocation and is not shown to the user.
 3. The system inserts a message on the user's behalf containing the result of the tool.
 4. You extract the relevant information and formulate a reply to the user. This is then shown to the user.
