@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+**/tsconfig.tsbuildinfo
 
 # Editor directories and files
 .vscode/*
@@ -25,4 +26,4 @@ dist-ssr
 *.sw?
 
 # Config and secrets
-src/config.ts
+packages/frontend/src/config.ts

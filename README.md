@@ -3,15 +3,13 @@
 Provides a voice-controlled AI chat interface in your Browser.
 The AI assistant can use **tools** that integrate with various services such as Spotify, Google Calendar and Google Maps.
 
-This project was bootstrapped using `npm create vite@latest ./ -- --template react-ts`.
-
 ## About
 
 https://github.com/stippi/voice-assistant/assets/67784/bc1989e9-6595-4996-b1c3-8a136cdfc882
 
 The rough idea for this project is to have a voice-activated assistant similar to Amazon Alexa or Siri, but backed by a Large Language Model.
 It is currently implemented as a website running purely in your browser.
-It uses OpenAI's GPT-4 Turbo model configured with several tools (a.k.a. "functions") that allow it to integrate with a range of APIs.
+It defaults to using OpenAI's GPT-4o model configured with several tools (a.k.a. "functions") that allow it to integrate with a range of APIs.
 To use these APIs, secrets must be provided, see below.
 The most "sophisticated" integrations are for Google and Spotify.
 
@@ -19,26 +17,24 @@ Generally, you can just ask the Assistant what it can do for you. ;-)
 
 ## Running Locally
 
-Create a file named `config.ts` in the `src` directory.
-You can copy the file [`src/config.ts.example`](src/config.ts.example) and adjust it to your needs.
+Create a file named `config.ts` in the `packages/frontend/src` directory.
+You can copy the file [`src/config.ts.example`](packages/frontend/src/config.ts.example) and adjust it to your needs.
 
 ```typescript
 // The following configuration is required:
 
 // By configuring the endpoints below, you can use a server with OpenAI compatible REST API:
 export const completionsApiKey = "<The API Key used for /completions endpoint>";
-
-//export const completionsApiUrl = "http://localhost:5173/mistral/"; // Proxy for https://api.mistral.ai/v1/ due to CORS issues, see vite.config.ts
-//export const completionsApiUrl = "http://localhost:8080/v1"; // LocalAI server, which needs to be started with --cors
 export const completionsApiUrl = "https://api.openai.com/v1";
+export const modelName = "gpt-4o";
+export const useTools = true;
 
-export const speechApiKey = "<The API Key used for tts and stt endpoints>";
+export const speechApiKey = "<The API Key used for the TTS endpoint>";
 export const speechApiUrl = "https://api.openai.com/v1";
 
-//export const modelName = "mistral-large-latest";
-export const modelName = "gpt-4-turbo-preview";
-export const useTools = true;
-export const useStreaming = true;
+export const transcriptionApiKey = "<The API Key used for the SST endpoint>";
+export const transcriptionApiUrl = "https://api.openai.com/v1";
+export const transcriptionModel = "whisper-1";
 
 // All the following API keys are optional, and are only required if you want to use the corresponding features.
 
@@ -64,7 +60,9 @@ export const MicrosoftClientId = "<Your Azure App Client ID>";
 
 :bulb: **This file is ignored by git.**
 
-In order to use the GPT-4 model, your [platform.openai.com](https://platform.openai.com/) account must have billing information and one successful payment.
+
+
+In order to use any of the GPT-4 models, your [platform.openai.com](https://platform.openai.com/) account must have billing information and one successful payment.
 If your account was never charged, yet, you can manually initiate a payment via "Buy credits" on the [billing overview page](https://platform.openai.com/account/billing/overview).
 This will "unlock" the GPT-4 models.
 
