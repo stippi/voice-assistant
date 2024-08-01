@@ -65,7 +65,6 @@ export const LLMConfigs: React.FC = () => {
     apiCompatibility: "OpenAI",
     modelID: "",
     useTools: true,
-    useStreaming: true,
   };
 
   return (

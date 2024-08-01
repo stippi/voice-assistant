@@ -7,17 +7,19 @@ export const completionsApiKey = "<The API Key used for /completions endpoint>";
 //export const completionsApiUrl = "http://localhost:8080/v1"; // LocalAI server, which needs to be started with --cors
 export const completionsApiUrl = "https://api.openai.com/v1";
 
+//export const modelName = "mistral-large-latest";
+export const modelName = "gpt-4o";
+export const useTools = true;
+
+// NOTE: All the above must currently be provided, as it is imported in the code and used as a fallback.
+// However, from the Assistant settings, it is possible to configure any number of models and LLM providers and switch between them.
+
 export const speechApiKey = "<The API Key used for the TTS endpoint>";
 export const speechApiUrl = "https://api.openai.com/v1";
 
 export const transcriptionApiKey = "<The API Key used for the SST endpoint>";
 export const transcriptionApiUrl = "https://api.openai.com/v1";
 export const transcriptionModel = "whisper-1";
-
-//export const modelName = "mistral-large-latest";
-export const modelName = "gpt-4-turbo-preview";
-export const useTools = true;
-export const useStreaming = true;
 
 // All the following API keys are optional, and are only required if you want to use the corresponding features.
 

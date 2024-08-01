@@ -9,15 +9,7 @@ import useConfigs from "./useConfigs";
 import useAppContext from "./useAppContext";
 import { getTools, callFunction } from "../integrations/tools";
 import OpenAI from "openai";
-import {
-  completionsApiUrl,
-  completionsApiKey,
-  modelName,
-  useTools,
-  useStreaming,
-  speechApiUrl,
-  speechApiKey,
-} from "../config";
+import { completionsApiUrl, completionsApiKey, modelName, useTools, speechApiUrl, speechApiKey } from "../config";
 import { removeCodeBlocks } from "../utils/removeCodeBlocks";
 import useSpotifyContext from "./useSpotifyContext";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
@@ -30,7 +22,6 @@ const fallbackConfig: LLMConfig = {
   apiEndPoint: completionsApiUrl,
   apiCompatibility: "OpenAI",
   useTools: useTools,
-  useStreaming: useStreaming,
 };
 
 export function useVoiceAssistant() {
