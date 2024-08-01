@@ -144,96 +144,92 @@ export function Sidebar() {
           }}
         >
           {/* Fixed top section */}
-          <Box>
-            <SidebarList component="nav" disablePadding>
-              <ListItem
+          <SidebarList component="nav" disablePadding>
+            <ListItem
+              sx={{
+                color: "rgb(255, 143, 16)",
+              }}
+            >
+              <ListItemIcon
                 sx={{
-                  color: "rgb(255, 143, 16)",
+                  color: "inherit",
+                  fontSize: 20,
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    color: "inherit",
-                    fontSize: 20,
-                  }}
-                >
-                  <RiRobot2Fill />
+                <RiRobot2Fill />
+              </ListItemIcon>
+              <ListItemText
+                sx={{
+                  my: 0,
+                  textShadow: "0 0 8px rgba(255, 143, 16, 0.2)",
+                }}
+                primary="Voice Assistant"
+                primaryTypographyProps={{
+                  fontFamily: "KomikaAxis",
+                  fontSize: 18,
+                  fontWeight: "medium",
+                  paddingBottom: "3px",
+                  letterSpacing: 0,
+                }}
+              />
+            </ListItem>
+            <Divider />
+            <ListItem component="div" disablePadding>
+              <ListItemButton sx={{ height: 56 }} onClick={() => newChat([])}>
+                <ListItemIcon>
+                  <AddCircleIcon color="primary" />
                 </ListItemIcon>
                 <ListItemText
-                  sx={{
-                    my: 0,
-                    textShadow: "0 0 8px rgba(255, 143, 16, 0.2)",
-                  }}
-                  primary="Voice Assistant"
+                  primary="New chat"
                   primaryTypographyProps={{
-                    fontFamily: "KomikaAxis",
-                    fontSize: 18,
+                    color: "primary",
                     fontWeight: "medium",
-                    paddingBottom: "3px",
-                    letterSpacing: 0,
+                    variant: "body2",
                   }}
                 />
-              </ListItem>
-              <Divider />
-              <ListItem component="div" disablePadding>
-                <ListItemButton sx={{ height: 56 }} onClick={() => newChat([])}>
-                  <ListItemIcon>
-                    <AddCircleIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="New chat"
-                    primaryTypographyProps={{
-                      color: "primary",
-                      fontWeight: "medium",
-                      variant: "body2",
-                    }}
-                  />
-                </ListItemButton>
-                <Tooltip title="Assistant Settings">
-                  <IconButton
-                    size="large"
-                    sx={{
-                      "& svg": {
-                        color: "rgba(255,255,255,0.8)",
-                        transition: "0.2s",
-                        transform: "translateX(0) rotate(0)",
+              </ListItemButton>
+              <Tooltip title="Assistant Settings">
+                <IconButton
+                  size="large"
+                  sx={{
+                    "& svg": {
+                      color: "rgba(255,255,255,0.8)",
+                      transition: "0.2s",
+                      transform: "translateX(0) rotate(0)",
+                    },
+                    "&:hover, &:focus": {
+                      bgcolor: "unset",
+                      "& svg:first-of-type": {
+                        transform: "translateX(-4px) rotate(-20deg)",
                       },
-                      "&:hover, &:focus": {
-                        bgcolor: "unset",
-                        "& svg:first-of-type": {
-                          transform: "translateX(-4px) rotate(-20deg)",
-                        },
-                        "& svg:last-of-type": {
-                          right: 0,
-                          opacity: 1,
-                        },
+                      "& svg:last-of-type": {
+                        right: 0,
+                        opacity: 1,
                       },
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        height: "80%",
-                        display: "block",
-                        left: 0,
-                        width: "1px",
-                        bgcolor: "divider",
-                      },
-                    }}
-                    onMouseDown={handleClick}
-                  >
-                    <Settings />
-                    <ArrowRight sx={{ position: "absolute", right: 4, opacity: 0 }} />
-                  </IconButton>
-                </Tooltip>
-                <AssistantSettings anchorEl={anchorEl} onClose={handleClose} />
-              </ListItem>
-            </SidebarList>
+                    },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      height: "80%",
+                      display: "block",
+                      left: 0,
+                      width: "1px",
+                      bgcolor: "divider",
+                    },
+                  }}
+                  onMouseDown={handleClick}
+                >
+                  <Settings />
+                  <ArrowRight sx={{ position: "absolute", right: 4, opacity: 0 }} />
+                </IconButton>
+              </Tooltip>
+              <AssistantSettings anchorEl={anchorEl} onClose={handleClose} />
+            </ListItem>
             <Divider />
-          </Box>
+          </SidebarList>
 
           {/* Scrollable middle section */}
-          <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-            <ChatSelection />
-          </Box>
+          <ChatSelection />
 
           {/* Fixed bottom section */}
           <Box>
