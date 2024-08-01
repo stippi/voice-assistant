@@ -18,7 +18,7 @@ Generally, you can just ask the Assistant what it can do for you. ;-)
 ## Running Locally
 
 Create a file named `config.ts` in the `packages/frontend/src` directory.
-You can copy the file [`src/config.ts.example`](packages/frontend/src/config.ts.example) and adjust it to your needs.
+You can copy the file [`packages/frontend/src/config.ts.example`](packages/frontend/src/config.ts.example) and adjust it to your needs.
 
 ```typescript
 // The following configuration is required:
@@ -60,7 +60,8 @@ export const MicrosoftClientId = "<Your Azure App Client ID>";
 
 :bulb: **This file is ignored by git.**
 
-
+NOTE: The above config must currently be provided, as it is imported in the code and used as a fallback.
+However, from the Assistant settings UI, it is possible to configure any number of models and LLM providers and switch between them.
 
 In order to use any of the GPT-4 models, your [platform.openai.com](https://platform.openai.com/) account must have billing information and one successful payment.
 If your account was never charged, yet, you can manually initiate a payment via "Buy credits" on the [billing overview page](https://platform.openai.com/account/billing/overview).
@@ -142,11 +143,11 @@ With OpenAI's GPT-4-Turbo, we can use 30 and more with close to perfect reliabil
 
 ### Starting the Vite Dev Server
 
-After preparing the `config.ts` file, you can run:
+After preparing the `packages/frontend/src/config.ts` file, you can run:
 
 ```bash
 yarn install
-yarn run dev
+yarn workspace voice-assistant-frontend dev
 ```
 
 :warning: **Do not build this project and host it somewhere publicly, since it would expose all keys from `config.ts`!**
