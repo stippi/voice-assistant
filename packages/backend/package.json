@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "type": "module",
   "packageManager": "yarn@1.22.19",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,10 +13,13 @@
     "test": "vitest"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
-    "http-proxy-middleware": "^2.0.4"
+    "http-proxy-middleware": "^2.0.4",
+    "smart-whisper": "^0.7.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.2",
     "ts-node-dev": "^2.0.0",
