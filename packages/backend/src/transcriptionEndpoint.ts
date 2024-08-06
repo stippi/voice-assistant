@@ -4,7 +4,7 @@ import { WhisperTranscriber } from "./whisperTranscriber";
 import { AudioChunkRequest } from "./types";
 
 const router = express.Router();
-const transcriber = new WhisperTranscriber(path.join(__dirname, "../../../../ggml-large-v3.bin"), 1.0); // 1.0 second minimum chunk size
+const transcriber = new WhisperTranscriber(path.join(__dirname, "../../../../ggml-large-v3.bin"));
 
 router.post("/transcribe", async (req, res) => {
   try {

@@ -9,14 +9,21 @@ export class WhisperTranscriber {
   private bufferTimeOffset: number;
   private minChunkSize: number;
   private sampleRate: number;
+  private isProcessing: boolean;
+  private audioQueue: Float32Array[];
+  private unstableTranscription: TranscriptionResult[];
 
-  constructor(modelPath: string, minChunkSize: number = 1.0) {
-    this.whisper = new Whisper(modelPath, { gpu: true });
+  constructor(modelPath: string, minChunkSize: number = 0.5) {
+    this.whisper = new Whisper(modelPath, { offload: 120, gpu: true });
     this.buffer = new TranscriptionBufferManager();
     this.audioBuffer = new Float32Array();
     this.bufferTimeOffset = 0;
     this.minChunkSize = minChunkSize;
-    this.sampleRate = 16000; // Whisper expects 16kHz audio
+    this.sampleRate = 16000;
+    this.isProcessing = false;
+    this.audioQueue = [];
+    this.unstableTranscription = [];
+
     this.whisper
       .load()
       .then((model) => {
@@ -28,32 +35,58 @@ export class WhisperTranscriber {
   }
 
   async processChunk(request: AudioChunkRequest): Promise<TranscriptionResult[]> {
-    this.audioBuffer = this.concatenateFloat32Arrays(this.audioBuffer, request.audioChunk);
+    this.audioQueue.push(request.audioChunk);
 
-    if (this.getBufferDuration() < this.minChunkSize && !request.isLast) {
-      // Not enough audio data to process yet
-      return this.buffer.getCommitted();
+    if (!this.isProcessing) {
+      console.log("Processing queue");
+      this.processQueue();
+    } else {
+      console.log("Queue is already being processed");
     }
 
+    return this.getCurrentTranscription();
+  }
+
+  private async processQueue() {
+    if (this.isProcessing || this.audioQueue.length === 0) return;
+
+    this.isProcessing = true;
+
+    while (this.audioQueue.length > 0) {
+      const chunk = this.audioQueue.shift()!;
+      this.audioBuffer = this.concatenateFloat32Arrays(this.audioBuffer, chunk);
+    }
+    if (this.getBufferDuration() >= this.minChunkSize) {
+      console.log("Transcribing buffer");
+      await this.transcribeBuffer();
+    } else {
+      console.log("Buffer is too short, waiting for more audio");
+    }
+
+    this.isProcessing = false;
+  }
+
+  private async transcribeBuffer() {
     const task = await this.whisper.transcribe<"simple", true>(this.audioBuffer, {
-      language: request.language || "auto",
+      language: "auto",
+      split_on_word: true,
+      temperature: 0.2,
       initial_prompt: this.buffer.getPrompt(),
     });
 
     const result = await task.result;
     const transcription = this.parseWhisperResult(result);
+    console.log("transcription", transcription);
 
     this.buffer.insert(transcription, this.bufferTimeOffset);
     const committed = this.buffer.flush();
+    this.unstableTranscription = transcription.slice(committed.length);
 
     this.trimAudioBuffer();
+  }
 
-    if (request.isLast) {
-      const finalTranscription = await this.finishTranscription(request.language);
-      committed.push(...finalTranscription);
-    }
-
-    return this.buffer.getCommitted();
+  private getCurrentTranscription(): TranscriptionResult[] {
+    return [...this.buffer.getCommitted(), ...this.unstableTranscription];
   }
 
   private parseWhisperResult(result: TranscribeSimpleResult[]): TranscriptionResult[] {
@@ -81,16 +114,6 @@ export class WhisperTranscriber {
     const samplesToKeep = Math.max(0, this.audioBuffer.length - Math.floor(lastCommittedTime * this.sampleRate));
     this.audioBuffer = this.audioBuffer.slice(-samplesToKeep);
     this.bufferTimeOffset = lastCommittedTime;
-  }
-
-  private async finishTranscription(language?: string): Promise<TranscriptionResult[]> {
-    // Process any remaining audio in the buffer
-    const task = await this.whisper.transcribe<"simple", true>(this.audioBuffer, {
-      language: language || "auto",
-      initial_prompt: this.buffer.getPrompt(),
-    });
-    const result = await task.result;
-    return this.parseWhisperResult(result);
   }
 
   async free(): Promise<void> {

@@ -3,9 +3,10 @@ interface Options {
 }
 
 export class RollingAudioCapture {
-  options: Options;
-  buffers: Int16Array[] = [];
-  currentIndex = 0;
+  private options: Options;
+  private buffers: Int16Array[] = [];
+  private currentIndex = 0;
+  private transcribe = false;
 
   constructor(options: Options) {
     this.options = options || {};
@@ -14,13 +15,17 @@ export class RollingAudioCapture {
     }
   }
 
+  setTranscribe(transcribe: boolean) {
+    this.transcribe = transcribe;
+  }
+
   appendBuffer(buffer: Int16Array) {
     if (this.buffers.length < this.options.maxBuffers) {
       this.buffers.push(buffer);
     } else {
       this.buffers[this.currentIndex] = buffer;
       this.currentIndex = (this.currentIndex + 1) % this.options.maxBuffers;
-      if (this.currentIndex === 0) {
+      if (this.currentIndex === 0 && this.transcribe) {
         fetch("http://localhost:3000/api/transcribe", {
           method: "POST",
           headers: {
@@ -44,7 +49,7 @@ export class RollingAudioCapture {
     }
   }
 
-  convertInt16BuffersToFloat32Blob(int16Buffers: Int16Array[]) {
+  private convertInt16BuffersToFloat32Blob(int16Buffers: Int16Array[]) {
     const totalLength = int16Buffers.reduce((sum, buffer) => sum + buffer.length, 0);
     const float32Array = new Float32Array(totalLength);
     console.log("Total length:", totalLength);

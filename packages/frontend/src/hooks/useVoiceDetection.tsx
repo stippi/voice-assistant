@@ -17,10 +17,7 @@ type VoiceDetection = {
 
 export function useVoiceDetection(enableWakeWord: boolean): {
   isLoaded: boolean;
-  init: (
-    wakeWord: BuiltInKeyword,
-    speakerProfiles: EagleProfile[],
-  ) => Promise<void>;
+  init: (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => Promise<void>;
   start: () => Promise<void>;
   stop: () => Promise<void>;
   release: () => Promise<void>;
@@ -29,9 +26,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   voiceDetection: VoiceDetection | null;
 } {
   const [subscribed, setSubscribed] = useState(false);
-  const [voiceDetection, setVoiceDetection] = useState<VoiceDetection | null>(
-    null,
-  );
+  const [voiceDetection, setVoiceDetection] = useState<VoiceDetection | null>(null);
   const voiceDetectedRef = useRef(false);
   const lastSilenceCheckRef = useRef(new Date().getTime());
 
@@ -60,17 +55,9 @@ export function useVoiceDetection(enableWakeWord: boolean): {
         console.log("failed to stop Porcupine wake-word detection", error);
       });
     }
-  }, [
-    startPorcupine,
-    stopPorcupine,
-    enableWakeWord,
-    isListening,
-    isPorcupineLoaded,
-  ]);
+  }, [startPorcupine, stopPorcupine, enableWakeWord, isListening, isPorcupineLoaded]);
 
-  const rollingAudioCapture = useRef(
-    new RollingAudioCapture({ maxBuffers: 10 }),
-  );
+  const rollingAudioCapture = useRef(new RollingAudioCapture({ maxBuffers: 15 }));
 
   const rollingAudioEngine = useRef<PvEngine>({
     onmessage: async (event: MessageEvent) => {
@@ -117,6 +104,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
       await startEagle();
     }
     await startCobra();
+    rollingAudioCapture.current.setTranscribe(true);
     voiceDetectedRef.current = false;
     lastSilenceCheckRef.current = new Date().getTime();
     setVoiceDetection({
@@ -127,6 +115,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   }, [isEagleLoaded, startCobra, startEagle]);
 
   const stop = useCallback(async () => {
+    rollingAudioCapture.current.setTranscribe(false);
     await stopCobra();
     if (isEagleLoaded) {
       await stopEagle();
@@ -184,13 +173,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
       }
       await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
     },
-    [
-      initPorcupine,
-      initEagle,
-      initCobra,
-      voiceProbabilityCallback,
-      speakerScoresCallback,
-    ],
+    [initPorcupine, initEagle, initCobra, voiceProbabilityCallback, speakerScoresCallback],
   );
 
   const release = useCallback(async () => {

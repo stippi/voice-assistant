@@ -22,12 +22,21 @@ export class TranscriptionBufferManager {
       }))
       .filter((t) => t.start > this.buffer.lastCommittedTime - 0.1);
 
-    // Implement logic to remove duplicates from the beginning of new transcription
-    // This part is simplified and may need to be adjusted based on your specific requirements
+    // Remove duplicates from the beginning of new transcription
     if (this.buffer.new.length > 0 && this.buffer.committed.length > 0) {
-      const lastCommitted = this.buffer.committed[this.buffer.committed.length - 1];
-      while (this.buffer.new.length > 0 && this.buffer.new[0].text === lastCommitted.text) {
-        this.buffer.new.shift();
+      for (let i = 1; i <= Math.min(5, this.buffer.committed.length, this.buffer.new.length); i++) {
+        const committedTail = this.buffer.committed
+          .slice(-i)
+          .map((t) => t.text)
+          .join(" ");
+        const newHead = this.buffer.new
+          .slice(0, i)
+          .map((t) => t.text)
+          .join(" ");
+        if (committedTail === newHead) {
+          this.buffer.new.splice(0, i);
+          break;
+        }
       }
     }
   }
