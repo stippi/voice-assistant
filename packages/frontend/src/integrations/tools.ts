@@ -26,6 +26,7 @@ import {
   listCalendarEvents,
   listContacts,
 } from "./google";
+import { timerService } from "../services/TimerService";
 
 const math = create(all, {});
 
@@ -600,16 +601,15 @@ export async function callFunction(
     console.log("calling function:", functionCall.name, args);
     switch (functionCall.name) {
       case "add_alarm":
-        return await addTimer("alarm", args.time, args.title || "", appContext);
+        return await addTimer("alarm", args.time, args.title || "");
       case "add_countdown":
         return await addTimer(
           "countdown",
           addIsoDurationToDate(new Date(), args.duration).toString(),
           args.title || "",
-          appContext,
         );
       case "delete_timer":
-        return await removeTimer(args.id, appContext);
+        return await removeTimer(args.id);
       case "calculate_time":
         return await calculateTime(args.baseTime, args.operation, args.value, args.unit);
       case "evaluate_expression":
@@ -728,7 +728,7 @@ export async function callFunction(
   }
 }
 
-async function addTimer(type: "countdown" | "alarm", time: string, title: string, appContext: AppContextType) {
+async function addTimer(type: "countdown" | "alarm", time: string, title: string) {
   console.log(`Adding timer: ${type} at ${time} with title '${title}'`);
   const timer: Timer = {
     id: Math.random().toString(36).substring(7),
@@ -736,13 +736,13 @@ async function addTimer(type: "countdown" | "alarm", time: string, title: string
     time,
     title,
   };
-  appContext.setTimers([...appContext.timers, timer]);
+  timerService.addTimer(timer);
   return { result: `timer created with ID ${timer.id}` };
 }
 
-async function removeTimer(id: string, appContext: AppContextType) {
+async function removeTimer(id: string) {
   console.log(`Removing timer: ${id}`);
-  appContext.setTimers(appContext.timers.filter((timer) => timer.id !== id));
+  timerService.removeTimer(id);
   return { result: "timer deleted" };
 }
 
