@@ -24,7 +24,5 @@ export default function useTimers() {
     };
   }, [setTimers]);
 
-  console.log("returning timers", timers);
-
   return { timers, setTimers: setTimersInService };
 }

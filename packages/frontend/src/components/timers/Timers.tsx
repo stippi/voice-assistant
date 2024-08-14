@@ -4,8 +4,6 @@ import { TimerItem } from "./TimerItem";
 export function Timers() {
   const { timers, setTimers } = useTimers();
 
-  console.log(timers);
-
   return (
     <>
       {timers.map((timer) => (
