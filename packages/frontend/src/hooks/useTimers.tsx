@@ -12,7 +12,6 @@ export default function useTimers() {
   React.useEffect(() => {
     const listener = {
       timersUpdated(timers: Timer[]) {
-        console.log("timers updated", timers);
         setTimers(() => timers);
       },
     };
