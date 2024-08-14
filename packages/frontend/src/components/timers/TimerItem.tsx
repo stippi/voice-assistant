@@ -1,5 +1,5 @@
 import React from "react";
-import { calculateTimeLeft, formatDateRelativeToToday } from "../utils/timeFormat.ts";
+import { calculateTimeLeft, formatDateRelativeToToday } from "../../utils/timeFormat";
 import ListItem from "@mui/material/ListItem";
 import { IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,7 +9,6 @@ import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 import AlarmIcon from "@mui/icons-material/Alarm";
 import ListItemText from "@mui/material/ListItemText";
 import { Timer } from "@shared/types";
-import useTimers from "../hooks/useTimers.tsx";
 
 function padWithZero(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
@@ -20,21 +19,29 @@ interface Props {
   removeTimer: () => void;
 }
 
-function TimerItem({ timer, removeTimer }: Props) {
-  const [timeLeft, setTimeLeft] = React.useState(calculateTimeLeft(timer.time));
+export const TimerItem = React.memo(({ timer, removeTimer }: Props) => {
+  const [timeLeft, setTimeLeft] = React.useState(() => calculateTimeLeft(timer.time));
 
   React.useEffect(() => {
     const interval = window.setInterval(() => {
-      const newTimeLeft = calculateTimeLeft(timer.time);
-      setTimeLeft(newTimeLeft);
-      if (newTimeLeft.difference <= 0) {
-        clearInterval(interval);
-      }
+      setTimeLeft(() => {
+        const newTimeLeft = calculateTimeLeft(timer.time);
+        if (newTimeLeft.difference <= 0) {
+          clearInterval(interval);
+        }
+        return newTimeLeft;
+      });
     }, 1000);
 
-    // Cleanup interval
     return () => clearInterval(interval);
-  }, [timer]);
+  }, [timer.time]);
+
+  const formattedTime = React.useMemo(() => {
+    if (timer.type === "countdown") {
+      return `${timeLeft.hours}:${padWithZero(timeLeft.minutes)}:${padWithZero(timeLeft.seconds)}`;
+    }
+    return formatDateRelativeToToday(timer.time);
+  }, [timer.type, timer.time, timeLeft]);
 
   return (
     <ListItem
@@ -59,15 +66,11 @@ function TimerItem({ timer, removeTimer }: Props) {
     >
       <ListItemIcon sx={{ fontSize: 20, position: "relative" }}>
         {timer.type === "countdown" ? <HourglassTopIcon fontSize="inherit" /> : <AlarmIcon fontSize="inherit" />}
-        {timer.ringing === true && <SoundWaves />}
+        {timer.ringing && <SoundWaves />}
       </ListItemIcon>
       <ListItemText
         sx={{ my: 0 }}
-        primary={
-          timer.type === "countdown"
-            ? `${timeLeft.hours}:${padWithZero(timeLeft.minutes)}:${padWithZero(timeLeft.seconds)}`
-            : formatDateRelativeToToday(timer.time)
-        }
+        primary={formattedTime}
         primaryTypographyProps={{
           fontSize: 15,
           fontWeight: "medium",
@@ -86,25 +89,4 @@ function TimerItem({ timer, removeTimer }: Props) {
       />
     </ListItem>
   );
-}
-
-export function Timers() {
-  const { timers, setTimers } = useTimers();
-
-  return (
-    <>
-      {timers.map((timer, index) => (
-        <div key={timer.id}>
-          <TimerItem
-            timer={timer}
-            removeTimer={() => {
-              const newTimers = [...timers];
-              newTimers.splice(index, 1);
-              setTimers(newTimers);
-            }}
-          />
-        </div>
-      ))}
-    </>
-  );
-}
+});

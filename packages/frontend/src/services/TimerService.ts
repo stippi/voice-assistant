@@ -47,6 +47,7 @@ export class TimerService {
 
   addListener(listener: TimerListener) {
     this.listeners.push(listener);
+    listener.timersUpdated([...this.timers]);
   }
 
   removeListener(listener: TimerListener) {
@@ -56,7 +57,7 @@ export class TimerService {
   setTimers(timers: Timer[]) {
     this.timers = timers;
     this.persistence.setTimers(timers);
-    this.listeners.forEach((l) => l.timersUpdated(timers));
+    this.listeners.forEach((l) => l.timersUpdated([...timers]));
     this.checkTimers();
   }
 

@@ -14,7 +14,7 @@ import { Box, ListItemButton, SxProps } from "@mui/material";
 import ListItemText from "@mui/material/ListItemText";
 import { Settings } from "../contexts/SettingsContext";
 import useSettings from "../hooks/useSettings";
-import { Timers } from "./Timers";
+import { Timers } from "./timers/Timers";
 import { Events } from "./Events";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import { CurrentSong, PlaybackControls, PositionControls } from "./MusicControls";

@@ -12,7 +12,8 @@ export default function useTimers() {
   React.useEffect(() => {
     const listener = {
       timersUpdated(timers: Timer[]) {
-        setTimers(timers);
+        console.log("timers updated", timers);
+        setTimers(() => timers);
       },
     };
 
@@ -21,7 +22,9 @@ export default function useTimers() {
     return () => {
       timerService.removeListener(listener);
     };
-  }, []);
+  }, [setTimers]);
+
+  console.log("returning timers", timers);
 
   return { timers, setTimers: setTimersInService };
 }
