@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { GeoLocation, Timer, User } from "@shared/types";
+import { GeoLocation, User } from "@shared/types";
 import useLocation from "../hooks/useLocation";
 import { SearchResult } from "../integrations/spotify";
 
@@ -16,8 +16,6 @@ export type Spotify = {
 export type AppContextType = {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  timers: Timer[];
-  setTimers: React.Dispatch<React.SetStateAction<Timer[]>>;
   location: GeoLocation | undefined;
   spotify: Spotify | undefined;
   setSpotify: (spotify: Spotify | undefined) => void;
@@ -28,8 +26,6 @@ export type AppContextType = {
 export const AppContext = createContext<AppContextType>({
   users: [],
   setUsers: () => {},
-  timers: [],
-  setTimers: () => {},
   location: undefined,
   spotify: undefined,
   setSpotify: () => {},
@@ -46,18 +42,12 @@ function getStorageItem<T>(key: string, fallback: T): T {
 }
 
 const initialUsers = getStorageItem<User[]>("voice-assistant-users", []);
-const initialTimers = getStorageItem<Timer[]>("voice-assistant-timers", []);
 
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState(initialUsers);
   useEffect(() => {
     localStorage.setItem("voice-assistant-users", JSON.stringify(users));
   }, [users]);
-
-  const [timers, setTimers] = useState(initialTimers);
-  useEffect(() => {
-    localStorage.setItem("voice-assistant-timers", JSON.stringify(timers));
-  }, [timers]);
 
   const { location } = useLocation();
 
@@ -90,7 +80,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   }, []);
 
   return (
-    <AppContext.Provider value={{ users, setUsers, timers, setTimers, location, spotify, setSpotify, idle, setIdle }}>
+    <AppContext.Provider value={{ users, setUsers, location, spotify, setSpotify, idle, setIdle }}>
       {children}
     </AppContext.Provider>
   );

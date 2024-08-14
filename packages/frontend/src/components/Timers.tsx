@@ -1,6 +1,4 @@
 import React from "react";
-import { playSound } from "../utils/audio.ts";
-import useAppContext from "../hooks/useAppContext.tsx";
 import { calculateTimeLeft, formatDateRelativeToToday } from "../utils/timeFormat.ts";
 import ListItem from "@mui/material/ListItem";
 import { IconButton } from "@mui/material";
@@ -11,9 +9,15 @@ import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 import AlarmIcon from "@mui/icons-material/Alarm";
 import ListItemText from "@mui/material/ListItemText";
 import { Timer } from "@shared/types";
+import useTimers from "../hooks/useTimers.tsx";
 
 function padWithZero(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
+}
+
+interface Props {
+  timer: Timer;
+  removeTimer: () => void;
 }
 
 function TimerItem({ timer, removeTimer }: Props) {
@@ -84,66 +88,8 @@ function TimerItem({ timer, removeTimer }: Props) {
   );
 }
 
-interface Props {
-  timer: Timer;
-  removeTimer: () => void;
-}
-
-function isSameSecond(date1: Date, date2: Date): boolean {
-  date1.setMilliseconds(0);
-  date2.setMilliseconds(0);
-
-  return date1.getTime() === date2.getTime();
-}
-
 export function Timers() {
-  const { timers, setTimers } = useAppContext();
-
-  React.useEffect(() => {
-    const interval = window.setInterval(() => {
-      if (timers.length === 0) {
-        return;
-      }
-      const now = new Date();
-      const updatedTimers = timers
-        .map((timer) => (isSameSecond(new Date(timer.time), now) ? { ...timer, ringing: true } : timer))
-        .filter((timer) => timer.ringing === true || new Date(timer.time) > now);
-      if (
-        timers.length != updatedTimers.length ||
-        !timers.every((timer, index) => timer.ringing === updatedTimers[index].ringing)
-      ) {
-        setTimers(updatedTimers);
-      }
-    }, 1000);
-
-    let timeout = -1;
-    if (timers.length > 0) {
-      const nextDate = timers
-        .map((timer) => new Date(timer.time))
-        .reduce((minDate, date) => {
-          return date < minDate ? date : minDate;
-        });
-      const now = new Date();
-      const waitTime = nextDate.getTime() - now.getTime();
-      if (waitTime >= 0) {
-        timeout = window.setTimeout(() => {
-          const audio = playSound("alarm");
-          audio.addEventListener("ended", () => {
-            // audio.currentTime = 0;
-            // audio.play().catch((error) => {
-            //   console.log("Failed to play sound (repeat: ", error);
-            // });
-            audio.remove();
-            setTimers(timers.map((timer) => ({ ...timer, ringing: false })));
-          });
-        }, waitTime);
-      }
-    }
-    return () => {
-      window.clearInterval(interval);
-      window.clearTimeout(timeout);
-    };
-  }, [timers, setTimers]);
+  const { timers, setTimers } = useTimers();
 
   return (
     <>

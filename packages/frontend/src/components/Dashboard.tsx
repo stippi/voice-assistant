@@ -5,6 +5,7 @@ import { styled, ThemeProvider, createTheme } from "@mui/material/styles";
 import List from "@mui/material/List";
 import useAppContext from "../hooks/useAppContext";
 import useGoogleContext from "../hooks/useGoogleContext";
+import useTimers from "../hooks/useTimers";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import AlarmIcon from "@mui/icons-material/Alarm";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -280,7 +281,8 @@ function MusicList() {
 }
 
 export function Dashboard() {
-  const { timers, idle } = useAppContext();
+  const { idle } = useAppContext();
+  const { timers } = useTimers();
   const { upcomingEvents: upcomingGoogleEvents, favoritePhotos } = useGoogleContext();
   const { upcomingEvents: upcomingMicrosoftEvents } = useMicrosoftContext();
   const { settings } = useSettings();
