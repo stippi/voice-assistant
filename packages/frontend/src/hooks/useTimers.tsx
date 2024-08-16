@@ -1,27 +1,12 @@
-import { timerService } from "../services/TimerService";
-import { Timer } from "voice-assistant-shared";
 import React from "react";
+import { TimerContext } from "../contexts/TimerContext.tsx";
 
 export default function useTimers() {
-  const [timers, setTimers] = React.useState<Timer[]>([]);
+  const context = React.useContext(TimerContext);
 
-  const setTimersInService = React.useCallback((timers: Timer[]) => {
-    timerService.setTimers(timers);
-  }, []);
+  if (context === undefined) {
+    throw new Error("useTimers must be used within a TimerContextProvider");
+  }
 
-  React.useEffect(() => {
-    const listener = {
-      timersUpdated(timers: Timer[]) {
-        setTimers(() => timers);
-      },
-    };
-
-    timerService.addListener(listener);
-
-    return () => {
-      timerService.removeListener(listener);
-    };
-  }, [setTimers]);
-
-  return { timers, setTimers: setTimersInService };
+  return context;
 }

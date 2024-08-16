@@ -13,6 +13,7 @@ import useSettings from "./hooks/useSettings";
 import { Dashboard } from "./components/Dashboard";
 import { SpotifyContextProvider } from "./contexts/SpotifyContext";
 import { MicrosoftContextProvider } from "./contexts/MicrosoftContext";
+import { TimerContextProvider } from "./contexts/TimerContext";
 import useAppContext from "./hooks/useAppContext";
 import useWindowFocus from "./hooks/useWindowFocus";
 
@@ -115,11 +116,13 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <WindowFocusProvider>
         <AppContextProvider>
-          <SettingsProvider>
-            <ConfigsProvider>
-              <AssistantWithOptionalIntegrations />
-            </ConfigsProvider>
-          </SettingsProvider>
+          <TimerContextProvider>
+            <SettingsProvider>
+              <ConfigsProvider>
+                <AssistantWithOptionalIntegrations />
+              </ConfigsProvider>
+            </SettingsProvider>
+          </TimerContextProvider>
         </AppContextProvider>
       </WindowFocusProvider>
     </ThemeProvider>
