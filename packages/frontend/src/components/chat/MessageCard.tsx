@@ -11,11 +11,11 @@ import { Message } from "@shared/types";
 import { BsFillPersonFill } from "react-icons/bs";
 import { RiRobot2Fill } from "react-icons/ri";
 import { GoogleMapsCard } from "./GoogleMapsCard";
-import { showToolCallInChat } from "../integrations/tools";
+import { showToolCallInChat } from "../../integrations/tools";
 import { ButtonGroup, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { createPerformanceTrackingService, PerformanceData } from "../services/PerformanceTrackingService";
+import { createPerformanceTrackingService, PerformanceData } from "../../services/PerformanceTrackingService";
 import PerformanceTooltip from "./PerformanceTooltip";
 
 function parseMath(text: string) {

@@ -1,4 +1,4 @@
-import { Conversation } from "./Conversation";
+import { Conversation } from "./chat/Conversation";
 import { MessageBar } from "./MessageBar";
 import { useVoiceAssistant } from "../hooks/useVoiceAssistant";
 

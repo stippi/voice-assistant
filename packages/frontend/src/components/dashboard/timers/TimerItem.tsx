@@ -1,5 +1,5 @@
 import React from "react";
-import { calculateTimeLeft, formatDateRelativeToToday } from "../../utils/timeFormat";
+import { calculateTimeLeft, formatDateRelativeToToday } from "../../../utils/timeFormat";
 import ListItem from "@mui/material/ListItem";
 import { IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";

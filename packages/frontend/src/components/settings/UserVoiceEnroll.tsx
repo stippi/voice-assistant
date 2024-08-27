@@ -12,10 +12,10 @@ import {
 } from "@mui/material";
 import { EagleProfile } from "@picovoice/eagle-web";
 import { User } from "@shared/types";
-import { indexDbPut } from "../utils/indexDB";
-import { useEagleProfiler } from "../hooks/useEagleProfiler.tsx";
+import { indexDbPut } from "../../utils/indexDB";
+import { useEagleProfiler } from "../../hooks/useEagleProfiler.tsx";
 import { useEffect } from "react";
-import { PicoVoiceAccessKey } from "../config.ts";
+import { PicoVoiceAccessKey } from "../../config.ts";
 
 function CircularProgressWithLabel(props: CircularProgressProps & { value: number }) {
   return (

@@ -27,11 +27,11 @@ import {
 import SpeedIcon from "@mui/icons-material/Speed";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
-import { Voice, Personality, Settings } from "../contexts/SettingsContext";
-import useSettings from "../hooks/useSettings";
+import { Voice, Personality, Settings } from "../../contexts/SettingsContext";
+import useSettings from "../../hooks/useSettings";
 import { BuiltInKeyword } from "@picovoice/porcupine-web";
 import React, { useState } from "react";
-import useAppContext from "../hooks/useAppContext";
+import useAppContext from "../../hooks/useAppContext";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { LLMConfigs } from "./LLMConfigs";
 import { UserVoiceEnroll } from "./UserVoiceEnroll";

@@ -20,7 +20,7 @@ import Settings from "@mui/icons-material/Settings";
 import useChats from "../hooks/useChats";
 import "./Sidebar.css";
 import { ChatSelection } from "./ChatSelection";
-import { AssistantSettings } from "./AssistantSettings";
+import { AssistantSettings } from "./settings/AssistantSettings";
 import { RiRobot2Fill } from "react-icons/ri";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
