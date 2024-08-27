@@ -12,8 +12,22 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { CollapsibleList, ExpandButton } from "./Dashboard.tsx";
 import { PlaybackControls } from "./MusicControls.tsx";
 
+interface ImageInfo {
+  id: string;
+  url: string;
+  width: string;
+  height: string;
+  productUrl: string;
+}
+
+interface PhotoProps {
+  hovered?: boolean;
+  children?: React.ReactNode;
+  info: ImageInfo | null;
+  fullResolution: boolean;
+}
+
 export function Photo({ info, hovered, children }: PhotoProps) {
-  console.log("Rendering photo", info?.url);
   const aspectRatio = info ? parseInt(info.width) / parseInt(info.height) : 1;
   return (
     <Box className="container" style={{ aspectRatio: aspectRatio }}>
@@ -54,21 +68,6 @@ export function Photo({ info, hovered, children }: PhotoProps) {
       {children}
     </Box>
   );
-}
-
-interface ImageInfo {
-  id: string;
-  url: string;
-  width: string;
-  height: string;
-  productUrl: string;
-}
-
-interface PhotoProps {
-  hovered?: boolean;
-  children?: React.ReactNode;
-  info: ImageInfo | null;
-  fullResolution: boolean;
 }
 
 export function Photos({ idle, mediaItemIDs }: PhotosProps) {
