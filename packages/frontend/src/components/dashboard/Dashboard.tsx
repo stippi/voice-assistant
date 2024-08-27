@@ -22,12 +22,14 @@ import { Timers } from "./timers/Timers";
 import { Events } from "./Events";
 import { CurrentSong, PlaybackControls, PositionControls } from "./MusicControls";
 import { MusicPlaylist } from "./MusicPlaylist";
-import useSpotifyContext from "../../hooks/useSpotifyContext";
-import useMicrosoftContext from "../../hooks/useMicrosoftContext";
-import useSettings from "../../hooks/useSettings";
-import useAppContext from "../../hooks/useAppContext";
-import useGoogleContext from "../../hooks/useGoogleContext";
-import useTimers from "../../hooks/useTimers";
+import {
+  useAppContext,
+  useGoogleContext,
+  useMicrosoftContext,
+  useSettings,
+  useSpotifyContext,
+  useTimers,
+} from "../../hooks";
 import { Photos } from "./Photos";
 import { Theme } from "@emotion/react";
 import { gridConfig } from "./dashboardGridConfig";

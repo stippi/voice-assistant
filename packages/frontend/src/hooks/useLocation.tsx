@@ -32,7 +32,7 @@ async function getDeviceLocation(): Promise<GeoLocation> {
   });
 }
 
-export default function useLocation() {
+export function useLocation() {
   const swr = useSWR<GeoLocation>("location", getDeviceLocation);
   return {
     location: swr.data,

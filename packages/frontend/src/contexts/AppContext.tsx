@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { GeoLocation, User } from "@shared/types";
-import useLocation from "../hooks/useLocation";
+import { useLocation } from "../hooks";
 import { SearchResult } from "../integrations/spotify";
 
 export type Spotify = {

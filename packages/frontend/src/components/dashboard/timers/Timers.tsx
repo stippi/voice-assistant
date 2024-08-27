@@ -1,4 +1,4 @@
-import useTimers from "../../../hooks/useTimers";
+import { useTimers } from "../../../hooks";
 import { TimerItem } from "./TimerItem";
 
 export function Timers() {

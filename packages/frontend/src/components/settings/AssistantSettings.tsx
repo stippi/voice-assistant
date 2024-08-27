@@ -24,15 +24,14 @@ import {
   Tabs,
   TextField,
 } from "@mui/material";
-import SpeedIcon from "@mui/icons-material/Speed";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
+import SpeedIcon from "@mui/icons-material/Speed";
 import { Voice, Personality, Settings } from "../../contexts/SettingsContext";
-import useSettings from "../../hooks/useSettings";
 import { BuiltInKeyword } from "@picovoice/porcupine-web";
 import React, { useState } from "react";
-import useAppContext from "../../hooks/useAppContext";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
+import { useAppContext, useSettings } from "../../hooks";
 import { LLMConfigs } from "./LLMConfigs";
 import { UserVoiceEnroll } from "./UserVoiceEnroll";
 import { User } from "@shared/types";

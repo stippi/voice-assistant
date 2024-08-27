@@ -1,7 +1,7 @@
 import { ChatsContext } from "../contexts/ChatsContext";
 import React from "react";
 
-export default function useChats() {
+export function useChats() {
   const context = React.useContext(ChatsContext);
 
   if (context === undefined) {

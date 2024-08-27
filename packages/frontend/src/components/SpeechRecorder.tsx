@@ -5,13 +5,10 @@ import IconButton from "@mui/material/IconButton";
 import OpenAI, { toFile } from "openai";
 import { EagleProfile } from "@picovoice/eagle-web";
 import { transcriptionApiUrl, transcriptionApiKey, transcriptionModel, PicoVoiceAccessKey } from "../config";
-import useSettings from "../hooks/useSettings";
-import useWindowFocus from "../hooks/useWindowFocus";
+import { useAppContext, useSettings, useVoiceDetection, useWindowFocus } from "../hooks";
 import { playSound } from "../utils/audio";
 import { textToLowerCaseWords } from "../utils/textUtils";
-import useAppContext from "../hooks/useAppContext";
 import { indexDbGet } from "../utils/indexDB";
-import { useVoiceDetection } from "../hooks/useVoiceDetection";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 
 const openai = new OpenAI({

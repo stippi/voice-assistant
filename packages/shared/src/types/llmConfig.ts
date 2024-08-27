@@ -12,5 +12,4 @@ export type LLMConfig = {
   modelID: string;
 
   useTools: boolean;
-  useStreaming: boolean;
 };

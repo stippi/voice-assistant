@@ -17,11 +17,11 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ArrowRight from "@mui/icons-material/ArrowRight";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import Settings from "@mui/icons-material/Settings";
-import useChats from "../hooks/useChats";
+import { RiRobot2Fill } from "react-icons/ri";
+import { useChats } from "../hooks";
 import "./Sidebar.css";
 import { ChatSelection } from "./ChatSelection";
 import { AssistantSettings } from "./settings/AssistantSettings";
-import { RiRobot2Fill } from "react-icons/ri";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
   "& .MuiListItemButton-root": {

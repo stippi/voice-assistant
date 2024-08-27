@@ -1,6 +1,6 @@
 import { Conversation } from "./chat/Conversation";
 import { MessageBar } from "./MessageBar";
-import { useVoiceAssistant } from "../hooks/useVoiceAssistant";
+import { useVoiceAssistant } from "../hooks";
 
 interface Props {
   idle: boolean;

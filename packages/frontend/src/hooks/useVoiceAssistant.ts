@@ -3,16 +3,13 @@ import { ChatCompletionService, createChatCompletionService } from "../services/
 import { TextToSpeechService, createTextToSpeechService } from "../services/TextToSpeechService";
 import { SystemMessageService, createSystemMessageService } from "../services/SystemMessageService";
 import { LLMConfig, Message } from "@shared/types";
-import useChats from "./useChats";
-import useSettings from "./useSettings";
-import useConfigs from "./useConfigs";
-import useAppContext from "./useAppContext";
+import { useAppContext, useChats, useConfigs, useSettings, useSpotifyContext } from ".";
 import { getTools, callFunction } from "../integrations/tools";
 import OpenAI from "openai";
 import { completionsApiUrl, completionsApiKey, modelName, useTools, speechApiUrl, speechApiKey } from "../config";
 import { removeCodeBlocks } from "../utils/removeCodeBlocks";
-import useSpotifyContext from "./useSpotifyContext";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
+import { timerService } from "../services/TimerService";
 
 const fallbackConfig: LLMConfig = {
   id: "",
@@ -174,7 +171,7 @@ export function useVoiceAssistant() {
           const systemMessage = systemMessageServiceRef.current.generateSystemMessage(
             audible,
             settingsRef.current.personality,
-            appContextRef.current.timers,
+            timerService.getTimers(),
             appContextRef.current.location,
             playbackState,
           );

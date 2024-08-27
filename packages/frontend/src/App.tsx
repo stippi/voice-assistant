@@ -9,13 +9,11 @@ import { Sidebar } from "./components/Sidebar";
 import { WindowFocusProvider } from "./contexts/WindowFocusContext";
 import { AppContextProvider } from "./contexts/AppContext";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import useSettings from "./hooks/useSettings";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import { SpotifyContextProvider } from "./contexts/SpotifyContext";
 import { MicrosoftContextProvider } from "./contexts/MicrosoftContext";
 import { TimerContextProvider } from "./contexts/TimerContext";
-import useAppContext from "./hooks/useAppContext";
-import useWindowFocus from "./hooks/useWindowFocus";
+import { useAppContext, useSettings, useWindowFocus } from "./hooks";
 
 const theme = createTheme({
   components: {

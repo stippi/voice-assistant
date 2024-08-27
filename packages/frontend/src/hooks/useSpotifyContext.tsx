@@ -1,7 +1,7 @@
 import React from "react";
-import {SpotifyContext} from "../contexts/SpotifyContext.tsx";
+import { SpotifyContext } from "../contexts/SpotifyContext.tsx";
 
-export default function useSpotifyContext() {
+export function useSpotifyContext() {
   const context = React.useContext(SpotifyContext);
 
   if (context === undefined) {

@@ -1,5 +1,5 @@
 import "./ChatSelection.css";
-import useChats from "../hooks/useChats";
+import { useChats } from "../hooks";
 import { List } from "@mui/material";
 import EditableListItem from "./common/EditableListItem";
 

@@ -1,5 +1,5 @@
 import React from "react";
-import useSpotifyContext from "../../hooks/useSpotifyContext";
+import { useSpotifyContext } from "../../hooks";
 import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import { ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 

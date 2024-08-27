@@ -1,7 +1,7 @@
 import { MicrosoftContext } from "../contexts/MicrosoftContext";
 import React from "react";
 
-export default function useMicrosoftContext() {
+export function useMicrosoftContext() {
   const context = React.useContext(MicrosoftContext);
 
   if (context === undefined) {
