@@ -62,20 +62,26 @@ export const MessageBar = React.memo(
     return (
       <div className={`fixedBottom ${idle ? "idle" : "gradientBottom"}`}>
         <ThemeProvider theme={theme}>
-          <div className="textContainer" onClick={focusTextArea}>
-            <TextareaAutosize
-              name="Message input"
-              className="textArea"
-              ref={textAreaRef}
-              placeholder={placeHolder}
-              value={currentlyTypedMessage}
-              onChange={(e) => setCurrentlyTypedMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              minRows={1}
-              maxRows={10}
-            />
+          <div
+            className="textContainer"
+            style={{ width: idle ? "auto" : "50vw", borderRadius: idle ? "50%" : "1rem" }}
+            onClick={focusTextArea}
+          >
+            {!idle && (
+              <TextareaAutosize
+                name="Message input"
+                className="textArea"
+                ref={textAreaRef}
+                placeholder={placeHolder}
+                value={currentlyTypedMessage}
+                onChange={(e) => setCurrentlyTypedMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                minRows={1}
+                maxRows={10}
+              />
+            )}
             <div className="buttonContainer">
-              {!responding && (
+              {!idle && !responding && (
                 <IconButton
                   disabled={currentlyTypedMessage.trim() === ""}
                   aria-label="send message"
@@ -87,7 +93,7 @@ export const MessageBar = React.memo(
                   <SendIcon />
                 </IconButton>
               )}
-              {responding && (
+              {!idle && responding && (
                 <IconButton
                   aria-label="cancel response"
                   onMouseDown={(event) => {

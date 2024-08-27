@@ -1,90 +1,84 @@
 .fixedBottom {
-    z-index: 10;
-    position: fixed;
-    bottom: 0;
-    left: var(--sidebar-width);
-    right: var(--dashboard-width);
+  z-index: 10;
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: var(--dashboard-width);
 
-    padding-bottom: 4rem;
+  padding-bottom: 4rem;
 
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 
-    transition: left 0.3s ease-in-out;
+  transition: left 0.3s ease-in-out;
 }
 
 .gradientBottom {
-    background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0) 0%,
-        rgba(225, 225, 225, 0.7) 90%
-    );
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(225, 225, 225, 0.7) 90%);
 }
 
 .textContainer {
-    width: 50vw;
+  border: 0 solid transparent;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 0 1px 0 rgba(0, 0, 0, 0.4),
+    0 2px 4px 0 rgba(0, 0, 0, 0.05);
 
-    border: 0 solid transparent;
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow:
-        0 0 1px 0 rgba(0, 0, 0, 0.4),
-        0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  margin: 2px;
+  padding: 0 0 0 12px;
+  position: relative;
+  display: flex;
+  align-items: start;
+  cursor: text;
 
-    margin: 2px;
-    padding: 0 0 0 12px;
-    position: relative;
-    display: flex;
-    align-items: start;
-    cursor: text;
-
-    transition: box-shadow 0.3s ease-in-out;
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 .idle .textContainer {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(6px);
-    box-shadow:
-        0 0 1px 0 rgba(0, 0, 0, 0.4),
-        0 3px 5px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 0 1px 0 rgba(0, 0, 0, 0.4),
+    0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
 .window-focused .textContainer:focus-within {
-    border: 2px solid rgb(58, 166, 255);
-    margin: 0;
-    box-shadow:
-        0 0 1px 0 rgba(0, 0, 0, 0.1),
-        0 3px 5px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgb(58, 166, 255);
+  margin: 0;
+  box-shadow:
+    0 0 1px 0 rgba(0, 0, 0, 0.1),
+    0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
 .buttonContainer {
-    padding: 6px;
-    display: flex;
-    align-items: start;
-    flex-direction: row;
+  padding: 6px;
+  display: flex;
+  align-items: start;
+  flex-direction: row;
 }
 
 .textArea {
-    width: 100%;
-    margin: auto 0;
-    padding: 12px 12px;
-    border: none;
-    resize: none;
-    font-size: 16px;
+  width: 100%;
+  margin: auto 0;
+  padding: 12px 12px;
+  border: none;
+  resize: none;
+  font-size: 16px;
 
-    background: none;
-    color: rgb(20, 20, 20);
+  background: none;
+  color: rgb(20, 20, 20);
 }
 
 .textArea:focus {
-    outline: none;
-    caret-color: transparent;
+  outline: none;
+  caret-color: transparent;
 }
 
 .window-focused .textArea:focus {
-    outline: none;
-    caret-color: auto;
+  outline: none;
+  caret-color: auto;
 }
