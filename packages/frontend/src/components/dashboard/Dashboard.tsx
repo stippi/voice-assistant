@@ -1,29 +1,33 @@
 import React from "react";
 import "./Dashboard.css";
-import Paper from "@mui/material/Paper";
 import { styled, ThemeProvider, createTheme } from "@mui/material/styles";
-import List from "@mui/material/List";
-import useAppContext from "../hooks/useAppContext";
-import useGoogleContext from "../hooks/useGoogleContext";
-import useTimers from "../hooks/useTimers";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import AlarmIcon from "@mui/icons-material/Alarm";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import HeadphonesIcon from "@mui/icons-material/Headphones";
-import { Box, ListItemButton, SxProps } from "@mui/material";
-import ListItemText from "@mui/material/ListItemText";
-import { Settings } from "../contexts/SettingsContext";
-import useSettings from "../hooks/useSettings";
+import {
+  Box,
+  Divider,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  SxProps,
+  Paper,
+} from "@mui/material";
+import { Settings } from "../../contexts/SettingsContext";
 import { Timers } from "./timers/Timers";
 import { Events } from "./Events";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import { CurrentSong, PlaybackControls, PositionControls } from "./MusicControls";
-import useSpotifyContext from "../hooks/useSpotifyContext";
 import { MusicPlaylist } from "./MusicPlaylist";
-import ListItem from "@mui/material/ListItem";
-import IconButton from "@mui/material/IconButton";
-import Divider from "@mui/material/Divider";
-import useMicrosoftContext from "../hooks/useMicrosoftContext";
+import useSpotifyContext from "../../hooks/useSpotifyContext";
+import useMicrosoftContext from "../../hooks/useMicrosoftContext";
+import useSettings from "../../hooks/useSettings";
+import useAppContext from "../../hooks/useAppContext";
+import useGoogleContext from "../../hooks/useGoogleContext";
+import useTimers from "../../hooks/useTimers";
 import { Photos } from "./Photos";
 import { Theme } from "@emotion/react";
 import { gridConfig } from "./dashboardGridConfig";

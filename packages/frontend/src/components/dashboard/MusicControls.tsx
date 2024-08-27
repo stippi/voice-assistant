@@ -1,33 +1,30 @@
-import { styled, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Typography, {TypographyProps} from '@mui/material/Typography';
-import Slider from '@mui/material/Slider';
-import IconButton from '@mui/material/IconButton';
+import React, { useEffect, useRef, useState } from "react";
+import { styled, useTheme } from "@mui/material/styles";
+import { Box, IconButton, Slider, Tooltip } from "@mui/material";
+import Typography, { TypographyProps } from "@mui/material/Typography";
 //import Stack from '@mui/material/Stack';
-import SkipPreviousRounded from '@mui/icons-material/SkipPreviousRounded';
-import SkipNextRounded from '@mui/icons-material/SkipNextRounded';
-import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
-import PauseRounded from '@mui/icons-material/PauseRounded';
+import SkipPreviousRounded from "@mui/icons-material/SkipPreviousRounded";
+import SkipNextRounded from "@mui/icons-material/SkipNextRounded";
+import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
+import PauseRounded from "@mui/icons-material/PauseRounded";
 //import VolumeUpRounded from '@mui/icons-material/VolumeUpRounded';
 //import VolumeDownRounded from '@mui/icons-material/VolumeDownRounded';
-import React, {useEffect, useRef, useState} from "react";
-import Tooltip from "@mui/material/Tooltip";
 
-const CoverImage = styled('div')({
+const CoverImage = styled("div")({
   width: 100,
   height: 100,
-  objectFit: 'cover',
-  overflow: 'hidden',
+  objectFit: "cover",
+  overflow: "hidden",
   flexShrink: 0,
   borderRadius: 3,
-  backgroundColor: 'rgba(0,0,0,0.08)',
-  '& > img': {
-    width: '100%',
+  backgroundColor: "rgba(0,0,0,0.08)",
+  "& > img": {
+    width: "100%",
   },
 });
 
 const TinyText = styled(Typography)({
-  fontSize: '0.65rem',
+  fontSize: "0.65rem",
   opacity: 0.38,
   fontWeight: 500,
   letterSpacing: 0.2,
@@ -36,31 +33,31 @@ const TinyText = styled(Typography)({
 const TextWithTooltip = ({ text, ...props }: TextWithTooltipProps) => {
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
-  
+
   useEffect(() => {
     const textElement = textRef.current;
     if (!textElement) return;
-    
+
     const updateOverflowStatus = () => {
       setIsOverflowing(textElement.offsetWidth < textElement.scrollWidth);
     };
-    
+
     updateOverflowStatus();
-    
+
     const resizeObserver = new ResizeObserver(updateOverflowStatus);
     resizeObserver.observe(textElement);
-    
+
     return () => {
       resizeObserver.disconnect();
     };
   }, [text]);
-  
+
   const renderContent = () => (
     <Typography {...props} noWrap ref={textRef}>
       {text}
     </Typography>
   );
-  
+
   return isOverflowing ? (
     <Tooltip title={text} placement="top">
       {renderContent()}
@@ -74,27 +71,24 @@ interface TextWithTooltipProps extends TypographyProps {
   text: string;
 }
 
-export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl}: CurrentSongProps) => {
+export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl }: CurrentSongProps) => {
   return (
-    <Box sx={{display: 'flex', alignItems: 'center'}}>
+    <Box sx={{ display: "flex", alignItems: "center" }}>
       <CoverImage>
-        <img
-          alt="can't win - Chilling Sunday"
-          src={albumCoverUrl}
-        />
+        <img alt="can't win - Chilling Sunday" src={albumCoverUrl} />
       </CoverImage>
-      <Box sx={{ml: 1.5, minWidth: 0}}>
+      <Box sx={{ ml: 1.5, minWidth: 0 }}>
         <TextWithTooltip text={artist} variant="subtitle2" color="text.secondary" fontWeight={500} fontSize="12px" />
-        <TextWithTooltip text={title} fontWeight={700}/>
+        <TextWithTooltip text={title} fontWeight={700} />
         <TextWithTooltip text={albumTitle} noWrap variant="subtitle2" color="text.secondary" letterSpacing={-0.25} />
       </Box>
     </Box>
   );
 });
 
-export function PositionControls({position, duration, setPosition}: PositionProps) {
+export function PositionControls({ position, duration, setPosition }: PositionProps) {
   const theme = useTheme();
-  
+
   function formatDuration(value: number) {
     const minute = Math.floor(value / 60);
     const secondLeft = Math.floor(value - minute * 60);
@@ -111,37 +105,35 @@ export function PositionControls({position, duration, setPosition}: PositionProp
         max={duration}
         onChange={(_, value) => setPosition(value as number)}
         sx={{
-          color: theme.palette.mode === 'dark' ? '#fff' : '#888',
+          color: theme.palette.mode === "dark" ? "#fff" : "#888",
           height: 4,
-          '& .MuiSlider-thumb': {
+          "& .MuiSlider-thumb": {
             width: 8,
             height: 8,
-            transition: '0.2s ease-in-out',
+            transition: "0.2s ease-in-out",
             // '&::before': {
             //   boxShadow: '0 2px 12px 0 rgba(0,0,0,0.4)',
             // },
-            '&:hover, &.Mui-focusVisible': {
+            "&:hover, &.Mui-focusVisible": {
               boxShadow: `0px 0px 0px 6px ${
-                theme.palette.mode === 'dark'
-                  ? 'rgb(255 255 255 / 16%)'
-                  : 'rgb(0 0 0 / 16%)'
+                theme.palette.mode === "dark" ? "rgb(255 255 255 / 16%)" : "rgb(0 0 0 / 16%)"
               }`,
             },
-            '&.Mui-active': {
+            "&.Mui-active": {
               width: 20,
               height: 20,
             },
           },
-          '& .MuiSlider-rail': {
+          "& .MuiSlider-rail": {
             opacity: 0.16,
           },
         }}
       />
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           mt: -2,
           marginBottom: -0.75,
         }}
@@ -153,75 +145,70 @@ export function PositionControls({position, duration, setPosition}: PositionProp
   );
 }
 
-export const PlaybackControls = React.memo(({
-  playing, togglePlay,
-  canSkipPrevious, canSkipNext,
-  skipNext, skipPrevious,
-  fontSize = 28,
-  fontSizeLarge = 32,
-}: PlaybackProps) => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        mt: -1,
-      }}
-    >
-      <IconButton
-        aria-label="previous"
-        disabled={!canSkipPrevious}
-        onClick={skipPrevious}
-        color="inherit"
-        style={{fontSize}}
+export const PlaybackControls = React.memo(
+  ({
+    playing,
+    togglePlay,
+    canSkipPrevious,
+    canSkipNext,
+    skipNext,
+    skipPrevious,
+    fontSize = 28,
+    fontSizeLarge = 32,
+  }: PlaybackProps) => {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mt: -1,
+        }}
       >
-        <SkipPreviousRounded fontSize="inherit"/>
-      </IconButton>
-      <IconButton
-        aria-label={playing ? 'pause' : 'play'}
-        onClick={togglePlay}
-        color="inherit"
-        style={{fontSize: fontSizeLarge}}
-      >
-        {playing ? (
-          <PauseRounded fontSize="inherit"/>
-        ) : (
-          <PlayArrowRounded fontSize="inherit"/>
-        )}
-      </IconButton>
-      <IconButton
-        aria-label="next"
-        disabled={!canSkipNext}
-        onClick={skipNext}
-        color="inherit"
-        style={{fontSize}}
-      >
-        <SkipNextRounded fontSize="inherit"/>
-      </IconButton>
-    </Box>
-  );
-});
+        <IconButton
+          aria-label="previous"
+          disabled={!canSkipPrevious}
+          onClick={skipPrevious}
+          color="inherit"
+          style={{ fontSize }}
+        >
+          <SkipPreviousRounded fontSize="inherit" />
+        </IconButton>
+        <IconButton
+          aria-label={playing ? "pause" : "play"}
+          onClick={togglePlay}
+          color="inherit"
+          style={{ fontSize: fontSizeLarge }}
+        >
+          {playing ? <PauseRounded fontSize="inherit" /> : <PlayArrowRounded fontSize="inherit" />}
+        </IconButton>
+        <IconButton aria-label="next" disabled={!canSkipNext} onClick={skipNext} color="inherit" style={{ fontSize }}>
+          <SkipNextRounded fontSize="inherit" />
+        </IconButton>
+      </Box>
+    );
+  },
+);
 
 export function MusicControls({
-  title, artist, albumTitle, albumCoverUrl,
-  playing, togglePlay,
-  canSkipPrevious, canSkipNext, skipNext, skipPrevious,
-  duration, position, setPosition
+  title,
+  artist,
+  albumTitle,
+  albumCoverUrl,
+  playing,
+  togglePlay,
+  canSkipPrevious,
+  canSkipNext,
+  skipNext,
+  skipPrevious,
+  duration,
+  position,
+  setPosition,
 }: Props) {
   return (
-    <Box sx={{padding: 2}}>
-      <CurrentSong
-        title={title}
-        artist={artist}
-        albumTitle={albumTitle}
-        albumCoverUrl={albumCoverUrl}
-      />
-      <PositionControls
-        position={position}
-        duration={duration}
-        setPosition={setPosition}
-      />
+    <Box sx={{ padding: 2 }}>
+      <CurrentSong title={title} artist={artist} albumTitle={albumTitle} albumCoverUrl={albumCoverUrl} />
+      <PositionControls position={position} duration={duration} setPosition={setPosition} />
       {/*<Stack spacing={2} direction="row" sx={{mb: 1, px: 1}} alignItems="center">*/}
       {/*  <VolumeDownRounded htmlColor={lightIconColor}/>*/}
       {/*  <Slider*/}
@@ -260,29 +247,29 @@ export function MusicControls({
 }
 
 interface CurrentSongProps {
-  title: string,
-  artist: string,
+  title: string;
+  artist: string;
   albumTitle: string;
-  albumCoverUrl: string,
+  albumCoverUrl: string;
 }
 
 interface PlaybackProps {
-  skipPrevious: () => void,
-  canSkipPrevious: boolean,
-  skipNext: () => void,
-  canSkipNext: boolean,
-  togglePlay: () => void,
-  playing: boolean,
-  fontSize?: number,
-  fontSizeLarge?: number,
+  skipPrevious: () => void;
+  canSkipPrevious: boolean;
+  skipNext: () => void;
+  canSkipNext: boolean;
+  togglePlay: () => void;
+  playing: boolean;
+  fontSize?: number;
+  fontSizeLarge?: number;
 }
 
 interface PositionProps {
-  position: number,
-  duration: number,
-  setPosition: (value: number) => void,
+  position: number;
+  duration: number;
+  setPosition: (value: number) => void;
 }
 
 interface Props extends PositionProps, PlaybackProps, CurrentSongProps {
-  markFavorite: () => void,
+  markFavorite: () => void;
 }

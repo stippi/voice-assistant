@@ -10,12 +10,12 @@ import {
   Select,
   Switch,
 } from "@mui/material";
-import useConfigs from "../hooks/useConfigs";
+import useConfigs from "../../hooks/useConfigs";
 import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
-import EditableListItem from "./common/EditableListItem";
-import { DraggableList, OnDragEndResponder } from "./common/DraggableList";
+import EditableListItem from "../common/EditableListItem";
+import { DraggableList, OnDragEndResponder } from "../common/DraggableList";
 
 export const LLMConfigs: React.FC = () => {
   const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } = useConfigs();
