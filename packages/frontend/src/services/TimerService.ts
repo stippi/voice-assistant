@@ -61,6 +61,10 @@ export class TimerService {
     this.checkTimers();
   }
 
+  getTimers(): Timer[] {
+    return this.timers;
+  }
+
   private isSameSecond(date1: Date, date2: Date): boolean {
     date1.setMilliseconds(0);
     date2.setMilliseconds(0);

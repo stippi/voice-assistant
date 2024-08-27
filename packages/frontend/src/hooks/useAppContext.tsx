@@ -1,7 +1,7 @@
 import { AppContext } from "../contexts/AppContext";
 import React from "react";
 
-export default function useAppContext() {
+export function useAppContext() {
   const context = React.useContext(AppContext);
 
   if (context === undefined) {

@@ -3,9 +3,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { EagleProfile } from "@picovoice/eagle-web";
 import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
 import { RollingAudioCapture } from "../utils/rollingAudioCapture.ts";
-import { useEagleWorker } from "./useEagleWorker.tsx";
+import { useCobraWorker, useEagleWorker } from ".";
 import { PicoVoiceAccessKey } from "../config.ts";
-import { useCobraWorker } from "./useCobraWorker.tsx";
 import { usePorcupine } from "@picovoice/porcupine-react";
 import { BuiltInKeyword, PorcupineDetection } from "@picovoice/porcupine-web";
 
@@ -17,10 +16,7 @@ type VoiceDetection = {
 
 export function useVoiceDetection(enableWakeWord: boolean): {
   isLoaded: boolean;
-  init: (
-    wakeWord: BuiltInKeyword,
-    speakerProfiles: EagleProfile[],
-  ) => Promise<void>;
+  init: (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => Promise<void>;
   start: () => Promise<void>;
   stop: () => Promise<void>;
   release: () => Promise<void>;
@@ -29,9 +25,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   voiceDetection: VoiceDetection | null;
 } {
   const [subscribed, setSubscribed] = useState(false);
-  const [voiceDetection, setVoiceDetection] = useState<VoiceDetection | null>(
-    null,
-  );
+  const [voiceDetection, setVoiceDetection] = useState<VoiceDetection | null>(null);
   const voiceDetectedRef = useRef(false);
   const lastSilenceCheckRef = useRef(new Date().getTime());
 
@@ -60,17 +54,9 @@ export function useVoiceDetection(enableWakeWord: boolean): {
         console.log("failed to stop Porcupine wake-word detection", error);
       });
     }
-  }, [
-    startPorcupine,
-    stopPorcupine,
-    enableWakeWord,
-    isListening,
-    isPorcupineLoaded,
-  ]);
+  }, [startPorcupine, stopPorcupine, enableWakeWord, isListening, isPorcupineLoaded]);
 
-  const rollingAudioCapture = useRef(
-    new RollingAudioCapture({ maxBuffers: 10 }),
-  );
+  const rollingAudioCapture = useRef(new RollingAudioCapture({ maxBuffers: 10 }));
 
   const rollingAudioEngine = useRef<PvEngine>({
     onmessage: async (event: MessageEvent) => {
@@ -184,13 +170,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
       }
       await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
     },
-    [
-      initPorcupine,
-      initEagle,
-      initCobra,
-      voiceProbabilityCallback,
-      speakerScoresCallback,
-    ],
+    [initPorcupine, initEagle, initCobra, voiceProbabilityCallback, speakerScoresCallback],
   );
 
   const release = useCallback(async () => {

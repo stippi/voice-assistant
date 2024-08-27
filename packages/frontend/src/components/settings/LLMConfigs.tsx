@@ -10,7 +10,7 @@ import {
   Select,
   Switch,
 } from "@mui/material";
-import useConfigs from "../../hooks/useConfigs";
+import { useConfigs } from "../../hooks";
 import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";

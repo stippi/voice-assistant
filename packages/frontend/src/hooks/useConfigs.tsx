@@ -1,7 +1,7 @@
 import { ConfigsContext } from "../contexts/ConfigsContext";
 import React from "react";
 
-export default function useConfigs() {
+export function useConfigs() {
   const context = React.useContext(ConfigsContext);
 
   if (context === undefined) {

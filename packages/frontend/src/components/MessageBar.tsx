@@ -6,7 +6,7 @@ import SendIcon from "@mui/icons-material/Send";
 import CancelIcon from "@mui/icons-material/Cancel";
 import SpeechRecorder from "./SpeechRecorder";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
-import useChats from "../hooks/useChats";
+import { useChats } from "../hooks";
 
 const theme = createTheme({
   components: {},
