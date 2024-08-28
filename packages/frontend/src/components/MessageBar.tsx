@@ -103,28 +103,32 @@ export const MessageBar = React.memo(
               />
             )}
             <div className="buttonContainer">
-              {!idle && isTransitionComplete && !responding && (
-                <IconButton
-                  disabled={currentlyTypedMessage.trim() === ""}
-                  aria-label="send message"
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    sendTextMessage(currentlyTypedMessage);
-                  }}
-                >
-                  <SendIcon />
-                </IconButton>
-              )}
-              {!idle && isTransitionComplete && responding && (
-                <IconButton
-                  aria-label="cancel response"
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    stopResponding(false);
-                  }}
-                >
-                  <CancelIcon />
-                </IconButton>
+              {!idle && isTransitionComplete && (
+                <>
+                  {!responding && (
+                    <IconButton
+                      disabled={currentlyTypedMessage.trim() === ""}
+                      aria-label="send message"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        sendTextMessage(currentlyTypedMessage);
+                      }}
+                    >
+                      <SendIcon />
+                    </IconButton>
+                  )}
+                  {responding && (
+                    <IconButton
+                      aria-label="cancel response"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        stopResponding(false);
+                      }}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </>
               )}
               <SpeechRecorder
                 sendMessage={sendMessage}
