@@ -38,10 +38,10 @@
 
   transition:
     box-shadow 0.3s ease-in-out,
-    border-radius 0.3s ease-in-out,
-    width 0.3s ease-in-out,
-    background 0.3s ease-in-out,
-    padding 0.3s ease-in-out;
+    border-radius 0.5s ease-in-out,
+    width 0.5s ease-in-out,
+    background 0.5s ease-in-out,
+    padding 0.5s ease-in-out;
 }
 
 .idle .textContainer {
@@ -84,14 +84,14 @@
   color: rgb(20, 20, 20);
 }
 
-.textArea,
-.buttonContainer {
+.textContainer .textArea,
+.textContainer .sendButton {
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 2s ease-in-out;
 }
 
-.textContainer:not(.idle) .textArea,
-.textContainer:not(.idle) .buttonContainer {
+.contentVisible .textArea,
+.contentVisible .sendButton {
   opacity: 1;
 }
 

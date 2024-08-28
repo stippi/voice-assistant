@@ -37,29 +37,40 @@ export const MessageBar = React.memo(
     const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
     const performanceTrackingServiceRef = React.useRef(createPerformanceTrackingService());
 
-    const [isTransitionComplete, setIsTransitionComplete] = React.useState(false);
+    const [isTransitionComplete, setIsTransitionComplete] = React.useState(true);
+    const [showInnerContent, setShowInnerContent] = React.useState(!idle);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
       const container = containerRef.current;
       if (!container) return;
 
-      const handleTransitionEnd = (e: TransitionEvent) => {
+      const handleTransitionStart = (e: TransitionEvent) => {
         if (e.propertyName === "width") {
-          setIsTransitionComplete(true);
+          setIsTransitionComplete(false);
         }
       };
 
+      const handleTransitionEnd = (e: TransitionEvent) => {
+        if (e.propertyName === "width") {
+          setIsTransitionComplete(true);
+          // Show inner content with a slight delay
+          setTimeout(() => setShowInnerContent(true), 500);
+        }
+      };
+
+      container.addEventListener("transitionstart", handleTransitionStart);
       container.addEventListener("transitionend", handleTransitionEnd);
 
       return () => {
+        container.removeEventListener("transitionstart", handleTransitionStart);
         container.removeEventListener("transitionend", handleTransitionEnd);
       };
     }, []);
 
     React.useEffect(() => {
-      if (!idle) {
-        setIsTransitionComplete(false);
+      if (idle) {
+        setShowInnerContent(false);
       }
     }, [idle]);
 
@@ -86,13 +97,13 @@ export const MessageBar = React.memo(
     };
 
     return (
-      <div className={`fixedBottom ${idle ? "idle" : "gradientBottom"}`}>
+      <div className={`fixedBottom ${idle ? "idle" : "gradientBottom"} ${showInnerContent ? "contentVisible" : ""}`}>
         <ThemeProvider theme={theme}>
           <div ref={containerRef} className="textContainer" onClick={focusTextArea}>
             {!idle && isTransitionComplete && (
               <TextareaAutosize
                 name="Message input"
-                className="textArea"
+                className={showInnerContent ? "visible textArea" : "textArea"}
                 ref={textAreaRef}
                 placeholder={placeHolder}
                 value={currentlyTypedMessage}
@@ -107,6 +118,7 @@ export const MessageBar = React.memo(
                 <>
                   {!responding && (
                     <IconButton
+                      className="sendButton"
                       disabled={currentlyTypedMessage.trim() === ""}
                       aria-label="send message"
                       onMouseDown={(event) => {
@@ -119,6 +131,7 @@ export const MessageBar = React.memo(
                   )}
                   {responding && (
                     <IconButton
+                      className="sendButton"
                       aria-label="cancel response"
                       onMouseDown={(event) => {
                         event.preventDefault();
