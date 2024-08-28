@@ -18,6 +18,8 @@
 }
 
 .textContainer {
+  width: 50vw;
+  border-radius: 1rem;
   border: 0 solid transparent;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
@@ -33,10 +35,18 @@
   align-items: start;
   cursor: text;
 
-  transition: box-shadow 0.3s ease-in-out;
+  transition:
+    box-shadow 0.3s ease-in-out,
+    border-radius 0.3s ease-in-out,
+    width 0.3s ease-in-out,
+    background 0.3s ease-in-out,
+    padding 0.3s ease-in-out;
 }
 
 .idle .textContainer {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   padding: 0;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(4px);
@@ -71,6 +81,17 @@
 
   background: none;
   color: rgb(20, 20, 20);
+}
+
+.textArea,
+.buttonContainer {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.textContainer:not(.idle) .textArea,
+.textContainer:not(.idle) .buttonContainer {
+  opacity: 1;
 }
 
 .textArea:focus {
