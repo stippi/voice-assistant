@@ -37,6 +37,32 @@ export const MessageBar = React.memo(
     const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
     const performanceTrackingServiceRef = React.useRef(createPerformanceTrackingService());
 
+    const [isTransitionComplete, setIsTransitionComplete] = React.useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const handleTransitionEnd = (e: TransitionEvent) => {
+        if (e.propertyName === "width") {
+          setIsTransitionComplete(true);
+        }
+      };
+
+      container.addEventListener("transitionend", handleTransitionEnd);
+
+      return () => {
+        container.removeEventListener("transitionend", handleTransitionEnd);
+      };
+    }, []);
+
+    React.useEffect(() => {
+      if (!idle) {
+        setIsTransitionComplete(false);
+      }
+    }, [idle]);
+
     const focusTextArea = (e: MouseEvent) => {
       if (textAreaRef.current && e.target !== textAreaRef.current) {
         textAreaRef.current.focus();
@@ -62,12 +88,8 @@ export const MessageBar = React.memo(
     return (
       <div className={`fixedBottom ${idle ? "idle" : "gradientBottom"}`}>
         <ThemeProvider theme={theme}>
-          <div
-            className="textContainer"
-            style={{ width: idle ? "auto" : "50vw", borderRadius: idle ? "50%" : "1rem" }}
-            onClick={focusTextArea}
-          >
-            {!idle && (
+          <div ref={containerRef} className="textContainer" onClick={focusTextArea}>
+            {!idle && isTransitionComplete && (
               <TextareaAutosize
                 name="Message input"
                 className="textArea"
@@ -81,7 +103,7 @@ export const MessageBar = React.memo(
               />
             )}
             <div className="buttonContainer">
-              {!idle && !responding && (
+              {!idle && isTransitionComplete && !responding && (
                 <IconButton
                   disabled={currentlyTypedMessage.trim() === ""}
                   aria-label="send message"
@@ -93,7 +115,7 @@ export const MessageBar = React.memo(
                   <SendIcon />
                 </IconButton>
               )}
-              {!idle && responding && (
+              {!idle && isTransitionComplete && responding && (
                 <IconButton
                   aria-label="cancel response"
                   onMouseDown={(event) => {
