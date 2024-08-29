@@ -26,10 +26,11 @@ interface PhotoProps {
   fullResolution: boolean;
 }
 
-export function Photo({ info, hovered, children }: PhotoProps) {
+export function Photo({ info, hovered, children, fullResolution }: PhotoProps) {
   const aspectRatio = info ? parseInt(info.width) / parseInt(info.height) : 1;
+  const style = fullResolution ? { height: "100%" } : { aspectRatio: aspectRatio };
   return (
-    <Box className="container" style={{ aspectRatio: aspectRatio }}>
+    <Box className="container" style={style}>
       <TransitionGroup>
         {info && (
           <CSSTransition key={info.id} timeout={1000} classNames="fade">
@@ -42,7 +43,8 @@ export function Photo({ info, hovered, children }: PhotoProps) {
                 bottom: 0,
                 borderRadius: "4px",
                 backgroundImage: `url(${info.url})`,
-                backgroundSize: "100% auto",
+                backgroundPosition: "center",
+                backgroundSize: fullResolution ? "cover" : "100% auto",
                 backgroundRepeat: "no-repeat",
 
                 "&:after": {
@@ -91,13 +93,13 @@ export function Photos({ idle, mediaItemIDs }: PhotosProps) {
   // Increment the index at a regular interval
   useEffect(() => {
     const interval = setInterval(() => {
-      if (documentVisible && playing && isExpanded) {
+      if (documentVisible && (idle || (playing && isExpanded))) {
         setCurrentIndex((currentIndex) => (currentIndex + 1) % randomizedMediaItems.length);
       }
     }, 20000);
 
     return () => clearInterval(interval);
-  }, [documentVisible, randomizedMediaItems, playing, isExpanded]);
+  }, [documentVisible, randomizedMediaItems, playing, isExpanded, idle]);
 
   useEffect(() => {
     const id = randomizedMediaItems[currentIndex];
@@ -131,6 +133,7 @@ export function Photos({ idle, mediaItemIDs }: PhotosProps) {
         top: "1.5rem",
         left: "1.5rem",
         right: "calc(18vw + 3rem)",
+        bottom: "1.5rem",
       }
     : {};
 
@@ -144,61 +147,63 @@ export function Photos({ idle, mediaItemIDs }: PhotosProps) {
       onMouseLeave={() => setHovered(false)}
       header={
         mediaItemIDs.length > 0 &&
-        isExpanded && (
-          <Photo hovered={hovered} info={currentImageInfo} fullResolution={idle}>
-            <Box
-              className="headerItems"
-              sx={{
-                color: "#222",
-                opacity: 0,
-                transition: "opacity 0.3s",
-
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: "3px",
-                zIndex: 10,
-
-                ...gridConfig,
-
-                paddingTop: "8px",
-                paddingBottom: "8px",
-              }}
-            >
-              <IconButton
-                aria-label="open photo"
-                size="small"
-                color="inherit"
-                onClick={() => {
-                  if (currentImageInfo) {
-                    window.open(currentImageInfo.productUrl, "_blank");
-                  }
-                }}
-              >
-                <OpenInNewIcon fontSize="inherit" />
-              </IconButton>
-              <PlaybackControls
-                playing={playing}
-                togglePlay={() => setPlaying(!playing)}
-                canSkipPrevious={true}
-                canSkipNext={true}
-                skipNext={() => setCurrentIndex((currentIndex + 1) % randomizedMediaItems.length)}
-                skipPrevious={() =>
-                  setCurrentIndex((currentIndex - 1 + randomizedMediaItems.length) % randomizedMediaItems.length)
-                }
-              />
-              <IconButton
+        (isExpanded || idle) && (
+          <Photo hovered={!idle && hovered} info={currentImageInfo} fullResolution={idle}>
+            {!idle && (
+              <Box
+                className="headerItems"
                 sx={{
-                  paddingBlock: 0,
-                  paddingInline: 0,
-                  width: "32px",
-                  height: "32px",
+                  color: "#222",
+                  opacity: 0,
+                  transition: "opacity 0.3s",
+
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: "3px",
+                  zIndex: 10,
+
+                  ...gridConfig,
+
+                  paddingTop: "8px",
+                  paddingBottom: "8px",
                 }}
-                onClick={toggleExpand}
               >
-                <ExpandButton open={isExpanded} id="expand-photos" />
-              </IconButton>
-            </Box>
+                <IconButton
+                  aria-label="open photo"
+                  size="small"
+                  color="inherit"
+                  onClick={() => {
+                    if (currentImageInfo) {
+                      window.open(currentImageInfo.productUrl, "_blank");
+                    }
+                  }}
+                >
+                  <OpenInNewIcon fontSize="inherit" />
+                </IconButton>
+                <PlaybackControls
+                  playing={playing}
+                  togglePlay={() => setPlaying(!playing)}
+                  canSkipPrevious={true}
+                  canSkipNext={true}
+                  skipNext={() => setCurrentIndex((currentIndex + 1) % randomizedMediaItems.length)}
+                  skipPrevious={() =>
+                    setCurrentIndex((currentIndex - 1 + randomizedMediaItems.length) % randomizedMediaItems.length)
+                  }
+                />
+                <IconButton
+                  sx={{
+                    paddingBlock: 0,
+                    paddingInline: 0,
+                    width: "32px",
+                    height: "32px",
+                  }}
+                  onClick={toggleExpand}
+                >
+                  <ExpandButton open={isExpanded} id="expand-photos" />
+                </IconButton>
+              </Box>
+            )}
           </Photo>
         )
       }
