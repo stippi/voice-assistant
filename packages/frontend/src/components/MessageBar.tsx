@@ -55,7 +55,7 @@ export const MessageBar = React.memo(
         if (e.propertyName === "width") {
           setIsTransitionComplete(true);
           // Show inner content with a slight delay
-          setTimeout(() => setShowInnerContent(true), 500);
+          setTimeout(() => setShowInnerContent(true), 2000);
         }
       };
 
