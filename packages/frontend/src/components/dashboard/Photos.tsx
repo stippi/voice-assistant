@@ -3,13 +3,13 @@ import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { fetchMediaItem } from "../../integrations/google";
 import "./Photos.css";
 import { Box, IconButton } from "@mui/material";
-import { randomizeArray } from "../../utils/randomizeArray.ts";
+import { randomizeArray } from "../../utils/randomizeArray";
 import { useSettings, useWindowFocus } from "../../hooks";
-import { gridConfig } from "./dashboardGridConfig.ts";
+import { gridConfig } from "./dashboardGridConfig";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
-import { CollapsibleList, ExpandButton } from "./Dashboard.tsx";
-import { PlaybackControls } from "./MusicControls.tsx";
+import { CollapsibleList, ExpandButton } from "./Dashboard";
+import { PlaybackControls } from "./MusicControls";
 
 interface ImageInfo {
   id: string;
