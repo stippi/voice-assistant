@@ -94,6 +94,14 @@ function AssistantWithOptionalIntegrations() {
     }
   }, [windowFocused]);
 
+  React.useEffect(() => {
+    if (idle && settings.enableGoogle && settings.enableGooglePhotos) {
+      document.documentElement.style.overflowY = "hidden";
+    } else {
+      document.documentElement.style.overflowY = "scroll";
+    }
+  }, [idle, settings.enableGoogle, settings.enableGooglePhotos]);
+
   return (
     <ChatsProvider>
       <GoogleContextProvider enable={settings.enableGoogle}>
