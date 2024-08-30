@@ -41,7 +41,7 @@ export function Photo({ info, hovered, children, fullResolution }: PhotoProps) {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                borderRadius: "4px",
+                borderRadius: fullResolution ? 0 : "4px",
                 backgroundImage: `url(${info.url})`,
                 backgroundPosition: "center",
                 backgroundSize: fullResolution ? "cover" : "100% auto",
@@ -130,10 +130,16 @@ export function Photos({ idle, mediaItemIDs }: PhotosProps) {
   const extraStyles = idle
     ? {
         position: "fixed",
-        top: "1.5rem",
-        left: "1.5rem",
-        right: "calc(18vw + 3rem)",
-        bottom: "1.5rem",
+        // top: "1.5rem",
+        // left: "1.5rem",
+        // right: "calc(18vw + 3rem)",
+        // bottom: "1.5rem",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: -1,
+        borderRadius: 0,
       }
     : {};
 
