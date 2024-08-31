@@ -24,6 +24,46 @@ interface Props {
   enable: boolean;
 }
 
+async function fetchCalendarList() {
+  const response = await gapi.client.calendar.calendarList.list();
+  return response.result.items.filter((c) => !c.id.includes("weeknum@group.v.calendar.google.com"));
+}
+
+async function fetchUpcomingEvents(): Promise<CalendarEvent[]> {
+  const calendars = await fetchCalendarList();
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Set to midnight of the current day
+  const timeMin = now.toISOString();
+
+  const eventPromises = calendars.map((calendar) =>
+    gapi.client.calendar.events.list({
+      calendarId: calendar.id,
+      timeMin: timeMin,
+      showDeleted: false,
+      singleEvents: true,
+      maxResults: 10,
+      orderBy: "startTime",
+    }),
+  );
+
+  const eventResponses = await Promise.all(eventPromises);
+
+  const allEvents: CalendarEvent[] = eventResponses.flatMap((response, index) =>
+    (response.result.items || []).map((item) => ({
+      ...item,
+      calendarId: calendars[index].id,
+    })),
+  );
+
+  allEvents.sort((a, b) => {
+    const aStart = new Date(a.start.dateTime || a.start.date || 0);
+    const bStart = new Date(b.start.dateTime || b.start.date || 0);
+    return aStart.getTime() - bStart.getTime();
+  });
+
+  return allEvents;
+}
+
 export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => {
   const [apiLoaded, setApiLoaded] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -80,42 +120,9 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
     return () => {};
   }, [apiLoaded]);
 
-  const fetchUpcomingEvents = React.useCallback(async () => {
-    const fetchCalendarList = async () => {
-      const response = await gapi.client.calendar.calendarList.list();
-      return response.result.items.filter((c) => !c.id.includes("weeknum@group.v.calendar.google.com"));
-    };
-
+  const fetchAndSetUpcomingEvents = React.useCallback(async () => {
     try {
-      const calendars = await fetchCalendarList();
-      const now = new Date().toISOString();
-
-      const eventPromises = calendars.map((calendar) =>
-        gapi.client.calendar.events.list({
-          calendarId: calendar.id,
-          timeMin: now,
-          showDeleted: false,
-          singleEvents: true,
-          maxResults: 7,
-          orderBy: "startTime",
-        }),
-      );
-
-      const eventResponses = await Promise.all(eventPromises);
-
-      const allEvents: CalendarEvent[] = eventResponses.flatMap((response, index) =>
-        (response.result.items || []).map((item) => ({
-          ...item,
-          calendarId: calendars[index].id,
-        })),
-      );
-
-      allEvents.sort((a, b) => {
-        const aStart = new Date(a.start.dateTime || a.start.date || 0);
-        const bStart = new Date(b.start.dateTime || b.start.date || 0);
-        return aStart.getTime() - bStart.getTime();
-      });
-
+      const allEvents = await fetchUpcomingEvents();
       setUpcomingEvents(allEvents.slice(0, 7));
     } catch (error) {
       console.error("Error fetching upcoming events:", error);
@@ -144,7 +151,7 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
 
   useEffect(() => {
     if (!loggedIn) return;
-    fetchUpcomingEvents();
+    fetchAndSetUpcomingEvents();
     getFavoritePhotos(3000).then((favoritePhotos) => {
       setFavoritePhotos(favoritePhotos);
     });
@@ -155,7 +162,7 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
           .then((accessToken) => {
             gapi.client.setToken({ access_token: accessToken });
             setLoggedIn(true);
-            fetchUpcomingEvents();
+            fetchAndSetUpcomingEvents();
           })
           .catch((error) => {
             console.log("Error refreshing access token", error);
@@ -166,16 +173,16 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
       1000 * 60 * 15,
     );
     return () => clearInterval(interval);
-  }, [loggedIn, fetchUpcomingEvents]);
+  }, [loggedIn, fetchAndSetUpcomingEvents]);
 
   useEffect(() => {
     if (!loggedIn) return;
-    window.addEventListener("refresh-upcoming-events", fetchUpcomingEvents);
+    window.addEventListener("refresh-upcoming-events", fetchAndSetUpcomingEvents);
 
     return () => {
-      window.removeEventListener("refresh-upcoming-events", fetchUpcomingEvents);
+      window.removeEventListener("refresh-upcoming-events", fetchAndSetUpcomingEvents);
     };
-  }, [loggedIn, fetchUpcomingEvents]);
+  }, [loggedIn, fetchAndSetUpcomingEvents]);
 
   return (
     <GoogleContext.Provider

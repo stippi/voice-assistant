@@ -14,6 +14,7 @@ export interface EventTime {
 
 export interface CalendarEvent {
   id: string;
+  calendarId: string;
   // The (inclusive) start time of the event. For a recurring event, this is the start time of the first instance.
   start: EventTime;
 
@@ -24,5 +25,4 @@ export interface CalendarEvent {
   summary: string;
   location?: string;
   htmlLink?: string;
-  calendarId: string;
 }
