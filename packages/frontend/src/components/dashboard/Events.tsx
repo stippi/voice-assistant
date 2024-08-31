@@ -45,7 +45,6 @@ function splitMultiDayEvents(event: CalendarEvent): CalendarEventWithAllDay[] {
 function splitAndConsolidateEvents(events: CalendarEvent[]): CalendarEventWithAllDay[] {
   // Split multi-day events into separate events
   const allEvents: CalendarEventWithAllDay[] = events.flatMap(splitMultiDayEvents);
-  console.log("all events:", allEvents);
 
   // Group events by date
   const groupedEvents = allEvents.reduce(
@@ -87,8 +86,6 @@ function splitAndConsolidateEvents(events: CalendarEvent[]): CalendarEventWithAl
     const bStart = new Date(b.start.dateTime || b.start.date || 0);
     return aStart.getTime() - bStart.getTime();
   });
-
-  console.log("consolidated events:", consolidatedEvents);
 
   return consolidatedEvents;
 }
