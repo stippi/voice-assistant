@@ -140,6 +140,7 @@ export function Photos({ idle, mediaItemIDs }: PhotosProps) {
         bottom: 0,
         zIndex: -1,
         borderRadius: 0,
+        cursor: "none",
       }
     : {};
 
