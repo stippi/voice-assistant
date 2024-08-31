@@ -105,6 +105,7 @@ interface EventItem {
   monthDay: string;
   weekday: string;
   summary: string;
+  isAllDay: boolean;
   startTime: string;
   endTime: string;
   uiLink?: string;
@@ -112,7 +113,7 @@ interface EventItem {
 
 type ListItem = MonthDivider | EventItem;
 
-const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): ListItem[] => {
+const pimpedEventList = (events: CalendarEventWithAllDay[], lang = navigator.language): ListItem[] => {
   const pimpedList: ListItem[] = [];
   let currentMonth: string | null = null;
   let currentDay: string | null = null;
@@ -170,6 +171,7 @@ const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): Li
       summary: event.summary,
       startTime: startString,
       endTime: endString,
+      isAllDay: event.isAllDay,
       uiLink: event.htmlLink,
     });
   });
@@ -177,7 +179,7 @@ const pimpedEventList = (events: CalendarEvent[], lang = navigator.language): Li
   return pimpedList;
 };
 
-function Event({ monthDay, weekday, summary, startTime, endTime, uiLink }: EventProps) {
+function Event({ monthDay, weekday, summary, startTime, endTime, isAllDay, uiLink }: EventProps) {
   const openEvent = () => {
     window.open(uiLink, "_blank");
   };
@@ -229,7 +231,8 @@ function Event({ monthDay, weekday, summary, startTime, endTime, uiLink }: Event
           fontWeight: "medium",
           lineHeight: "20px",
           mb: "2px",
-          whiteSpace: "nowrap",
+          mt: isAllDay ? "2px" : 0,
+          whiteSpace: isAllDay ? "wrap" : "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
         }}
@@ -250,6 +253,7 @@ interface EventProps {
   summary: string;
   startTime: string;
   endTime: string;
+  isAllDay: boolean;
   uiLink?: string;
 }
 
@@ -281,6 +285,7 @@ export const Events = React.memo(({ events }: Props) => {
               summary={item.summary}
               startTime={item.startTime}
               endTime={item.endTime}
+              isAllDay={item.isAllDay}
               uiLink={item.uiLink}
             />
           );
