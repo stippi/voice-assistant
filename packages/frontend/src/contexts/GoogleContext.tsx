@@ -80,21 +80,47 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
     return () => {};
   }, [apiLoaded]);
 
-  const fetchUpcomingEvents = () => {
-    gapi.client.calendar.events
-      .list({
-        calendarId: "primary",
-        timeMin: new Date().toISOString(),
-        showDeleted: false,
-        singleEvents: true,
-        maxResults: 5,
-        orderBy: "startTime",
-      })
-      .then((response) => {
-        const events = response.result.items;
-        setUpcomingEvents(events);
+  const fetchUpcomingEvents = React.useCallback(async () => {
+    const fetchCalendarList = async () => {
+      const response = await gapi.client.calendar.calendarList.list();
+      return response.result.items.filter((c) => !c.id.includes("weeknum@group.v.calendar.google.com"));
+    };
+
+    try {
+      const calendars = await fetchCalendarList();
+      const now = new Date().toISOString();
+
+      const eventPromises = calendars.map((calendar) =>
+        gapi.client.calendar.events.list({
+          calendarId: calendar.id,
+          timeMin: now,
+          showDeleted: false,
+          singleEvents: true,
+          maxResults: 7,
+          orderBy: "startTime",
+        }),
+      );
+
+      const eventResponses = await Promise.all(eventPromises);
+
+      const allEvents: CalendarEvent[] = eventResponses.flatMap((response, index) =>
+        (response.result.items || []).map((item) => ({
+          ...item,
+          calendarId: calendars[index].id,
+        })),
+      );
+
+      allEvents.sort((a, b) => {
+        const aStart = new Date(a.start.dateTime || a.start.date || 0);
+        const bStart = new Date(b.start.dateTime || b.start.date || 0);
+        return aStart.getTime() - bStart.getTime();
       });
-  };
+
+      setUpcomingEvents(allEvents.slice(0, 7));
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+    }
+  }, []);
 
   const getFavoritePhotos = async (maxResults: number) => {
     let favoritePhotos: string[] = [];
@@ -140,7 +166,7 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
       1000 * 60 * 15,
     );
     return () => clearInterval(interval);
-  }, [loggedIn]);
+  }, [loggedIn, fetchUpcomingEvents]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -149,7 +175,7 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
     return () => {
       window.removeEventListener("refresh-upcoming-events", fetchUpcomingEvents);
     };
-  }, [loggedIn]);
+  }, [loggedIn, fetchUpcomingEvents]);
 
   return (
     <GoogleContext.Provider
