@@ -85,6 +85,21 @@ export function ExpandButton({
   );
 }
 
+interface DashboardItemProps {
+  icon?: React.ReactNode;
+  header?: React.ReactNode;
+  title: string | React.ReactNode;
+  secondaryTitle: string;
+  settingsKey: keyof Settings;
+  children?: React.ReactNode;
+  disableExpand?: boolean;
+  hideList?: boolean;
+  sx?: SxProps<Theme>;
+  expandKey?: string;
+  onMouseEnter?: (event: React.MouseEvent<HTMLElement>) => void;
+  onMouseLeave?: (event: React.MouseEvent<HTMLElement>) => void;
+}
+
 export function CollapsibleList({
   header,
   title,
@@ -198,23 +213,15 @@ export function CollapsibleList({
   );
 }
 
-interface DashboardItemProps {
-  icon?: React.ReactNode;
-  header?: React.ReactNode;
-  title: string | React.ReactNode;
-  secondaryTitle: string;
-  settingsKey: keyof Settings;
-  children?: React.ReactNode;
-  disableExpand?: boolean;
-  hideList?: boolean;
-  sx?: SxProps<Theme>;
-  expandKey?: string;
-  onMouseEnter?: (event: React.MouseEvent<HTMLElement>) => void;
-  onMouseLeave?: (event: React.MouseEvent<HTMLElement>) => void;
+interface MusicProps {
+  idle: boolean;
 }
 
-function MusicList() {
+function MusicList({ idle }: MusicProps) {
   const { player, playerState, deviceId, play, pausePlayback, skipNext, skipPrevious } = useSpotifyContext();
+  if (idle && !playerState.trackId) {
+    return <> </>;
+  }
   return (
     <CollapsibleList
       header={
@@ -417,7 +424,7 @@ export function Dashboard() {
             <Timers />
           </CollapsibleList>
         )}
-        {settings.enableSpotify && <MusicList />}
+        {settings.enableSpotify && <MusicList idle={idle} />}
         {hasPhotos && <Photos idle={idle} mediaItemIDs={favoritePhotos} />}
       </div>
     </ThemeProvider>
