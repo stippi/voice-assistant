@@ -87,7 +87,7 @@ function splitAndConsolidateEvents(events: CalendarEvent[]): CalendarEventWithAl
     return aStart.getTime() - bStart.getTime();
   });
 
-  return consolidatedEvents;
+  return consolidatedEvents.splice(0, 5);
 }
 
 interface MonthDivider {
