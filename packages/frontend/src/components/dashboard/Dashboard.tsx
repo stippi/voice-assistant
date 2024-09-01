@@ -1,6 +1,6 @@
 import React from "react";
 import "./Dashboard.css";
-import { styled, ThemeProvider, createTheme } from "@mui/material/styles";
+import { styled, ThemeProvider, createTheme, useTheme } from "@mui/material/styles";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import AlarmIcon from "@mui/icons-material/Alarm";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -57,14 +57,24 @@ const DashboardList = styled(List)<{ component?: React.ElementType }>({
   },
 });
 
-export function ExpandButton({ open, sx, id }: { open: boolean; sx?: SxProps<Theme>; id?: string }) {
+export function ExpandButton({
+  open,
+  sx,
+  id,
+  color,
+}: {
+  open: boolean;
+  sx?: SxProps<Theme>;
+  id?: string;
+  color?: string;
+}) {
   return (
     <KeyboardArrowDown
       key={id}
       sx={{
         ...sx,
         mr: -1,
-        color: "rgba(0,0,0,1)",
+        color: `rgba(${color},1)`,
         transform: open ? "rotate(-180deg)" : "rotate(0)",
         transition: "0.2s",
         fontSize: 20,
@@ -93,6 +103,10 @@ export function CollapsibleList({
   const open = settings[settingsKey];
   const toggleExpand = () => setSettings({ ...settings, [settingsKey]: !open });
 
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+  const textColor = isDarkMode ? "255,255,255" : "0,0,0";
+
   const iconContent = () => {
     if (icon) {
       return <ListItemIcon style={{ marginTop: 0 }}>{icon}</ListItemIcon>;
@@ -105,18 +119,9 @@ export function CollapsibleList({
       return (
         <ListItemText
           primary={title}
-          primaryTypographyProps={{
-            fontSize: 15,
-            fontWeight: "medium",
-            lineHeight: "20px",
-            mb: "2px",
-          }}
           secondary={!header ? secondaryTitle : null}
           secondaryTypographyProps={{
-            noWrap: true,
-            fontSize: 12,
-            lineHeight: "16px",
-            color: !disableExpand && open ? "rgba(0,0,0,0)" : "rgba(0,0,0,0.5)",
+            color: !disableExpand && open ? `rgba(${textColor},0)` : `rgba(${textColor},0.5)`,
           }}
           sx={{ my: 0 }}
         />
@@ -127,7 +132,7 @@ export function CollapsibleList({
   };
   const expandContent = () => {
     if (!disableExpand) {
-      return <ExpandButton open={!!open} id={expandKey} />;
+      return <ExpandButton open={!!open} id={expandKey} color={textColor} />;
     }
   };
 
@@ -208,28 +213,6 @@ interface DashboardItemProps {
   onMouseLeave?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
-const theme = createTheme({
-  components: {
-    MuiListItemButton: {
-      defaultProps: {
-        disableTouchRipple: true,
-      },
-    },
-  },
-  palette: {
-    mode: "light",
-    primary: {
-      main: "rgb(102, 157, 246)",
-    },
-    text: {
-      primary: "rgb(40, 40, 40)",
-    },
-    background: {
-      paper: "rgb(235, 235, 235)",
-    },
-  },
-});
-
 function MusicList() {
   const { player, playerState, deviceId, play, pausePlayback, skipNext, skipPrevious } = useSpotifyContext();
   return (
@@ -286,6 +269,99 @@ function MusicList() {
   );
 }
 
+const regularTheme = createTheme({
+  components: {
+    MuiListItemButton: {
+      defaultProps: {
+        disableTouchRipple: true,
+      },
+    },
+    MuiListItemText: {
+      defaultProps: {
+        primaryTypographyProps: {
+          style: {
+            fontSize: 15,
+            fontWeight: "medium",
+            lineHeight: "20px",
+          },
+          mb: "2px",
+        },
+        secondaryTypographyProps: {
+          style: {
+            fontSize: 12,
+            lineHeight: "16px",
+          },
+          noWrap: true,
+        },
+      },
+    },
+  },
+  palette: {
+    mode: "light",
+    primary: {
+      main: "rgb(102, 157, 246)",
+    },
+    text: {
+      primary: "rgb(40, 40, 40)",
+    },
+    background: {
+      paper: "rgb(235, 235, 235)",
+    },
+  },
+});
+
+const idleTheme = createTheme({
+  components: {
+    MuiListItemButton: {
+      defaultProps: {
+        disableTouchRipple: true,
+      },
+    },
+    MuiListItemText: {
+      defaultProps: {
+        primaryTypographyProps: {
+          style: {
+            fontSize: 20,
+            fontWeight: "medium",
+            lineHeight: "26px",
+            //textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
+          },
+          mb: "4px",
+        },
+        secondaryTypographyProps: {
+          style: {
+            fontSize: 16,
+            lineHeight: "20px",
+            //textShadow: "1px 1px 2px rgba(0,0,0,0.2)",
+          },
+          noWrap: true,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "rgba(0, 0, 0, 0.6)",
+          backdropFilter: "blur(1px)",
+          WebkitBackdropFilter: "blur(1px)",
+        },
+      },
+    },
+  },
+  palette: {
+    mode: "dark",
+    primary: {
+      main: "rgb(102, 157, 246)",
+    },
+    text: {
+      primary: "rgb(245, 245, 245)",
+    },
+    background: {
+      paper: "rgba(0, 0, 0, 0.6)",
+    },
+  },
+});
+
 export function Dashboard() {
   const { idle } = useAppContext();
   const { timers } = useTimers();
@@ -314,7 +390,7 @@ export function Dashboard() {
   }, [timers, hasEvents, settings.enableSpotify]);
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={idle ? idleTheme : regularTheme}>
       <div
         className="dashboard side-column"
         style={{
