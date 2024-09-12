@@ -1,7 +1,7 @@
 import "./ChatSelection.css";
-import { useChats } from "../hooks";
+import { useChats } from "../../hooks";
 import { List } from "@mui/material";
-import EditableListItem from "./common/EditableListItem";
+import EditableListItem from "../common/EditableListItem";
 
 export function ChatSelection() {
   const { chats, setCurrentChat, currentChatID, renameChat, deleteChat } = useChats();

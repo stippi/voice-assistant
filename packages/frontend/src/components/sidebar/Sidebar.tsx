@@ -1,4 +1,5 @@
-import * as React from "react";
+import "./Sidebar.css";
+import React from "react";
 import { styled, createTheme, ThemeProvider } from "@mui/material/styles";
 import {
   Box,
@@ -15,13 +16,13 @@ import {
 } from "@mui/material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ArrowRight from "@mui/icons-material/ArrowRight";
-import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import Settings from "@mui/icons-material/Settings";
 import { RiRobot2Fill } from "react-icons/ri";
-import { useChats } from "../hooks";
-import "./Sidebar.css";
+import { useChats } from "../../hooks";
+import { AssistantSettings } from "../settings/AssistantSettings";
 import { ChatSelection } from "./ChatSelection";
-import { AssistantSettings } from "./settings/AssistantSettings";
+import DownloadChatsButton from "./DownloadChatsButton";
+import ToggleFullscreenButton from "./ToggleFullscreenButton";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
   "& .MuiListItemButton-root": {
@@ -36,17 +37,6 @@ const SidebarList = styled(List)<{ component?: React.ElementType }>({
     fontSize: 20,
   },
 });
-
-const DownloadChatsButton: React.FC = () => {
-  const { downloadChats } = useChats();
-  return (
-    <Tooltip title="Download all chats">
-      <IconButton onClick={downloadChats} sx={{ fontSize: "1rem" }}>
-        <SaveAltIcon sx={{ fontSize: "inherit" }} />
-      </IconButton>
-    </Tooltip>
-  );
-};
 
 const theme = createTheme({
   components: {
@@ -235,7 +225,8 @@ export function Sidebar() {
           <Box>
             <Divider />
             <Box sx={{ p: 1 }}>
-              <Stack flexDirection="row" justifyContent="flex-end">
+              <Stack flexDirection="row">
+                <ToggleFullscreenButton />
                 <DownloadChatsButton />
               </Stack>
             </Box>
