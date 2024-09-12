@@ -5,7 +5,7 @@ import { SettingsProvider } from "./contexts/SettingsContext";
 import VoiceAssistant from "./components/VoiceAssistant";
 import { ChatsProvider } from "./contexts/ChatsContext";
 import { ConfigsProvider } from "./contexts/ConfigsContext";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar } from "./components/sidebar/Sidebar";
 import { WindowFocusProvider } from "./contexts/WindowFocusContext";
 import { AppContextProvider } from "./contexts/AppContext";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
