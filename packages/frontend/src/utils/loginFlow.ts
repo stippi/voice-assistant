@@ -101,7 +101,7 @@ export class LoginFlow {
     const args = new URLSearchParams(window.location.search);
     const code = args.get("code");
     if (!code) {
-      console.log(`no code found in URL, redirecting to ${this.options.storagePrefix} authorize`);
+      console.log(`${this.options.storagePrefix}: no code found in URL, redirecting to authorize`);
       await this.redirectToAuthorize();
       return "";
     }
@@ -109,20 +109,20 @@ export class LoginFlow {
     const storedState = window.localStorage.getItem(this.stateKey());
     window.localStorage.removeItem(this.stateKey());
     if (!storedState || state !== storedState) {
-      console.log(`state mismatch: ${state} !== ${storedState}`);
+      console.log(`${this.options.storagePrefix}: state mismatch: ${state} !== ${storedState}`);
       await this.redirectToAuthorize();
       return "";
     }
     if (window.location.pathname !== this.options.callbackPath) {
-      console.log(`code found in URL, but not on ${this.options.callbackPath}`);
+      console.log(`${this.options.storagePrefix}: code found in URL, but not on ${this.options.callbackPath}`);
       // TODO: Would redirecting here interrupt another login flow?
       return "";
     }
     // If we find a code, we're in a callback, do a token exchange
-    console.log(`found code in URL, exchanging for ${this.options.storagePrefix} access token`);
+    console.log(`${this.options.storagePrefix}: found code in URL, exchanging for access token`);
     try {
       const json = await this.getToken(code);
-      console.log(`received ${this.options.storagePrefix} access token set`);
+      console.log(`${this.options.storagePrefix}: received access token set`);
       const newTokenSet: TokenSet = {
         accessToken: json.access_token,
         refreshToken: json.refresh_token,
@@ -140,7 +140,7 @@ export class LoginFlow {
 
       return newTokenSet.accessToken;
     } catch (error) {
-      console.error(`failed to exchange ${this.options.storagePrefix} code for token`, error);
+      console.error(`${this.options.storagePrefix}: failed to exchange code for token`, error);
       await this.redirectToAuthorize();
       return "";
     }
@@ -170,7 +170,7 @@ export class LoginFlow {
     });
     if (!response.ok) {
       // If we failed to refresh the token, re-run the login flow
-      console.error("failed to refresh token!");
+      console.error(`${this.options.storagePrefix}: failed to refresh token!`);
       return await this.runLoginFlow();
     }
     const json = await response.json();
