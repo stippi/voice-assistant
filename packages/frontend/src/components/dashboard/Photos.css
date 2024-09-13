@@ -19,7 +19,7 @@
 
 .fade-enter.fade-enter-active {
   opacity: 1;
-  transition: opacity 1000ms ease-in;
+  transition: opacity 1000ms ease-in-out;
 }
 
 .fade-exit {
