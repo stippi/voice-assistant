@@ -8,7 +8,7 @@ import { useSettings, useWindowFocus } from "../../hooks";
 import { gridConfig } from "./dashboardGridConfig";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
-import { CollapsibleList, ExpandButton } from "./Dashboard";
+import { CollapsibleList, ExpandButton } from "./DashboardItem";
 import { PlaybackControls } from "./MusicControls";
 
 interface ImageInfo {
