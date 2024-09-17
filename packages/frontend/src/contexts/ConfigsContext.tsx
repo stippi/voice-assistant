@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useCallback, useEffect, useState, ReactNode } from "react";
 import { LLMConfig } from "@shared/types";
 
 type ConfigsContextType = {
@@ -18,11 +18,11 @@ export const ConfigsContext = createContext<ConfigsContextType>({
 export const ConfigsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [llmConfigs, setLLMConfigs] = useState<LLMConfig[]>([]);
   const [activeLLMConfig, setActiveLLMConfig] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
+  const loadConfigs = useCallback(() => {
     const savedConfigs = localStorage.getItem("voice-assistant-configs");
     const savedActiveConfig = localStorage.getItem("voice-assistant-active-config") || "";
-
     if (savedConfigs) {
       try {
         setLLMConfigs(JSON.parse(savedConfigs) as LLMConfig[]);
@@ -30,22 +30,23 @@ export const ConfigsProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.error("Failed to parse voice assistant configurations", e);
       }
     }
-
     setActiveLLMConfig(savedActiveConfig);
+    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("voice-assistant-configs", JSON.stringify(llmConfigs));
-  }, [llmConfigs]);
+    if (isInitialized) {
+      console.log(`Saving ${llmConfigs.length} configs`);
+      localStorage.setItem("voice-assistant-configs", JSON.stringify(llmConfigs));
+    } else {
+      loadConfigs();
+    }
+  }, [llmConfigs, isInitialized, loadConfigs]);
 
   useEffect(() => {
     localStorage.setItem("voice-assistant-active-config", activeLLMConfig);
   }, [activeLLMConfig]);
 
-  useEffect(() => {
-    console.log(`Saving ${llmConfigs.length} configs`);
-    localStorage.setItem("voice-assistant-configs", JSON.stringify(llmConfigs));
-  }, [llmConfigs]);
   useEffect(() => {
     localStorage.setItem("voice-assistant-active-config", activeLLMConfig);
   }, [activeLLMConfig]);
