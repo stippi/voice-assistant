@@ -1,15 +1,16 @@
-import OpenAI from "openai";
+import { Ollama, Message } from "ollama/browser";
+import { OpenAI } from "openai";
 import { ChatCompletionService } from "../ChatCompletionService";
 
 export class OllamaChatCompletionService implements ChatCompletionService {
-  private client: OpenAI;
+  private readonly client: Ollama;
+  private readonly contextLength: number;
 
-  constructor(apiKey?: string, baseURL?: string) {
-    this.client = new OpenAI({
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true,
-      baseURL,
+  constructor(host: string = "http://localhost:11434", contextLength: number = 8192) {
+    this.client = new Ollama({
+      host,
     });
+    this.contextLength = contextLength;
   }
 
   removeToolBlocks(text: string): string {
@@ -82,18 +83,8 @@ Again, the flow in simplified form:
     );
   }
 
-  async getStreamedMessage(
-    systemMessage: string,
-    body: OpenAI.ChatCompletionCreateParams,
-    signal: AbortSignal,
-    callback: (chunk: string) => Promise<boolean>,
-  ): Promise<OpenAI.ChatCompletionMessage> {
-    if (body.tools) {
-      systemMessage = this.insertToolExplanation(systemMessage, body.tools);
-    }
-    body.messages = [{ role: "system", content: systemMessage }, ...body.messages];
-    delete body.tools;
-    body.messages = body.messages.map((message) => {
+  convertMessagesFromOpenAI(messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]): Message[] {
+    return messages.map((message) => {
       if (message.role === "assistant" && message.content === null && message.tool_calls) {
         return {
           role: "assistant",
@@ -102,66 +93,85 @@ Again, the flow in simplified form:
               return `<tool>${JSON.stringify({ tool: toolCall.function.name, tool_input: toolCall.function.arguments })}</tool>`;
             })
             .join("\n"),
-        } as OpenAI.ChatCompletionMessageParam;
+        } as Message;
       }
       return {
         role: message.role === "tool" ? "user" : message.role,
         content: message.content,
-      } as OpenAI.ChatCompletionMessageParam;
+      } as Message;
+    });
+  }
+
+  async getStreamedMessage(
+    systemMessage: string,
+    body: OpenAI.ChatCompletionCreateParams,
+    _signal: AbortSignal,
+    callback: (chunk: string) => Promise<boolean>,
+  ): Promise<OpenAI.ChatCompletionMessage> {
+    if (body.tools) {
+      systemMessage = this.insertToolExplanation(systemMessage, body.tools);
+    }
+    body.messages = [{ role: "system", content: systemMessage }, ...body.messages];
+    delete body.tools;
+
+    const stream = await this.client.chat({
+      model: body.model,
+      messages: this.convertMessagesFromOpenAI(body.messages),
+      stream: true,
+      options: {
+        // temperature: request.temperature,
+        // num_predict: request.max_tokens,
+        num_ctx: this.contextLength, // Increases the context size, default is 2048
+      },
     });
 
-    const stream = this.client.beta.chat.completions.stream(
-      {
-        ...body,
-        stream: true,
-      },
-      { signal },
-    );
     let content = "";
     let previousContentWithoutToolBlocks = "";
     for await (const chunk of stream) {
-      content += chunk.choices[0].delta.content || "";
+      content += chunk.message.content || "";
       const contentWithoutToolBlocks = this.removeToolBlocks(content).trim();
       if (contentWithoutToolBlocks !== previousContentWithoutToolBlocks) {
         const keepStreaming = await callback(contentWithoutToolBlocks.slice(previousContentWithoutToolBlocks.length));
-        if (!keepStreaming) {
+        if (!keepStreaming || chunk.done) {
           break;
         }
         previousContentWithoutToolBlocks = contentWithoutToolBlocks;
       }
     }
-    const finalMessage = await stream.finalMessage();
+    const finalMessage: OpenAI.ChatCompletionMessage = {
+      content: null,
+      role: "assistant",
+      refusal: null,
+    };
 
-    if (typeof finalMessage.content === "string") {
-      const matches = finalMessage.content.match(/<tool>[\s\S]*?<\/tool>/g);
-      if (matches) {
-        finalMessage.tool_calls = matches.map((match) => {
-          try {
-            const toolCall = JSON.parse(match.slice(6, -7));
-            return {
-              type: "function",
-              id: crypto.randomUUID(),
-              function: {
-                name: toolCall.tool,
-                arguments: JSON.stringify(toolCall.tool_input),
-              },
-            };
-          } catch (e) {
-            return {
-              type: "function",
-              id: crypto.randomUUID(),
-              function: {
-                name: "unknown",
-                arguments: "{}",
-              },
-            };
-          }
-        });
-      }
-      finalMessage.content = this.removeToolBlocks(finalMessage.content);
-      if (finalMessage.content.trim() === "") {
-        finalMessage.content = null;
-      }
+    const matches = content.match(/<tool>[\s\S]*?<\/tool>/g);
+    if (matches) {
+      finalMessage.tool_calls = matches.map((match) => {
+        try {
+          const toolCall = JSON.parse(match.slice(6, -7));
+          return {
+            type: "function",
+            id: crypto.randomUUID(),
+            function: {
+              name: toolCall.tool,
+              arguments: JSON.stringify(toolCall.tool_input),
+            },
+          };
+        } catch (e) {
+          return {
+            type: "function",
+            id: crypto.randomUUID(),
+            function: {
+              name: "unknown",
+              arguments: "{}",
+            },
+          };
+        }
+      });
+    }
+    content = this.removeToolBlocks(content);
+    if (content.trim() !== "") {
+      finalMessage.content = content;
     }
 
     return finalMessage;

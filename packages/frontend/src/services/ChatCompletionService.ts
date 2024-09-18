@@ -21,7 +21,7 @@ export function createChatCompletionService(config: LLMConfig): ChatCompletionSe
     case "OpenAI":
       return new OpenAIChatCompletionService(config.apiKey, config.apiEndPoint);
     case "Ollama":
-      return new OllamaChatCompletionService(config.apiKey, config.apiEndPoint);
+      return new OllamaChatCompletionService(config.apiEndPoint);
     case "Anthropic":
       return new AnthropicChatCompletionService(config.apiKey, config.apiEndPoint);
     case "VertexAI":
