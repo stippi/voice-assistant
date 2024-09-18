@@ -17,6 +17,7 @@
     "@anthropic-ai/sdk": "^0.24.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
+    "@mui/base": "^5.0.0-beta.40",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
     "@picovoice/cobra-web": "^2.0.3",
