@@ -235,6 +235,12 @@ export function useVoiceAssistant() {
             new Date().getTime(),
           );
 
+          if (finalAssistantMessage.tool_calls && finalAssistantMessage.tool_calls.length === 0) {
+            // Apparently, the OpenAI client can return messages with empty tool_calls array, but we cannot sent that to the Completions API.
+            // It would result in a 400 Bad Request.
+            delete finalAssistantMessage.tool_calls;
+          }
+
           messages = updateLastMessage(messages, { ...finalAssistantMessage, id: assistantMessageIdRef.current });
 
           // Check for tool calls
