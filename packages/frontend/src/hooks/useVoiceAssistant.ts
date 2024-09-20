@@ -83,6 +83,14 @@ export function useVoiceAssistant() {
     }
   }, [activeLLMConfig, llmConfigs]);
 
+  const trackTimestamp = useCallback(async (what: string) => {
+    await performanceTrackingServiceRef.current.trackTimestamp(
+      assistantMessageIdRef.current,
+      what,
+      new Date().getTime(),
+    );
+  }, []);
+
   useEffect(() => {
     chatServiceRef.current = createChatCompletionService(llmConfig);
     textToSpeechServiceRef.current = createTextToSpeechService({
@@ -97,19 +105,11 @@ export function useVoiceAssistant() {
 
     if (textToSpeechServiceRef.current) {
       textToSpeechServiceRef.current.onPlaybackStart(async () => {
-        await performanceTrackingServiceRef.current.trackTimestamp(
-          assistantMessageIdRef.current,
-          "spoken-response-started",
-          new Date().getTime(),
-        );
+        await trackTimestamp("spoken-response-started");
         document.dispatchEvent(new CustomEvent("reduce-volume"));
       });
       textToSpeechServiceRef.current.onPlaybackComplete(async () => {
-        await performanceTrackingServiceRef.current.trackTimestamp(
-          assistantMessageIdRef.current,
-          "spoken-response-finished",
-          new Date().getTime(),
-        );
+        await trackTimestamp("spoken-response-finished");
         document.dispatchEvent(new CustomEvent("restore-volume"));
         isRespondingRef.current = false;
         setResponding(false);
@@ -120,7 +120,7 @@ export function useVoiceAssistant() {
         }
       });
     }
-  }, [llmConfig, settings.voice, settings.audioSpeed, settings.expectResponse]);
+  }, [llmConfig, settings.voice, settings.audioSpeed, settings.expectResponse, trackTimestamp]);
 
   useEffect(() => {
     if (currentChat) {
@@ -189,11 +189,7 @@ export function useVoiceAssistant() {
             content,
           });
 
-          await performanceTrackingServiceRef.current.trackTimestamp(
-            assistantMessageIdRef.current,
-            "streaming-started",
-            new Date().getTime(),
-          );
+          await trackTimestamp("streaming-started");
 
           const finalAssistantMessage = await chatServiceRef.current.getStreamedMessage(
             systemMessage,
@@ -209,11 +205,7 @@ export function useVoiceAssistant() {
                 return false;
               }
               if (content === "" && chunk !== "") {
-                await performanceTrackingServiceRef.current.trackTimestamp(
-                  assistantMessageIdRef.current,
-                  "first-content-received",
-                  new Date().getTime(),
-                );
+                await trackTimestamp("first-content-received");
               }
               content += chunk;
               messages = updateLastMessage(messages, {
@@ -229,11 +221,7 @@ export function useVoiceAssistant() {
             },
           );
 
-          await performanceTrackingServiceRef.current.trackTimestamp(
-            assistantMessageIdRef.current,
-            "streaming-finished",
-            new Date().getTime(),
-          );
+          await trackTimestamp("streaming-finished");
 
           if (finalAssistantMessage.tool_calls && finalAssistantMessage.tool_calls.length === 0) {
             // Apparently, the OpenAI client can return messages with empty tool_calls array, but we cannot sent that to the Completions API.
@@ -245,11 +233,7 @@ export function useVoiceAssistant() {
 
           // Check for tool calls
           if (finalAssistantMessage.tool_calls) {
-            await performanceTrackingServiceRef.current.trackTimestamp(
-              assistantMessageIdRef.current,
-              "tool-execution-started",
-              new Date().getTime(),
-            );
+            await trackTimestamp("tool-execution-started");
             for (const toolCall of finalAssistantMessage.tool_calls) {
               if (toolCall.type !== "function") continue;
               const result = await callFunction(toolCall.function, appContextRef.current);
@@ -263,11 +247,7 @@ export function useVoiceAssistant() {
               };
               messages.push(toolReply);
             }
-            await performanceTrackingServiceRef.current.trackTimestamp(
-              assistantMessageIdRef.current,
-              "tool-execution-finished",
-              new Date().getTime(),
-            );
+            await trackTimestamp("tool-execution-finished");
             // Update the assistant message ID for the next loop iteration
             assistantMessageIdRef.current = crypto.randomUUID();
           } else {
@@ -347,7 +327,7 @@ export function useVoiceAssistant() {
         ];
       });
     },
-    [llmConfig, updateChat, newChat, currentChatID],
+    [llmConfig, updateChat, newChat, currentChatID, trackTimestamp],
   );
 
   const stopResponding = useCallback(() => {
