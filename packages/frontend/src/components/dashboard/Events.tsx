@@ -176,6 +176,16 @@ const pimpedEventList = (events: CalendarEventWithAllDay[], lang = navigator.lan
   return pimpedList;
 };
 
+interface EventProps {
+  monthDay: string;
+  weekday: string;
+  summary: string;
+  startTime: string;
+  endTime: string;
+  isAllDay: boolean;
+  uiLink?: string;
+}
+
 function Event({ monthDay, weekday, summary, startTime, endTime, isAllDay, uiLink }: EventProps) {
   const openEvent = () => {
     window.open(uiLink, "_blank");
@@ -244,14 +254,8 @@ function Event({ monthDay, weekday, summary, startTime, endTime, isAllDay, uiLin
   );
 }
 
-interface EventProps {
-  monthDay: string;
-  weekday: string;
-  summary: string;
-  startTime: string;
-  endTime: string;
-  isAllDay: boolean;
-  uiLink?: string;
+interface Props {
+  events: CalendarEvent[];
 }
 
 export const Events = React.memo(({ events }: Props) => {
@@ -259,7 +263,7 @@ export const Events = React.memo(({ events }: Props) => {
 
   return (
     <>
-      {pimpedEvents.map((item /*, index, array*/) => {
+      {pimpedEvents.map((item) => {
         if (item.type === "month") {
           return (
             <ListItem key={item.id} style={{ paddingTop: 2, paddingBottom: 2 }}>
@@ -291,7 +295,3 @@ export const Events = React.memo(({ events }: Props) => {
     </>
   );
 });
-
-interface Props {
-  events: CalendarEvent[];
-}

@@ -4,6 +4,7 @@ export * from "./useCobraWorker";
 export * from "./useConfigs";
 export * from "./useEagleProfiler";
 export * from "./useEagleWorker";
+export * from "./useEvents";
 export * from "./useGoogleContext";
 export * from "./useLocation";
 export * from "./useMicrosoftContext";
