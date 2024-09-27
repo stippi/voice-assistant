@@ -9,27 +9,15 @@ import { Timers } from "./timers/Timers";
 import { Events } from "./Events";
 import { Photos } from "./Photos";
 import { SpotifyPlayer } from "./SpotifyPlayer";
-import { useAppContext, useGoogleContext, useMicrosoftContext, useSettings, useTimers } from "../../hooks";
+import { useAppContext, useGoogleContext, useEvents, useSettings, useTimers } from "../../hooks";
 
 export function Dashboard() {
   const { idle } = useAppContext();
   const { timers } = useTimers();
-  const { upcomingEvents: upcomingGoogleEvents, favoritePhotos } = useGoogleContext();
-  const { upcomingEvents: upcomingMicrosoftEvents } = useMicrosoftContext();
+  const { favoritePhotos } = useGoogleContext();
   const { settings } = useSettings();
+  const upcomingEvents = useEvents({ isIdle: idle, maxEvents: 2, soonThresholdMinutes: 60 });
 
-  const upcomingEvents = [];
-  if (settings.enableGoogle && settings.enableGoogleCalendar) {
-    upcomingEvents.push(...(upcomingGoogleEvents || []));
-  }
-  if (settings.enableMicrosoft) {
-    upcomingEvents.push(...(upcomingMicrosoftEvents || []));
-  }
-  upcomingEvents.sort((a, b) => {
-    const aStart = a.start.dateTime || a.start.date || "";
-    const bStart = b.start.dateTime || b.start.date || "";
-    return aStart.localeCompare(bStart);
-  });
   const hasEvents = upcomingEvents.length > 0;
   const hasPhotos = settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0;
 
