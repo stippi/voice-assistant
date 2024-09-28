@@ -39,7 +39,7 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
         }
       }
     }
-    if (message.role === "tool") {
+    if (message.role === "tool" && typeof message.content === "string") {
       result.content = [
         {
           tool_use_id: message.tool_call_id,
@@ -92,7 +92,7 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
     const finalMessage = await stream.finalMessage();
 
     // Convert the final message back to OpenAI format
-    const message: OpenAI.ChatCompletionMessage = {
+    const message: Partial<OpenAI.ChatCompletionMessage> = {
       role: "assistant",
       content: null,
     };
@@ -101,7 +101,7 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
         if (!message.content) {
           message.content = "";
         }
-        message.content = contentBlock.text;
+        message.content += contentBlock.text;
       } else if (contentBlock.type === "tool_use") {
         if (!message.tool_calls) {
           message.tool_calls = [];
@@ -116,6 +116,6 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
         });
       }
     }
-    return message;
+    return message as OpenAI.ChatCompletionMessage;
   }
 }
