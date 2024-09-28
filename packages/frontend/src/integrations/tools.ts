@@ -103,7 +103,7 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
             value: { type: "number", description: "The duration value to add or subtract" },
             unit: { type: "string", enum: ["minutes", "hours", "days"] },
           },
-          required: ["date", "time", "duration"],
+          required: ["baseTime", "operation", "value", "unit"],
         },
       },
     },
