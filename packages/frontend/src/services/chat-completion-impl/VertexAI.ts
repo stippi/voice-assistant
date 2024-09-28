@@ -67,7 +67,7 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
       role: this.convertRole(message.role),
       parts: [],
     };
-    if (message.role === "tool") {
+    if (message.role === "tool" && typeof message.content === "string") {
       converted.parts.push({
         functionResponse: {
           //@ts-expect-error "name" is present, since it's actually Messages in the array'
@@ -162,7 +162,7 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
       }
     }
 
-    const finalMessage: OpenAI.ChatCompletionMessage = {
+    const finalMessage: Partial<OpenAI.ChatCompletionMessage> = {
       role: "assistant",
       content: content ? content : null,
     };
@@ -179,7 +179,7 @@ export class VertexAIChatCompletionService implements ChatCompletionService {
       ];
     }
 
-    return finalMessage;
+    return finalMessage as OpenAI.ChatCompletionMessage;
   }
 
   async *fetchServerSentEvents(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncIterableIterator<MessageEvent> {
