@@ -9,6 +9,9 @@ export class AnthropicChatCompletionService implements ChatCompletionService {
     this.client = new Anthropic({
       apiKey,
       baseURL,
+      defaultHeaders: {
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
     });
   }
 
