@@ -58,7 +58,7 @@ export function SpotifyPlayer({ idle }: Props) {
           />
         )
       }
-      secondaryTitle={playerState.trackId ? "Show playlist" : "No music is currently streaming"}
+      secondaryTitle={playerState.trackId ? "Show playlist" : "No music streaming"}
       settingsKey="showPlaylist"
       disableExpand={!playerState.trackId}
     >
