@@ -123,7 +123,7 @@ export const GoogleContextProvider: React.FC<Props> = ({ enable, children }) => 
   const fetchAndSetUpcomingEvents = React.useCallback(async () => {
     try {
       const allEvents = await fetchUpcomingEvents();
-      setUpcomingEvents(allEvents.slice(0, 7));
+      setUpcomingEvents(allEvents.slice(0, 20));
     } catch (error) {
       console.error("Error fetching upcoming events:", error);
     }

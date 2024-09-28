@@ -16,15 +16,15 @@ export function Dashboard() {
   const { timers } = useTimers();
   const { favoritePhotos } = useGoogleContext();
   const { settings } = useSettings();
-  const upcomingEvents = useEvents({ isIdle: idle, maxEvents: 2, soonThresholdMinutes: 60 });
+  const { upcomingEvents, eventsEnabled } = useEvents({ isIdle: idle, maxEvents: 2, soonThresholdMinutes: 60 });
 
   const hasEvents = upcomingEvents.length > 0;
   const hasPhotos = settings.enableGoogle && settings.enableGooglePhotos && favoritePhotos.length > 0;
 
   React.useEffect(() => {
-    const showDashboard = timers.length > 0 || hasEvents || settings.enableSpotify;
+    const showDashboard = timers.length > 0 || eventsEnabled || settings.enableSpotify;
     document.documentElement.style.setProperty("--dashboard-width", showDashboard ? "230px" : "0");
-  }, [timers, hasEvents, settings.enableSpotify]);
+  }, [timers, eventsEnabled, settings.enableSpotify]);
 
   return (
     <ThemeProvider theme={idle ? idleTheme : regularTheme}>
@@ -34,12 +34,13 @@ export function Dashboard() {
           display: timers.length > 0 || hasEvents || settings.enableSpotify || hasPhotos ? "flex" : "none",
         }}
       >
-        {hasEvents && (
+        {(hasEvents || (!idle && eventsEnabled)) && (
           <CollapsibleList
             icon={<CalendarMonthIcon style={{ color: "#00c4ff", fontSize: "1.5rem" }} />}
             title="Calendar"
-            secondaryTitle="Show upcoming events"
+            secondaryTitle={hasEvents ? "Show upcoming events" : "No upcoming events"}
             settingsKey="showUpcomingEvents"
+            disableExpand={!hasEvents}
           >
             <Events events={upcomingEvents} />
           </CollapsibleList>

@@ -69,5 +69,8 @@ export function useEvents({ isIdle, maxEvents, soonThresholdMinutes }: Props) {
     upcomingMicrosoftEvents,
   ]);
 
-  return filterEvents(upcomingEvents, 2, maxEvents, isIdle, soonThresholdMinutes);
+  return {
+    eventsEnabled: (settings.enableGoogle && settings.enableGoogleCalendar) || settings.enableMicrosoft,
+    upcomingEvents: filterEvents(upcomingEvents, 2, maxEvents, isIdle, soonThresholdMinutes),
+  };
 }
