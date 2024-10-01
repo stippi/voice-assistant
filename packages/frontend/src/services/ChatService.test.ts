@@ -129,11 +129,6 @@ describe("ChatService", () => {
   describe("updateChat", () => {
     it("should update an existing chat", async () => {
       const chatId = "1";
-      const messages: Message[] = [
-        { id: "1", role: "user", content: "Hello" },
-        { id: "2", role: "assistant", content: "Hello yourself!" },
-      ];
-      const currentlyTypedMessage = "Typing...";
 
       mockPersistenceService.getChat.mockResolvedValue({
         id: chatId,
@@ -143,6 +138,12 @@ describe("ChatService", () => {
         messages: [{ id: "1", role: "user", content: "Hello" }],
         currentlyTypedMessage: "",
       });
+
+      const messages: Message[] = [
+        { id: "1", role: "user", content: "Hello" },
+        { id: "2", role: "assistant", content: "Hello yourself!" },
+      ];
+      const currentlyTypedMessage = "Typing...";
 
       await chatService.updateChat(chatId, messages, currentlyTypedMessage);
 
