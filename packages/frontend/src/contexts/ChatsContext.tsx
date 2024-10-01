@@ -1,13 +1,11 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useCallback, useState, useEffect, ReactNode } from "react";
 import { Chat, ChatInfo, Message } from "@shared/types";
-import { indexDbDelete, indexDbGet, indexDbGetAllKeys, indexDbPut } from "../utils/indexDB.ts";
+import { createChatService } from "../services/ChatService";
 
 type ChatsContextType = {
   loading: boolean;
-
   currentlyTypedMessage: string;
   setCurrentlyTypedMessage: (message: string) => void;
-
   chats: ChatInfo[];
   currentChatID: string;
   currentChat: Chat | null;
@@ -22,17 +20,13 @@ type ChatsContextType = {
 
 export const ChatsContext = createContext<ChatsContextType>({
   loading: true,
-
   currentlyTypedMessage: "",
   setCurrentlyTypedMessage: () => {},
-
   chats: [],
   currentChatID: "",
   currentChat: null,
   setCurrentChat: () => {},
-  newChat: async () => {
-    return "";
-  },
+  newChat: async () => "",
   updateChat: () => {},
   renameChat: () => {},
   deleteChat: () => {},
@@ -41,165 +35,112 @@ export const ChatsContext = createContext<ChatsContextType>({
 });
 
 export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [chatService] = useState(() => createChatService());
   const [loading, setLoading] = useState(true);
-  const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState("");
-  const currentlyTypedMessageRef = React.useRef(currentlyTypedMessage);
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [currentChatID, setCurrentChatID] = useState<string>("");
-  const [currentChat, setChat] = useState<Chat | null>(null);
+  const [currentChat, setCurrentChat] = useState<Chat | null>(null);
+  const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState("");
 
   useEffect(() => {
-    indexDbGet<ChatInfo[]>("chats")
-      .then((chatsFromDb) => {
-        setChats(chatsFromDb || []);
-        return indexDbGet<string>("currentChatID");
-      })
-      .then((currentChatIDFromDb) => {
-        if (currentChatIDFromDb) {
-          setCurrentChatID(currentChatIDFromDb);
-        }
-      })
-      .catch((error) => {
-        console.error("An error occurred while loading chats or currentChatID", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+    const initializeChats = async () => {
+      const chatsFromService = await chatService.getChats();
+      setChats(chatsFromService);
+      const currentChatIDFromService = await chatService.getCurrentChatID();
+      if (currentChatIDFromService) {
+        setCurrentChatID(currentChatIDFromService);
+      }
+      setLoading(false);
+    };
+
+    initializeChats();
+  }, [chatService]);
 
   useEffect(() => {
-    currentlyTypedMessageRef.current = currentlyTypedMessage;
-  }, [currentlyTypedMessage]);
-
-  useEffect(() => {
-    if (currentChat) {
-      setCurrentlyTypedMessage(currentChat.currentlyTypedMessage || "");
-    }
-    return () => {
-      if (currentChat) {
-        currentChat.currentlyTypedMessage = currentlyTypedMessageRef.current;
-        indexDbPut(currentChat.id, currentChat);
+    const loadCurrentChat = async () => {
+      if (currentChatID) {
+        const chat = await chatService.getChat(currentChatID);
+        setCurrentChat(chat);
+        setCurrentlyTypedMessage(chat?.currentlyTypedMessage || "");
       }
     };
-  }, [currentChat]);
 
-  useEffect(() => {
-    if (currentChatID) {
-      indexDbGet<Chat>(currentChatID).then((chat) => {
-        setChat(chat);
-      });
-    }
-  }, [currentChatID]);
+    loadCurrentChat();
+  }, [chatService, currentChatID]);
 
-  const setCurrentChat = React.useCallback(async (chatID: string) => {
-    await indexDbPut("currentChatID", chatID);
-    setCurrentChatID(chatID);
-  }, []);
+  const setCurrentChatContext = useCallback(
+    async (chatID: string) => {
+      if (currentChat) {
+        await chatService.setCurrentlyTypedMessage(currentChat.id, currentlyTypedMessage);
+      }
+      await chatService.setCurrentChat(chatID);
+      setCurrentChatID(chatID);
+      const newCurrentChat = await chatService.getChat(chatID);
+      setCurrentChat(newCurrentChat);
+      setCurrentlyTypedMessage(newCurrentChat?.currentlyTypedMessage || "");
+    },
+    [chatService, currentChat, currentlyTypedMessage],
+  );
 
-  const newChat = React.useCallback(
+  const newChat = useCallback(
     async (messages: Message[]) => {
       if (loading) throw new Error("Cannot create new chat while loading");
-      const newChatID = crypto.randomUUID();
-      const now = new Date().getTime();
-      const newChatInfo: ChatInfo = {
-        id: newChatID,
-        name: "",
-        created: now,
-        lastUpdated: now,
-      };
-      // TODO: Should use an atomic transaction here
-      await indexDbPut("chats", [...chats, newChatInfo]);
-      const newChat: Chat = {
-        ...newChatInfo,
-        messages: messages,
-      };
-      await indexDbPut(newChatID, newChat);
-      setChats((prevChats) => [...prevChats, newChatInfo]);
-      await setCurrentChat(newChatID);
+      const newChatID = await chatService.newChat(messages);
+      setChats(await chatService.getChats());
+      await setCurrentChatContext(newChatID);
       return newChatID;
     },
-    [loading, chats, setCurrentChat],
+    [chatService, loading, setCurrentChatContext],
   );
 
-  const updateChat = React.useCallback(
+  const updateChat = useCallback(
     async (messages: Message[]) => {
-      if (currentChat === null) throw new Error("Cannot update chat while current chat is null");
-      const updatedChat = { ...currentChat };
-      updatedChat.lastUpdated = new Date().getTime();
-      updatedChat.messages = messages;
-      // update current chat
-      await indexDbPut(currentChat.id, updatedChat);
-      setChat(updatedChat);
-      // update chats
-      const updatedChats = [...chats];
-      const chatIndex = updatedChats.findIndex((chatInfo) => chatInfo.id === currentChat.id);
-      if (chatIndex === -1) throw new Error("Cannot find current chat in chats");
-      updatedChats[chatIndex].lastUpdated = updatedChat.lastUpdated;
-      await indexDbPut("chats", updatedChats);
-      setChats(updatedChats);
+      if (!currentChat) throw new Error("Cannot update chat while current chat is null");
+      await chatService.updateChat(currentChat.id, messages, currentlyTypedMessage);
+      setCurrentChat(await chatService.getChat(currentChat.id));
+      setChats(await chatService.getChats());
     },
-    [currentChat, chats],
+    [chatService, currentChat, currentlyTypedMessage],
   );
 
-  const renameChat = React.useCallback(
-    async (chatID: string, newName: string) => {
-      if (loading) throw new Error("Cannot rename chat while loading");
-
-      const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
-      if (index === -1) throw new Error("Cannot find chat to rename");
-
-      const newChats = chats.map((chatInfo) => ({ ...chatInfo }));
-      newChats[index].name = newName;
-      await indexDbPut("chats", newChats);
-      setChats(newChats);
-    },
-    [loading, chats],
-  );
-
-  const deleteChat = React.useCallback(
-    async (chatID: string) => {
-      if (loading) throw new Error("Cannot delete chat while loading");
-
-      const index = chats.findIndex((chatInfo) => chatInfo.id === chatID);
-      if (index === -1) throw new Error("Cannot find chat to delete");
-
-      const newChats = [...chats];
-      newChats.splice(index, 1);
-      // TODO: Should use an atomic transaction here
-      await indexDbPut("chats", newChats);
-      await indexDbDelete(chatID);
-      setChats(newChats);
-
-      if (index < chats.length) {
-        await setCurrentChat(newChats[index].id);
-      } else if (index > 0) {
-        await setCurrentChat(newChats[index - 1].id);
-      } else {
-        await setCurrentChat("");
+  const setTypedMessageAndUpdateChat = useCallback(
+    (message: string) => {
+      setCurrentlyTypedMessage(message);
+      if (currentChat) {
+        chatService.setCurrentlyTypedMessage(currentChat.id, message);
       }
     },
-    [loading, chats, setCurrentChat],
+    [chatService, currentChat],
   );
 
-  const syncChats = React.useCallback(async () => {
-    const allChatIDs = (await indexDbGetAllKeys()).filter((key) => key !== "chats" && key !== "currentChatID");
-    const chatsFromDb = await Promise.all(allChatIDs.map((chatID) => indexDbGet<Chat>(chatID)));
-    const chatInfos = chatsFromDb.map((chat) => {
-      return {
-        id: chat.id,
-        created: chat.created,
-        lastUpdated: chat.lastUpdated,
-      };
-    });
-    await indexDbPut("chats", chatInfos);
-  }, []);
+  const renameChat = async (chatID: string, newName: string) => {
+    if (loading) throw new Error("Cannot rename chat while loading");
+    await chatService.renameChat(chatID, newName);
+    setChats(await chatService.getChats());
+  };
 
-  const downloadChats = React.useCallback(async () => {
-    const allData: Record<string, Chat> = {};
-    for (const chatInfo of chats) {
-      allData[chatInfo.id] = { ...(await indexDbGet<Chat>(chatInfo.id)), ...chatInfo };
+  const deleteChat = async (chatID: string) => {
+    if (loading) throw new Error("Cannot delete chat while loading");
+    await chatService.deleteChat(chatID);
+    const updatedChats = await chatService.getChats();
+    setChats(updatedChats);
+
+    if (chatID === currentChatID) {
+      if (updatedChats.length > 0) {
+        await setCurrentChatContext(updatedChats[0].id);
+      } else {
+        await setCurrentChatContext("");
+      }
     }
+  };
 
+  const syncChats = async () => {
+    await chatService.syncChats();
+    setChats(await chatService.getChats());
+  };
+
+  const downloadChats = async () => {
+    const allData = await chatService.getAllChatsData();
     const jsonData = JSON.stringify(allData, null, 2);
     const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -213,24 +154,24 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
-  }, [chats]);
+  };
 
   return (
     <ChatsContext.Provider
       value={{
         loading,
-        currentlyTypedMessage,
-        setCurrentlyTypedMessage,
         chats,
-        newChat,
         currentChatID,
-        setCurrentChat,
         currentChat,
+        setCurrentChat: setCurrentChatContext,
+        newChat,
         updateChat,
         renameChat,
         deleteChat,
         syncChats,
         downloadChats,
+        currentlyTypedMessage,
+        setCurrentlyTypedMessage: setTypedMessageAndUpdateChat,
       }}
     >
       {children}
