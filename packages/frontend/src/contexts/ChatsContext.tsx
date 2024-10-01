@@ -118,7 +118,7 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       await setCurrentChat(newChatID);
       return newChatID;
     },
-    [loading, chats],
+    [loading, chats, setCurrentChat],
   );
 
   const updateChat = React.useCallback(
@@ -178,7 +178,7 @@ export const ChatsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await setCurrentChat("");
       }
     },
-    [loading, chats],
+    [loading, chats, setCurrentChat],
   );
 
   const syncChats = React.useCallback(async () => {
