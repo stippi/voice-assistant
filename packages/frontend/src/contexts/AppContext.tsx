@@ -62,7 +62,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
       clearTimeout(inactivityTimeout);
       inactivityTimeout = window.setTimeout(() => {
         setIdle(true);
-      }, 5000);
+      }, 15000);
     }
 
     document.addEventListener("mousemove", resetInactivityTimeout);
