@@ -27,3 +27,4 @@ dist-ssr
 
 # Config and secrets
 packages/frontend/src/config.ts
+.env
