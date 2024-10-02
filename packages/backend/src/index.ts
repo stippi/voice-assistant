@@ -1,5 +1,11 @@
 import express from "express";
 import path from "path";
+import dotenv from "dotenv";
+import { createSession } from "./realtime-session";
+
+dotenv.config();
+
+createSession();
 
 const app = express();
 const port = process.env.PORT || 3000;
