@@ -4,7 +4,7 @@ import {
   OllamaChatCompletionService,
   OpenAIChatCompletionService,
   VertexAIChatCompletionService,
-} from "./chat-completion-impl";
+} from "./chat-completion";
 import { LLMConfig } from "@shared/types";
 
 export interface ChatCompletionService {
