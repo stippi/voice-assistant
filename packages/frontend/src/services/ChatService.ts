@@ -73,10 +73,11 @@ export class ChatService {
       await this.persistenceService.updateChat(this.currentChatCache);
     } else {
       const chat = await this.persistenceService.getChat(chatID);
-      if (!chat) throw new Error("Cannot update currentlyTypedMessage: chat not found");
-      chat.currentlyTypedMessage = message;
-      await this.persistenceService.updateChat(chat);
-      this.currentChatCache = chat;
+      if (chat) {
+        chat.currentlyTypedMessage = message;
+        await this.persistenceService.updateChat(chat);
+        this.currentChatCache = chat;
+      }
     }
   }
 
