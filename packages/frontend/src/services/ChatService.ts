@@ -97,7 +97,6 @@ export class ChatService {
 
   async syncChats(): Promise<void> {
     await this.persistenceService.syncChats();
-    // Nach der Synchronisierung den Cache aktualisieren
     if (this.currentChatCache) {
       this.currentChatCache = await this.persistenceService.getChat(this.currentChatCache.id);
     }
@@ -107,7 +106,6 @@ export class ChatService {
     return this.persistenceService.getAllChatsData();
   }
 
-  // Methode zum manuellen Invalidieren des Caches, falls nötig
   invalidateCache(): void {
     this.currentChatCache = null;
   }
