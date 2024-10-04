@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
+    "@types/audioworklet": "^0.0.60",
     "@types/dom-speech-recognition": "^0.0.4",
     "@types/gapi": "^0.0.47",
     "@types/gapi.calendar": "^3.0.11",
