@@ -8,8 +8,12 @@ import {
   pausePlayback,
   skipNext,
   skipPrevious,
+  addToFavorites,
+  removeFromFavorites,
+  isContainedInFavorites,
+  getDevices,
   SearchResult,
-  Result,
+  SpotifyDevice,
 } from "../integrations/spotify";
 
 type Track = {
@@ -42,13 +46,26 @@ export type SpotifyContextType = {
   player: Spotify.Player | null;
   playerState: SpotifyPlayerState;
   search: (query: string, types: string[], limit?: number, market?: string) => Promise<SearchResult>;
-  play: (deviceId: string, trackIds: string[], contextUri?: string) => Promise<{ result?: string; error?: string }>;
-  playTopTracks: (deviceId: string, artists: string[]) => Promise<{ result?: string; error?: string }>;
-  pausePlayback: (deviceId: string) => Promise<{ result?: string; error?: string }>;
-  skipNext: (deviceId: string) => Promise<{ result?: string; error?: string }>;
-  skipPrevious: (deviceId: string) => Promise<{ result?: string; error?: string }>;
-  // markAsFavorite: (trackId: string) => Promise<{ result?: string, error?: string }>;
+  play: (deviceId: string, trackIds: string[], contextUri?: string) => Promise<void>;
+  playTopTracks: (deviceId: string, artists: string[]) => Promise<void>;
+  pausePlayback: (deviceId: string) => Promise<void>;
+  skipNext: (deviceId: string) => Promise<void>;
+  skipPrevious: (deviceId: string) => Promise<void>;
+  markAsFavorite: (trackId: string, isFavorite: boolean) => Promise<void>;
+  isFavorite: (trackId: string) => Promise<boolean>;
 };
+
+async function markAsFavorite(trackId: string, isFavorite: boolean) {
+  if (isFavorite) {
+    await addToFavorites([trackId]);
+  } else {
+    await removeFromFavorites([trackId]);
+  }
+}
+
+async function isFavorite(trackId: string) {
+  return (await isContainedInFavorites([trackId]))[0];
+}
 
 export const SpotifyContext = createContext<SpotifyContextType>({
   accessToken: "",
@@ -75,7 +92,8 @@ export const SpotifyContext = createContext<SpotifyContextType>({
   pausePlayback: pausePlayback,
   skipNext: skipNext,
   skipPrevious: skipPrevious,
-  //  markAsFavorite: markAsFavorite,
+  markAsFavorite: markAsFavorite,
+  isFavorite: isFavorite,
 });
 
 interface Props {
@@ -115,9 +133,7 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
 
   const playerRef = React.useRef<Spotify.Player | null>(null);
 
-  useEffect(() => {
-    if (!enable) return;
-
+  const createSpotifyPlayer = React.useCallback(() => {
     const readyListener = ({ device_id }: { device_id: string }) => {
       setDeviceId(device_id);
       console.log("Spotify ready with device ID", device_id);
@@ -126,16 +142,7 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
       setDeviceId("");
       console.log("Spotify device ID has gone offline", device_id);
     };
-    const initializationErrorListener = ({ message }: { message: string }) => {
-      console.error(message);
-    };
-    const authenticationErrorListener = ({ message }: { message: string }) => {
-      console.error(message);
-    };
-    const accountErrorListener = ({ message }: { message: string }) => {
-      console.error(message);
-    };
-    const playbackErrorListener = ({ message }: { message: string }) => {
+    const errorListener = ({ message }: { message: string }) => {
       console.error(message);
     };
     const playerStateChangedListener = ({
@@ -174,6 +181,37 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
       });
     };
 
+    playerRef.current = new Spotify.Player({
+      name: "Voice Assistant",
+      getOAuthToken: (callback) => {
+        console.log("Spotify player requesting access token");
+        loginFlow.getAccessToken().then((accessToken) => callback(accessToken));
+      },
+      volume: 0.5,
+    });
+
+    // Attach listeners
+    playerRef.current.addListener("ready", readyListener);
+    playerRef.current.addListener("not_ready", notReadyListener);
+    playerRef.current.addListener("initialization_error", errorListener);
+    playerRef.current.addListener("authentication_error", errorListener);
+    playerRef.current.addListener("account_error", errorListener);
+    playerRef.current.addListener("player_state_changed", playerStateChangedListener);
+    playerRef.current.addListener("playback_error", errorListener);
+
+    playerRef.current.connect().then((result) => {
+      if (result) {
+        setPlayer(playerRef.current);
+      } else {
+        console.error("Spotify player could not connect");
+        setPlayer(null);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!enable) return;
+
     const updatePosition = () => {
       if (!playerRef.current) return;
       playerRef.current.getCurrentState().then((state) => {
@@ -204,33 +242,8 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
     window.onSpotifyWebPlaybackSDKReady = () => {
       if (!playerRef.current) {
         console.log("creating Spotify player");
-        playerRef.current = new Spotify.Player({
-          name: "Voice Assistant",
-          getOAuthToken: (callback) => {
-            console.log("Spotify player requesting access token");
-            loginFlow.getAccessToken().then((accessToken) => callback(accessToken));
-          },
-          volume: 0.5,
-        });
+        createSpotifyPlayer();
       }
-
-      // Attach listeners
-      playerRef.current.addListener("ready", readyListener);
-      playerRef.current.addListener("not_ready", notReadyListener);
-      playerRef.current.addListener("initialization_error", initializationErrorListener);
-      playerRef.current.addListener("authentication_error", authenticationErrorListener);
-      playerRef.current.addListener("account_error", accountErrorListener);
-      playerRef.current.addListener("player_state_changed", playerStateChangedListener);
-      playerRef.current.addListener("playback_error", playbackErrorListener);
-
-      playerRef.current.connect().then((result) => {
-        if (result) {
-          setPlayer(playerRef.current);
-        } else {
-          console.error("Spotify player could not connect");
-          setPlayer(null);
-        }
-      });
     };
 
     if (!playerRef.current) {
@@ -244,20 +257,29 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
       clearInterval(positionInterval);
       if (playerRef.current) {
         console.log("Disconnecting Spotify Player");
-        // Detach listeners
-        playerRef.current.removeListener("ready", readyListener);
-        playerRef.current.removeListener("not_ready", notReadyListener);
-        playerRef.current.removeListener("initialization_error", initializationErrorListener);
-        playerRef.current.removeListener("authentication_error", authenticationErrorListener);
-        playerRef.current.removeListener("account_error", accountErrorListener);
-        playerRef.current.removeListener("player_state_changed", playerStateChangedListener);
-        playerRef.current.removeListener("playback_error", playbackErrorListener);
-
         playerRef.current.disconnect();
+        playerRef.current = null;
       }
       setPlayer(null);
     };
-  }, [enable]);
+  }, [enable, createSpotifyPlayer]);
+
+  useEffect(() => {
+    const interval = setInterval(
+      async () => {
+        const devices = await getDevices();
+        const isContained = devices.some((device: SpotifyDevice) => {
+          return device.id === ourDeviceId;
+        });
+        if (!isContained) {
+          console.warn("Spotify player not in devices list on server");
+          createSpotifyPlayer();
+        }
+      },
+      1000 * 60 * 2,
+    );
+    return () => clearInterval(interval);
+  }, [ourDeviceId, createSpotifyPlayer]);
 
   // Refresh access token every 15 minutes
   useEffect(() => {
@@ -309,15 +331,15 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
   }, [spotifyPlayer]);
 
   const performConnected = React.useCallback(
-    async (deviceId: string, callback: () => Promise<Result>) => {
+    async (deviceId: string, callback: () => Promise<void>) => {
       if (deviceId === ourDeviceId) {
         if (!spotifyPlayer) {
-          return { error: "Spotify player not ready" };
+          throw new Error("Spotify player not ready");
         }
         if (!connected) {
           console.log("connecting Spotify player");
           if (!(await spotifyPlayer.connect())) {
-            return { error: "Spotify player could not connect" };
+            throw new Error("Spotify player could not connect");
           }
           // TODO: Now we may have a new device ID, but the caller past the old one
         }
@@ -328,57 +350,54 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
   );
 
   const playConnected = React.useCallback(
-    async (deviceId: string, trackIds: string[], contextUri?: string): Promise<Result> => {
-      return performConnected(deviceId, async () => play(deviceId, trackIds, contextUri));
+    async (deviceId: string, trackIds: string[], contextUri?: string): Promise<void> => {
+      await performConnected(deviceId, async () => play(deviceId, trackIds, contextUri));
     },
     [performConnected],
   );
 
   const playTopTracksConnected = React.useCallback(
-    async (deviceId: string, artists: string[]): Promise<Result> => {
-      return performConnected(deviceId, async () => playTopTracks(deviceId, artists));
+    async (deviceId: string, artists: string[]): Promise<void> => {
+      await performConnected(deviceId, async () => playTopTracks(deviceId, artists));
     },
     [performConnected],
   );
 
   const pausePlaybackConnected = React.useCallback(
-    async (deviceId: string): Promise<Result> => {
+    async (deviceId: string): Promise<void> => {
       if (deviceId === ourDeviceId) {
         if (!spotifyPlayer) {
-          return { error: "Spotify player not ready" };
+          throw new Error("Spotify player not ready");
         }
         await spotifyPlayer.pause();
-        return { result: "playback paused" };
       }
-      return pausePlayback(deviceId);
+      await pausePlayback(deviceId);
     },
     [spotifyPlayer, ourDeviceId],
   );
 
   const skipNextConnected = React.useCallback(
-    async (deviceId: string): Promise<Result> => {
+    async (deviceId: string): Promise<void> => {
       if (deviceId === ourDeviceId) {
         if (!spotifyPlayer) {
-          return { error: "Spotify player not ready" };
+          throw new Error("Spotify player not ready");
         }
         await spotifyPlayer.nextTrack();
-        return { result: "playing next track" };
       }
-      return skipNext(deviceId);
+      await skipNext(deviceId);
     },
     [spotifyPlayer, ourDeviceId],
   );
 
   const skipPreviousConnected = React.useCallback(
-    async (deviceId: string): Promise<Result> => {
+    async (deviceId: string): Promise<void> => {
       if (deviceId === ourDeviceId) {
         if (!spotifyPlayer) {
-          return { error: "Spotify player not ready" };
+          throw new Error("Spotify player not ready");
         }
         await spotifyPlayer.previousTrack();
-        return { result: "playing previous track" };
       }
-      return skipPrevious(deviceId);
+      await skipPrevious(deviceId);
     },
     [spotifyPlayer, ourDeviceId],
   );
@@ -396,6 +415,8 @@ export const SpotifyContextProvider: React.FC<Props> = ({ enable, children }) =>
         pausePlayback: pausePlaybackConnected,
         skipNext: skipNextConnected,
         skipPrevious: skipPreviousConnected,
+        markAsFavorite: markAsFavorite,
+        isFavorite: isFavorite,
       }}
     >
       {children}

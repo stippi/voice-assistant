@@ -833,14 +833,16 @@ async function playOnSpotify(spotify: Spotify | undefined, trackIds: string[], c
   if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.play(spotify.deviceId, trackIds, contextUri);
+  await spotify.play(spotify.deviceId, trackIds, contextUri);
+  return { result: "playback started" };
 }
 
 async function playTopTracksOnSpotify(spotify: Spotify | undefined, artists: string[]) {
   if (!spotify) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.playTopTracks(spotify.deviceId, artists);
+  await spotify.playTopTracks(spotify.deviceId, artists);
+  return { result: "playback started" };
 }
 
 async function pauseSpotifyPlayback(spotify: Spotify | undefined) {
