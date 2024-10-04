@@ -20,6 +20,7 @@
     "@mui/base": "^5.0.0-beta.40",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
+    "@openai/realtime-api-beta": "github:openai/openai-realtime-api-beta",
     "@picovoice/cobra-web": "^2.0.3",
     "@picovoice/eagle-web": "^1.0.0",
     "@picovoice/porcupine-react": "^3.0.3",
