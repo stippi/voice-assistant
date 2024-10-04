@@ -893,6 +893,11 @@
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
 
+"@types/audioworklet@^0.0.60":
+  version "0.0.60"
+  resolved "https://registry.yarnpkg.com/@types/audioworklet/-/audioworklet-0.0.60.tgz#c8678343a18ae142b762aa6290eb11f56002e8a3"
+  integrity sha512-BCYklConpVRbPlNVcjzIhRsPWBTbCFSbkfjBC+VLULryaBI1M651y4nK0SMsSuTgtVSrKVY7Y+fsobCjviuDWA==
+
 "@types/babel__core@^7.20.5":
   version "7.20.5"
   resolved "https://registry.yarnpkg.com/@types/babel__core/-/babel__core-7.20.5.tgz#3df15f27ba85319caa07ba08d0721889bb39c017"

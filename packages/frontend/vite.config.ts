@@ -1,10 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { resolve } from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        audioWorklet: resolve(__dirname, "src/audio-worklet.ts"),
+      },
+    },
+  },
   server: {
+    // Enable COOP and COEP headers to enable SharedArrayBuffer support for the audio-worklet.js
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
     // The proxy is used to avoid CORS issues when calling respective APIs
     // The response does not include the Access-Control-Allow-Origin header.
     proxy: {
