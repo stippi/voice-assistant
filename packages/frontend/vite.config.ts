@@ -14,11 +14,6 @@ export default defineConfig({
     },
   },
   server: {
-    // Enable COOP and COEP headers to enable SharedArrayBuffer support for the audio-worklet.js
-    headers: {
-      "Cross-Origin-Opener-Policy": "same-origin",
-      "Cross-Origin-Embedder-Policy": "require-corp",
-    },
     // The proxy is used to avoid CORS issues when calling respective APIs
     // The response does not include the Access-Control-Allow-Origin header.
     proxy: {
