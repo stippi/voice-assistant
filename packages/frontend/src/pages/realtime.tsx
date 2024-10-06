@@ -1,14 +1,14 @@
-import { AssistantWithOptionalIntegrations } from "../components/AssistantWithOptionalIntegrations";
+import { OptionalIntegrations } from "../components/OptionalIntegrations";
 import RealTimeAssistant from "../components/RealTimeAssistant";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import { Dashboard } from "../components/dashboard/Dashboard";
 
 export default function RealTimePage() {
   return (
-    <AssistantWithOptionalIntegrations>
+    <OptionalIntegrations>
       <Sidebar />
       <RealTimeAssistant />
       <Dashboard />
-    </AssistantWithOptionalIntegrations>
+    </OptionalIntegrations>
   );
 }
