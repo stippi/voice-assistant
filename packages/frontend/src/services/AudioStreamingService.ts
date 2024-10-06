@@ -56,10 +56,10 @@ export class AudioStreamingService {
       await this.context.resume();
     }
     try {
-      await this.context.audioWorklet.addModule("/src/audio-worklet.js");
+      await this.context.audioWorklet.addModule("/src/audio-worklet.ts");
     } catch (e) {
       console.error(e);
-      throw new Error(`Could not add audioWorklet module: "/src/audio-worklet.js"`);
+      throw new Error(`Could not add audioWorklet module: "/src/audio-worklet.ts"`);
     }
     this.analyser = this.context.createAnalyser();
     this.analyser.fftSize = 8192;
@@ -90,7 +90,7 @@ export class AudioStreamingService {
     if (!this.context || !this.analyser) {
       throw new Error("Must call connect() before trying to start streaming");
     }
-    const streamNode = new AudioWorkletNode(this.context, "stream_processor");
+    const streamNode = new AudioWorkletNode(this.context, "audio-stream-processor");
     streamNode.connect(this.context.destination);
     streamNode.port.onmessage = (e) => {
       const { event } = e.data;
@@ -163,5 +163,9 @@ export class AudioStreamingService {
    */
   async interrupt(): Promise<TrackSampleOffset | null> {
     return this.getTrackSampleOffset(true);
+  }
+
+  getAudioContext(): AudioContext | null {
+    return this.context;
   }
 }
