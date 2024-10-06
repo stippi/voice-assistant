@@ -1,19 +1,20 @@
 import { useEffect, useRef, useCallback, useState } from "react";
+import IconButton from "@mui/material/IconButton";
+import MicIcon from "@mui/icons-material/Mic";
 import { RealtimeClient } from "@openai/realtime-api-beta";
 import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
 import { completionsApiKey } from "../config";
 import { AudioStreamingService } from "../services/AudioStreamingService";
 import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
 import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
+import { createSystemMessageService } from "../services/SystemMessageService";
+import { Message } from "@shared/types";
+import { Conversation } from "./chat/Conversation";
 // import { Conversation } from "./chat/Conversation";
 // import { MessageBar } from "./MessageBar";
 // import { useVoiceAssistant } from "../hooks";
 
-interface Props {
-  idle: boolean;
-}
-
-export default function RealtimeAssistant({ idle }: Props) {
+export default function RealtimeAssistant() {
   const wavStreamPlayerRef = useRef(new AudioStreamingService({ sampleRate: 24000 }));
   const clientRef = useRef(
     new RealtimeClient({
@@ -21,6 +22,7 @@ export default function RealtimeAssistant({ idle }: Props) {
       dangerouslyAllowAPIKeyInBrowser: true,
     }),
   );
+  const instructionsRef = useRef(createSystemMessageService());
 
   const [items, setItems] = useState<ItemType[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -116,9 +118,12 @@ export default function RealtimeAssistant({ idle }: Props) {
     // Get refs
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
+    const instructions = instructionsRef.current;
 
     // Set instructions
-    client.updateSession({ instructions: instructions });
+    client.updateSession({
+      instructions: instructions.generateSystemMessage(false, "snarky", [], undefined, null),
+    });
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: "whisper-1" } });
 
@@ -167,4 +172,24 @@ export default function RealtimeAssistant({ idle }: Props) {
       client.reset();
     };
   }, [disconnectConversation]);
+
+  const messages: Message[] = items
+    .filter((item) => {
+      item.type === "message" && item.role === "assistant";
+    })
+    .map((item) => {
+      return {
+        id: item.id,
+        role: item.role,
+        content: item.object,
+      } as Message;
+    });
+  return (
+    <>
+      <Conversation chat={messages} deleteMessage={() => {}} />
+      <IconButton area-label="start conversation" color={"error"} onClick={connectConversation}>
+        <MicIcon />
+      </IconButton>
+    </>
+  );
 }

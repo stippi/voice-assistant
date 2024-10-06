@@ -1,5 +1,4 @@
 export * from "./useAppContext";
-export * from "./useAudioStreaming";
 export * from "./useChats";
 export * from "./useCobraWorker";
 export * from "./useConfigs";
