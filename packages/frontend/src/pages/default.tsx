@@ -1,4 +1,4 @@
-import { AssistantWithOptionalIntegrations } from "../components/AssistantWithOptionalIntegrations";
+import { OptionalIntegrations } from "../components/OptionalIntegrations";
 import VoiceAssistant from "../components/VoiceAssistant";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import { Dashboard } from "../components/dashboard/Dashboard";
@@ -11,10 +11,10 @@ export default function DefaultPage() {
   const idleMode = idle && settings.enableGoogle && settings.enableGooglePhotos;
 
   return (
-    <AssistantWithOptionalIntegrations>
+    <OptionalIntegrations>
       <Sidebar />
       <VoiceAssistant idle={idleMode} />
       <Dashboard />
-    </AssistantWithOptionalIntegrations>
+    </OptionalIntegrations>
   );
 }

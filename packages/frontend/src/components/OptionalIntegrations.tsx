@@ -5,7 +5,7 @@ import { SpotifyContextProvider } from "../contexts/SpotifyContext";
 import { MicrosoftContextProvider } from "../contexts/MicrosoftContext";
 import { useAppContext, useSettings, useWindowFocus } from "../hooks";
 
-export const AssistantWithOptionalIntegrations: React.FC<PropsWithChildren> = ({ children }) => {
+export const OptionalIntegrations: React.FC<PropsWithChildren> = ({ children }) => {
   const { settings } = useSettings();
   const { idle } = useAppContext();
 
