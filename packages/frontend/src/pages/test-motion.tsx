@@ -30,7 +30,7 @@ const darkTheme = createTheme({
 const MotionPaper = motion(Paper);
 const MotionTypography = motion(Typography);
 
-const AppTest = () => {
+export default function MotionTestPage() {
   const [theme, setTheme] = useState(lightTheme);
 
   const toggleTheme = () => {
@@ -53,14 +53,12 @@ const AppTest = () => {
           }}
           transition={{ duration: 0.5 }}
         >
-          Willkommen zu meiner App
+          Welcome
         </MotionTypography>
         <Button onClick={toggleTheme} style={{ marginTop: "20px" }}>
-          Wechsle zu {theme === lightTheme ? "Dark" : "Light"} Theme
+          Switch to {theme === lightTheme ? "dark" : "light"} Theme
         </Button>
       </MotionPaper>
     </ThemeProvider>
   );
-};
-
-export default AppTest;
+}
