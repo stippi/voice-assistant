@@ -30,7 +30,7 @@ import { timerService } from "../services/TimerService";
 
 const math = create(all, {});
 
-export async function getTools(settings: Settings, appContext: AppContextType) {
+export function getTools(settings: Settings, appContext: AppContextType) {
   const tools: ChatCompletionTool[] = [
     {
       type: "function",
@@ -532,57 +532,54 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
       },
     });
     if (appContext.spotify?.player) {
-      const playbackState = await appContext.spotify.player.getCurrentState();
-      if (playbackState) {
-        tools.push({
-          type: "function",
-          function: {
-            name: "resume_spotify_playback",
-            description: "Resume streaming playback on Spotify Player.",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
-            },
+      tools.push({
+        type: "function",
+        function: {
+          name: "resume_spotify_playback",
+          description: "Resume streaming playback on Spotify Player.",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: [],
           },
-        });
-        tools.push({
-          type: "function",
-          function: {
-            name: "pause_spotify_playback",
-            description: "Pause streaming playback on Spotify Player",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
-            },
+        },
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "pause_spotify_playback",
+          description: "Pause streaming playback on Spotify Player",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: [],
           },
-        });
-        tools.push({
-          type: "function",
-          function: {
-            name: "spotify_skip_next",
-            description: "Skip to the next song on the Spotify Player",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
-            },
+        },
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "spotify_skip_next",
+          description: "Skip to the next song on the Spotify Player",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: [],
           },
-        });
-        tools.push({
-          type: "function",
-          function: {
-            name: "spotify_skip_previous",
-            description: "Skip to the previous song on the Spotify Player",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
-            },
+        },
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "spotify_skip_previous",
+          description: "Skip to the previous song on the Spotify Player",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: [],
           },
-        });
-      }
+        },
+      });
     }
   }
   return tools;
