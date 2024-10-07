@@ -13,7 +13,7 @@ import { createSystemMessageService } from "../services/SystemMessageService";
 import { Message } from "@shared/types";
 import { Conversation } from "./chat/Conversation";
 import { getTools, callFunction } from "../integrations/tools";
-import { useAppContext, useSettings, useTimers } from "../hooks";
+import { useAppContext, useSettings, useTimers, useSpotifyContext } from "../hooks";
 // import { Conversation } from "./chat/Conversation";
 // import { MessageBar } from "./MessageBar";
 // import { useVoiceAssistant } from "../hooks";
@@ -26,7 +26,7 @@ export default function RealtimeAssistant() {
       dangerouslyAllowAPIKeyInBrowser: true,
     }),
   );
-  const instructionsRef = useRef(createSystemMessageService());
+  const systemMessageServiceRef = useRef(createSystemMessageService());
 
   const [items, setItems] = useState<ItemType[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -35,9 +35,38 @@ export default function RealtimeAssistant() {
   const appContextRef = useRef(appContext);
   const { settings } = useSettings();
   const { timers } = useTimers();
+  const autoEndConversationRef = useRef(false);
+
+  // TODO: Remove this hack
+  const spotifyContext = useSpotifyContext();
+  useEffect(() => {
+    if (spotifyContext.player && spotifyContext.accessToken && spotifyContext.deviceId) {
+      appContextRef.current.setSpotify({
+        player: spotifyContext.player,
+        accessToken: spotifyContext.accessToken,
+        deviceId: spotifyContext.deviceId,
+        search: spotifyContext.search,
+        play: spotifyContext.play,
+        playTopTracks: spotifyContext.playTopTracks,
+        pausePlayback: spotifyContext.pausePlayback,
+      });
+    } else {
+      appContextRef.current.setSpotify(undefined);
+    }
+  }, [
+    spotifyContext.player,
+    spotifyContext.accessToken,
+    spotifyContext.deviceId,
+    spotifyContext.search,
+    spotifyContext.play,
+    spotifyContext.playTopTracks,
+    spotifyContext.pausePlayback,
+  ]);
+  // End hack
 
   useEffect(() => {
     appContextRef.current = appContext;
+    console.log("app context updated");
   }, [appContext]);
 
   /**
@@ -48,7 +77,6 @@ export default function RealtimeAssistant() {
     const wavStreamPlayer = wavStreamPlayerRef.current;
 
     // Set state variables
-    setIsConnected(true);
     setItems(client.conversation.getItems());
 
     // Connect to microphone
@@ -57,8 +85,11 @@ export default function RealtimeAssistant() {
     // Connect to audio output
     await wavStreamPlayer.connect();
 
+    autoEndConversationRef.current = false;
+
     // Connect to realtime API
     await client.connect();
+    setIsConnected(true);
     // client.sendUserMessageContent([
     //   {
     //     type: `input_text`,
@@ -72,7 +103,6 @@ export default function RealtimeAssistant() {
    */
   const disconnectConversation = useCallback(async () => {
     setIsConnected(false);
-    setItems([]);
 
     const client = clientRef.current;
     client.disconnect();
@@ -116,13 +146,21 @@ export default function RealtimeAssistant() {
   //   client.deleteItem(id);
   // }, []);
 
+  /* Set instructions */
   useEffect(() => {
     const client = clientRef.current;
-    const instructions = instructionsRef.current;
-    // Set instructions
-    client.updateSession({
-      instructions: instructions.generateSystemMessage(false, "snarky", timers, appContext.location, null),
-    });
+    let instructions = systemMessageServiceRef.current.generateSystemMessage(
+      false,
+      "snarky",
+      timers,
+      appContext.location,
+      null,
+    );
+    instructions += `
+## Important
+
+Make sure to use the 'end_conversation' tool after you have completed your task and when the user no longer requires you.`;
+    client.updateSession({ instructions });
   }, [appContext.location, appContext.spotify, timers]);
 
   /**
@@ -156,11 +194,11 @@ export default function RealtimeAssistant() {
       {
         name: "end_conversation",
         description:
-          "Ends the current conversation with the user. Use when the user indicates the assistant is no longer needed.",
+          "Ends the current conversation with the user. Use when the task is done or the user indicates the assistant is no longer needed.",
         parameters: {},
       },
       async () => {
-        disconnectConversation();
+        autoEndConversationRef.current = true;
         return { ok: true };
       },
     );
@@ -187,6 +225,9 @@ export default function RealtimeAssistant() {
     client.on("conversation.item.completed", async ({ item }: any) => {
       const items = client.conversation.getItems();
       setItems(items);
+      if (autoEndConversationRef.current && item.role === "assistant") {
+        disconnectConversation();
+      }
     });
     client.on("server.input_audio_buffer.speech_started", async () => {
       console.log("user speech started");
