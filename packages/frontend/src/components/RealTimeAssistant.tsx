@@ -180,6 +180,7 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
     // Add tools
     const tools = getTools(settings, appContextRef.current);
     for (const tool of tools) {
+      console.log(`adding tool "${tool.function.name}"`);
       client.addTool(tool.function as ToolDefinitionType, async (args: never) => {
         const result = await callFunction(
           { name: tool.function.name, arguments: JSON.stringify(args) },
@@ -254,6 +255,23 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
           id: item.id,
           role: item.role,
           content: item.formatted.text || item.formatted.transcript || "",
+        });
+      }
+      if (item.type === "function_call" && item.status === "completed") {
+        convertedItems.push({
+          id: item.id,
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            {
+              id: item.call_id,
+              type: "function",
+              function: {
+                name: item.name,
+                arguments: item.arguments,
+              },
+            },
+          ],
         });
       }
     }
