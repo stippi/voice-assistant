@@ -13,7 +13,7 @@ import { createSystemMessageService } from "../services/SystemMessageService";
 import { Message } from "@shared/types";
 import { Conversation } from "./chat/Conversation";
 import { getTools, callFunction } from "../integrations/tools";
-import { useAppContext, useSettings } from "../hooks";
+import { useAppContext, useSettings, useTimers } from "../hooks";
 // import { Conversation } from "./chat/Conversation";
 // import { MessageBar } from "./MessageBar";
 // import { useVoiceAssistant } from "../hooks";
@@ -34,6 +34,7 @@ export default function RealtimeAssistant() {
   const appContext = useAppContext();
   const appContextRef = useRef(appContext);
   const { settings } = useSettings();
+  const { timers } = useTimers();
 
   useEffect(() => {
     appContextRef.current = appContext;
@@ -115,6 +116,15 @@ export default function RealtimeAssistant() {
   //   client.deleteItem(id);
   // }, []);
 
+  useEffect(() => {
+    const client = clientRef.current;
+    const instructions = instructionsRef.current;
+    // Set instructions
+    client.updateSession({
+      instructions: instructions.generateSystemMessage(false, "snarky", timers, appContext.location, null),
+    });
+  }, [appContext.location, appContext.spotify, timers]);
+
   /**
    * Core RealtimeClient and audio capture setup
    * Set all of our instructions, tools, events and more
@@ -123,12 +133,7 @@ export default function RealtimeAssistant() {
     // Get refs
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
-    const instructions = instructionsRef.current;
 
-    // Set instructions
-    client.updateSession({
-      instructions: instructions.generateSystemMessage(false, "snarky", [], undefined, null),
-    });
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: "whisper-1" } });
     // Activate server-side turn detection
