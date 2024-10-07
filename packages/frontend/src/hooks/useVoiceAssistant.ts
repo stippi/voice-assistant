@@ -158,7 +158,7 @@ export function useVoiceAssistant() {
           return messages;
         }
 
-        const tools = llmConfig.useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined;
+        const tools = llmConfig.useTools ? getTools(settingsRef.current, appContextRef.current) : undefined;
 
         let tries = 0;
         while (tries < 4 && isRespondingRef.current) {
