@@ -3,13 +3,14 @@ import { ChatCompletionService, createChatCompletionService } from "../services/
 import { TextToSpeechService, createTextToSpeechService } from "../services/TextToSpeechService";
 import { SystemMessageService, createSystemMessageService } from "../services/SystemMessageService";
 import { LLMConfig, Message } from "@shared/types";
-import { useAppContext, useChats, useConfigs, useSettings, useSpotifyContext } from ".";
+import { useAppContext, useChats, useConfigs, useSettings } from ".";
 import { getTools, callFunction } from "../integrations/tools";
 import OpenAI from "openai";
 import { completionsApiUrl, completionsApiKey, modelName, useTools, speechApiUrl, speechApiKey } from "../config";
 import { removeCodeBlocks } from "../utils/removeCodeBlocks";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 import { timerService } from "../services/TimerService";
+import { spotifyService } from "../services/SpotifyService";
 
 const fallbackConfig: LLMConfig = {
   id: "",
@@ -39,33 +40,6 @@ export function useVoiceAssistant() {
     appContextRef.current = appContext;
     settingsRef.current = settings;
   }, [settings, appContext]);
-
-  // TODO: Remove this hack
-  const spotifyContext = useSpotifyContext();
-  React.useEffect(() => {
-    if (spotifyContext.player && spotifyContext.accessToken && spotifyContext.deviceId) {
-      appContextRef.current.setSpotify({
-        player: spotifyContext.player,
-        accessToken: spotifyContext.accessToken,
-        deviceId: spotifyContext.deviceId,
-        search: spotifyContext.search,
-        play: spotifyContext.play,
-        playTopTracks: spotifyContext.playTopTracks,
-        pausePlayback: spotifyContext.pausePlayback,
-      });
-    } else {
-      appContextRef.current.setSpotify(undefined);
-    }
-  }, [
-    spotifyContext.player,
-    spotifyContext.accessToken,
-    spotifyContext.deviceId,
-    spotifyContext.search,
-    spotifyContext.play,
-    spotifyContext.playTopTracks,
-    spotifyContext.pausePlayback,
-  ]);
-  // End hack
 
   const systemMessageServiceRef = useRef<SystemMessageService>(createSystemMessageService());
   const chatServiceRef = useRef<ChatCompletionService | null>(null);
@@ -158,16 +132,14 @@ export function useVoiceAssistant() {
           return messages;
         }
 
-        const tools = llmConfig.useTools ? await getTools(settingsRef.current, appContextRef.current) : undefined;
+        const tools = llmConfig.useTools ? await getTools(settingsRef.current) : undefined;
 
         let tries = 0;
         while (tries < 4 && isRespondingRef.current) {
           tries++;
 
           // Generate system message
-          const playbackState = appContextRef.current.spotify
-            ? await appContextRef.current.spotify.player.getCurrentState()
-            : null;
+          const playbackState = await spotifyService.getPlaybackState();
           const systemMessage = systemMessageServiceRef.current.generateSystemMessage(
             audible,
             settingsRef.current.personality,
@@ -236,7 +208,7 @@ export function useVoiceAssistant() {
             await trackTimestamp("tool-execution-started");
             for (const toolCall of finalAssistantMessage.tool_calls) {
               if (toolCall.type !== "function") continue;
-              const result = await callFunction(toolCall.function, appContextRef.current);
+              const result = await callFunction(toolCall.function);
               console.log("function result", result);
               const toolReply: Message = {
                 id: crypto.randomUUID(),

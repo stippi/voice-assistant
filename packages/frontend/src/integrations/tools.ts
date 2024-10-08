@@ -9,7 +9,6 @@ import {
 import { create, all } from "mathjs";
 import { Timer } from "@shared/types";
 import { addIsoDurationToDate } from "../utils/timeFormat";
-import { AppContextType, Spotify } from "../contexts/AppContext";
 import OpenAI from "openai";
 import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
 import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
@@ -27,10 +26,11 @@ import {
   listContacts,
 } from "./google";
 import { timerService } from "../services/TimerService";
+import { spotifyService } from "../services/SpotifyService";
 
 const math = create(all, {});
 
-export async function getTools(settings: Settings, appContext: AppContextType) {
+export async function getTools(settings: Settings) {
   const tools: ChatCompletionTool[] = [
     {
       type: "function",
@@ -484,6 +484,7 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
           properties: {
             trackIds: { type: "array", items: { type: "string" }, description: "Optional. An array of track IDs" },
             contextUri: { type: "string", description: "Optional. The Spotify URI of an album, artist, or playlist." },
+            deviceId: { type: "string", description: "Optional Spotify device ID. Defaults to this device." },
           },
           required: [],
         },
@@ -505,6 +506,7 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
               items: { type: "string" },
               description: "One or more queries to find artists by.",
             },
+            deviceId: { type: "string", description: "Optional Spotify device ID. Defaults to this device." },
           },
           required: ["queries"],
         },
@@ -531,58 +533,64 @@ export async function getTools(settings: Settings, appContext: AppContextType) {
         },
       },
     });
-    if (appContext.spotify?.player) {
-      const playbackState = await appContext.spotify.player.getCurrentState();
-      if (playbackState) {
-        tools.push({
-          type: "function",
-          function: {
-            name: "resume_spotify_playback",
-            description: "Resume streaming playback on Spotify Player.",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
+
+    if (spotifyService.isEnabled() && (await spotifyService.getPlaybackState()) !== null) {
+      tools.push({
+        type: "function",
+        function: {
+          name: "resume_spotify_playback",
+          description: "Resume streaming playback on Spotify Player.",
+          parameters: {
+            type: "object",
+            properties: {
+              deviceId: { type: "string", description: "Optional Spotify device ID. Defaults to this device." },
             },
+            required: [],
           },
-        });
-        tools.push({
-          type: "function",
-          function: {
-            name: "pause_spotify_playback",
-            description: "Pause streaming playback on Spotify Player",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
+        },
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "pause_spotify_playback",
+          description: "Pause streaming playback on Spotify Player",
+          parameters: {
+            type: "object",
+            properties: {
+              deviceId: { type: "string", description: "Optional Spotify device ID. Defaults to this device." },
             },
+            required: [],
           },
-        });
-        tools.push({
-          type: "function",
-          function: {
-            name: "spotify_skip_next",
-            description: "Skip to the next song on the Spotify Player",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
+        },
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "spotify_skip_next",
+          description: "Skip to the next song on the Spotify Player",
+          parameters: {
+            type: "object",
+            properties: {
+              deviceId: { type: "string", description: "Optional Spotify device ID. Defaults to this device." },
             },
+            required: [],
           },
-        });
-        tools.push({
-          type: "function",
-          function: {
-            name: "spotify_skip_previous",
-            description: "Skip to the previous song on the Spotify Player",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
+        },
+      });
+      tools.push({
+        type: "function",
+        function: {
+          name: "spotify_skip_previous",
+          description: "Skip to the previous song on the Spotify Player",
+          parameters: {
+            type: "object",
+            properties: {
+              deviceId: { type: "string", description: "Optional Spotify device ID. Defaults to this device." },
             },
+            required: [],
           },
-        });
-      }
+        },
+      });
     }
   }
   return tools;
@@ -592,10 +600,7 @@ export function showToolCallInChat(toolCall: ChatCompletionMessageToolCall): boo
   return ["show_image", "show_map", "show_directions", "show_transit_directions"].includes(toolCall.function.name);
 }
 
-export async function callFunction(
-  functionCall: ChatCompletionMessage.FunctionCall,
-  appContext: AppContextType,
-): Promise<object> {
+export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<object> {
   try {
     const args = JSON.parse(functionCall.arguments || "{}");
     console.log("calling function:", functionCall.name, args);
@@ -706,19 +711,19 @@ export async function callFunction(
         );
 
       case "play_on_spotify":
-        return await playOnSpotify(appContext.spotify, args.trackIds || [], args.contextUri);
+        return await playOnSpotify(args.trackIds || [], args.contextUri, args.deviceId);
       case "find_artists_and_play_top_songs_on_spotify":
-        return await playTopTracksOnSpotify(appContext.spotify, args.queries);
+        return await playTopTracksOnSpotify(args.queries, args.deviceId);
       case "find_on_spotify":
-        return await findOnSpotify(appContext.spotify, args.query, args.types, args.limit);
+        return await findOnSpotify(args.query, args.types, args.limit);
       case "resume_spotify_playback":
-        return await playOnSpotify(appContext.spotify, []);
+        return await playOnSpotify([]);
       case "pause_spotify_playback":
-        return await pauseSpotifyPlayback(appContext.spotify);
+        return await pauseSpotifyPlayback();
       case "spotify_skip_next":
-        return await skipSpotifyPlaybackNext(appContext.spotify);
+        return await skipSpotifyPlaybackNext();
       case "spotify_skip_previous":
-        return await skipSpotifyPlaybackPrevious(appContext.spotify);
+        return await skipSpotifyPlaybackPrevious();
 
       default:
         return { error: `unknown function '${functionCall.name}'` };
@@ -822,48 +827,49 @@ async function deleteInformation(category: string, information: string) {
   return { result: "information not found in category" };
 }
 
-async function findOnSpotify(spotify: Spotify | undefined, query: string, types: string[], limit: number | undefined) {
-  if (!spotify) {
+async function findOnSpotify(query: string, types: string[], limit: number | undefined) {
+  if (!spotifyService.isEnabled()) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.search(query, types, limit);
+  return await spotifyService.search(query, types, limit);
 }
 
-async function playOnSpotify(spotify: Spotify | undefined, trackIds: string[], contextUri?: string) {
-  if (!spotify) {
+async function playOnSpotify(trackIds: string[], contextUri?: string, deviceId?: string) {
+  if (!spotifyService.isEnabled()) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  await spotify.play(spotify.deviceId, trackIds, contextUri);
+  await spotifyService.play(deviceId || spotifyService.getDeviceID(), trackIds, contextUri);
   return { result: "playback started" };
 }
 
-async function playTopTracksOnSpotify(spotify: Spotify | undefined, artists: string[]) {
-  if (!spotify) {
+async function playTopTracksOnSpotify(artists: string[], deviceId?: string) {
+  if (!spotifyService.isEnabled()) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  await spotify.playTopTracks(spotify.deviceId, artists);
+  await spotifyService.playTopTracks(deviceId || spotifyService.getDeviceID(), artists);
   return { result: "playback started" };
 }
 
-async function pauseSpotifyPlayback(spotify: Spotify | undefined) {
-  if (!spotify) {
+async function pauseSpotifyPlayback(deviceId?: string) {
+  if (!spotifyService.isEnabled()) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  return await spotify.pausePlayback(spotify.deviceId);
+  await spotifyService.pausePlayback(deviceId || spotifyService.getDeviceID());
+  return { result: "playback paused" };
 }
 
-async function skipSpotifyPlaybackNext(spotify: Spotify | undefined) {
-  if (!spotify || !spotify.player) {
+async function skipSpotifyPlaybackNext(deviceId?: string) {
+  if (!spotifyService.isEnabled()) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  await spotify.player.nextTrack();
+  await spotifyService.skipNext(deviceId || spotifyService.getDeviceID());
   return { result: "playback skipped" };
 }
 
-async function skipSpotifyPlaybackPrevious(spotify: Spotify | undefined) {
-  if (!spotify || !spotify.player) {
+async function skipSpotifyPlaybackPrevious(deviceId?: string) {
+  if (!spotifyService.isEnabled()) {
     return { error: "Spotify integration not enabled, or not logged into Spotify" };
   }
-  await spotify.player.previousTrack();
+  await spotifyService.skipPrevious(deviceId || spotifyService.getDeviceID());
   return { result: "playback skipped" };
 }

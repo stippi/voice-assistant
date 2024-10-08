@@ -71,14 +71,16 @@ export type SpotifyPlayerState = {
 };
 
 interface SpotifyListener {
-  playerStateChanged: (state: SpotifyPlayerState) => void;
+  playerStateChanged: (state: SpotifyPlayerState | null) => void;
   deviceIdChanged: (deviceId: string) => void;
   connectedChanged: (connected: boolean) => void;
 }
 
 export class SpotifyService {
+  private enabled = false;
+  private tokenRefreshInterval = 0;
   private loginFlow: LoginFlow;
-  private listeners: SpotifyListener[];
+  private listeners: SpotifyListener[] = [];
   private player: Spotify.Player | null = null;
   private deviceId: string = "";
   private connected: boolean = false;
@@ -103,10 +105,32 @@ export class SpotifyService {
       ],
       storagePrefix: "spotify",
     });
+  }
 
-    this.listeners = [];
+  setEnabled(enabled: boolean) {
+    if (this.enabled !== enabled) {
+      this.enabled = enabled;
+      if (enabled) {
+        this.tokenRefreshInterval = window.setInterval(
+          async () => {
+            await this.loginFlow.getAccessToken(true);
+          },
+          15 * 60 * 1000,
+        );
+        this.initializePlayer();
+      } else {
+        window.clearInterval(this.tokenRefreshInterval);
+        this.disconnect();
+      }
+    }
+  }
 
-    this.initializePlayer();
+  isEnabled() {
+    return this.enabled;
+  }
+
+  getDeviceID() {
+    return this.deviceId;
   }
 
   addListener(listener: SpotifyListener) {
@@ -181,35 +205,41 @@ export class SpotifyService {
     }
   }
 
-  private createPlayerState(state: Spotify.PlaybackState | null): SpotifyPlayerState {
+  async getPlaybackState(): Promise<Spotify.PlaybackState | null> {
+    if (this.player) {
+      return this.player.getCurrentState();
+    }
+    return null;
+  }
+
+  private createPlayerState(state: Spotify.PlaybackState | null): SpotifyPlayerState | null {
+    if (state === null) return null;
     return {
-      paused: state?.paused || true,
-      trackId: state?.track_window.current_track.id || "",
-      name: state?.track_window.current_track.name || "",
-      artists: state?.track_window.current_track.artists.map((artist) => artist.name) || [],
-      albumName: state?.track_window.current_track.album.name || "",
-      uiLink: state?.track_window.current_track.uri || "",
-      coverImageUrl: state?.track_window.current_track.album.images[0].url || "",
-      duration: state?.duration || 0 / 1000,
-      position: state?.position || 0 / 1000,
-      canSkipPrevious: !state?.disallows?.skipping_prev || false,
-      canSkipNext: !state?.disallows?.skipping_next || false,
-      previousTracks:
-        state?.track_window.previous_tracks.map((track) => ({
-          id: track.id || "",
-          name: track.name,
-          artists: track.artists.map((artist) => artist.name),
-          album: track.album.name,
-          uiLink: track.uri,
-        })) || [],
-      nextTracks:
-        state?.track_window.next_tracks.map((track) => ({
-          id: track.id || "",
-          name: track.name,
-          artists: track.artists.map((artist) => artist.name),
-          album: track.album.name,
-          uiLink: track.uri,
-        })) || [],
+      paused: state.paused,
+      trackId: state.track_window.current_track.id || "",
+      name: state.track_window.current_track.name || "",
+      artists: state.track_window.current_track.artists.map((artist) => artist.name) || [],
+      albumName: state.track_window.current_track.album.name || "",
+      uiLink: state.track_window.current_track.uri || "",
+      coverImageUrl: state.track_window.current_track.album.images[0].url || "",
+      duration: state.duration / 1000,
+      position: state.position / 1000,
+      canSkipPrevious: !state.disallows?.skipping_prev,
+      canSkipNext: !state.disallows?.skipping_next,
+      previousTracks: state.track_window.previous_tracks.map((track) => ({
+        id: track.id || "",
+        name: track.name,
+        artists: track.artists.map((artist) => artist.name),
+        album: track.album.name,
+        uiLink: track.uri,
+      })),
+      nextTracks: state.track_window.next_tracks.map((track) => ({
+        id: track.id || "",
+        name: track.name,
+        artists: track.artists.map((artist) => artist.name),
+        album: track.album.name,
+        uiLink: track.uri,
+      })),
     };
   }
 
@@ -394,7 +424,7 @@ export class SpotifyService {
       options.body = JSON.stringify({ context_uri: contextUri });
     }
     await this.validatePlayer(deviceId);
-    await this.callApi<void>(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, options, false);
+    return this.callApi<void>(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, options, false);
   }
 
   async playTopTracks(deviceId: string, artists: string[]): Promise<void> {
@@ -415,7 +445,7 @@ export class SpotifyService {
       trackIds.push(...response.tracks.map((track) => track.id));
     }
     randomizeArray(trackIds);
-    await this.play(deviceId, trackIds);
+    return this.play(deviceId, trackIds);
   }
 
   async pausePlayback(deviceId: string): Promise<void> {
@@ -424,7 +454,7 @@ export class SpotifyService {
     });
     if (handled) return;
     const options: RequestInit = { method: "PUT" };
-    await this.callApi<void>(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, options, false);
+    return this.callApi<void>(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, options, false);
   }
 
   async resumePlayback(deviceId: string): Promise<void> {
@@ -433,7 +463,7 @@ export class SpotifyService {
     });
     if (handled) return;
     const options: RequestInit = { method: "PUT" };
-    await this.callApi<void>(`https://api.spotify.com/v1/me/player/resume?device_id=${deviceId}`, options, false);
+    return this.callApi<void>(`https://api.spotify.com/v1/me/player/resume?device_id=${deviceId}`, options, false);
   }
 
   async skipNext(deviceId: string): Promise<void> {
@@ -442,7 +472,7 @@ export class SpotifyService {
     });
     if (handled) return;
     const options = { method: "POST" };
-    await this.callApi<void>(`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`, options, false);
+    return this.callApi<void>(`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`, options, false);
   }
 
   async skipPrevious(deviceId: string): Promise<void> {
@@ -451,7 +481,31 @@ export class SpotifyService {
     });
     if (handled) return;
     const options = { method: "POST" };
-    await this.callApi<void>(`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`, options, false);
+    return this.callApi<void>(`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`, options, false);
+  }
+
+  async seek(value: number): Promise<void> {
+    return this.player?.seek(value);
+  }
+
+  async setVolume(volume: number) {
+    if (this.player) {
+      await this.player.setVolume(volume);
+    }
+  }
+
+  async getVolume(): Promise<number> {
+    if (this.player) {
+      return this.player.getVolume();
+    }
+    return 0.5;
+  }
+
+  public disconnect() {
+    if (this.player) {
+      console.log("Disconnecting Spotify Player");
+      this.player.disconnect();
+    }
   }
 
   async getDevices(): Promise<SpotifyDevice[]> {
