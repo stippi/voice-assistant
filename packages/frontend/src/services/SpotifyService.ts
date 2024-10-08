@@ -163,14 +163,12 @@ export class SpotifyService {
           });
         }
 
-        this.attachListeners();
+        this.attachListeners(resolve);
 
         this.player
           .connect()
           .then((result) => {
-            if (result) {
-              resolve();
-            } else {
+            if (!result) {
               console.error("Spotify player could not connect");
               this.player = null;
               reject(new Error("Spotify player could not connect"));
@@ -186,6 +184,7 @@ export class SpotifyService {
         document.body.appendChild(apiScript);
       } else {
         this.player = null;
+        this.deviceId = "";
         window.onSpotifyWebPlaybackSDKReady();
       }
     });
@@ -243,12 +242,13 @@ export class SpotifyService {
     };
   }
 
-  private attachListeners() {
+  private attachListeners(readyCallback: (value: void | PromiseLike<void>) => void) {
     if (!this.player) return;
 
     this.player.addListener("ready", ({ device_id }) => {
       this.setDeviceId(device_id);
       console.log("Spotify ready with device ID", device_id);
+      readyCallback();
     });
 
     this.player.addListener("not_ready", ({ device_id }) => {
