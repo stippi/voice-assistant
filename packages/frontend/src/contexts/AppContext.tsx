@@ -1,24 +1,11 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { GeoLocation, User } from "@shared/types";
 import { useLocation } from "../hooks";
-import { SearchResult } from "../integrations/spotify";
-
-export type Spotify = {
-  player: Spotify.Player;
-  accessToken: string;
-  deviceId: string;
-  search: (query: string, types: string[], limit?: number, market?: string) => Promise<SearchResult>;
-  play: (deviceId: string, trackIds: string[], contextUri?: string) => Promise<{ result?: string; error?: string }>;
-  playTopTracks: (deviceId: string, artists: string[]) => Promise<{ result?: string; error?: string }>;
-  pausePlayback: (deviceId: string) => Promise<{ result?: string; error?: string }>;
-};
 
 export type AppContextType = {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   location: GeoLocation | undefined;
-  spotify: Spotify | undefined;
-  setSpotify: (spotify: Spotify | undefined) => void;
   idle: boolean;
   setIdle: (idle: boolean) => void;
 };
@@ -27,8 +14,6 @@ export const AppContext = createContext<AppContextType>({
   users: [],
   setUsers: () => {},
   location: undefined,
-  spotify: undefined,
-  setSpotify: () => {},
   idle: false,
   setIdle: () => {},
 });
@@ -50,8 +35,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   }, [users]);
 
   const { location } = useLocation();
-
-  const [spotify, setSpotify] = useState<Spotify | undefined>(undefined);
 
   const [idle, setIdle] = useState(false);
 
@@ -79,9 +62,5 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   }, []);
 
-  return (
-    <AppContext.Provider value={{ users, setUsers, location, spotify, setSpotify, idle, setIdle }}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={{ users, setUsers, location, idle, setIdle }}>{children}</AppContext.Provider>;
 };
