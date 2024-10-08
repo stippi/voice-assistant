@@ -18,6 +18,11 @@ import { useAppContext, useSettings, useTimers, useSpotifyContext } from "../hoo
 // import { MessageBar } from "./MessageBar";
 // import { useVoiceAssistant } from "../hooks";
 
+type RealtimeEvent = {
+  item: ItemType;
+  delta?: { audio: Int16Array | Int16Array };
+};
+
 export default function RealtimeAssistant() {
   const wavStreamPlayerRef = useRef(new AudioStreamingService({ sampleRate: 24000 }));
   const clientRef = useRef(
@@ -173,9 +178,18 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
     const client = clientRef.current;
 
     // Set transcription, otherwise we don't get user transcriptions back
-    client.updateSession({ input_audio_transcription: { model: "whisper-1" } });
+    client.updateSession({
+      input_audio_transcription: { model: "whisper-1" },
+    });
     // Activate server-side turn detection
-    client.updateSession({ turn_detection: { type: "server_vad" } });
+    client.updateSession({
+      turn_detection: {
+        type: "server_vad",
+        threshold: 0.5,
+        prefix_padding_ms: 300,
+        silence_duration_ms: 200,
+      },
+    });
 
     // Add tools
     const tools = getTools(settings, appContextRef.current);
@@ -212,7 +226,7 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
         client.cancelResponse(trackId, offset);
       }
     });
-    client.on("conversation.updated", async ({ item, delta }: any) => {
+    client.on("conversation.updated", async ({ item, delta }: RealtimeEvent) => {
       const items = client.conversation.getItems();
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
@@ -223,7 +237,7 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
       // }
       setItems(items);
     });
-    client.on("conversation.item.completed", async ({ item }: any) => {
+    client.on("conversation.item.completed", async ({ item }: RealtimeEvent) => {
       const items = client.conversation.getItems();
       setItems(items);
       if (autoEndConversationRef.current && item.role === "assistant") {
