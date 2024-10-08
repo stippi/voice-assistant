@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function SpotifyPlayer({ idle }: Props) {
-  const { player, playerState, deviceId, play, pausePlayback, skipNext, skipPrevious } = useSpotifyContext();
+  const { playerState, resumePlayback, pausePlayback, skipNext, skipPrevious, seek } = useSpotifyContext();
   if (idle && !playerState.trackId) {
     return <> </>;
   }
@@ -29,9 +29,7 @@ export function SpotifyPlayer({ idle }: Props) {
               position={playerState.position}
               duration={playerState.duration}
               setPosition={async (value: number) => {
-                if (player) {
-                  await player.seek(value * 1000);
-                }
+                await seek(value * 1000);
               }}
             />
           </Box>
@@ -43,15 +41,15 @@ export function SpotifyPlayer({ idle }: Props) {
           "Music"
         ) : (
           <PlaybackControls
-            skipPrevious={async () => skipPrevious(deviceId)}
-            skipNext={async () => skipNext(deviceId)}
+            skipPrevious={skipPrevious}
+            skipNext={skipNext}
             canSkipPrevious={playerState.canSkipPrevious}
             canSkipNext={playerState.canSkipNext}
             togglePlay={async () => {
               if (playerState.paused) {
-                await play(deviceId, []);
+                await resumePlayback();
               } else {
-                await pausePlayback(deviceId);
+                await pausePlayback();
               }
             }}
             playing={!playerState.paused}
