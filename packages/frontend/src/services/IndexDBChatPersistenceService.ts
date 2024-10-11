@@ -4,11 +4,11 @@ import { indexDbDelete, indexDbGet, indexDbGetAllKeys, indexDbPut } from "../uti
 
 export class IndexDBChatPersistenceService implements ChatPersistenceService {
   async getChats(): Promise<ChatInfo[]> {
-    return indexDbGet<ChatInfo[]>("chats") || [];
+    return (await indexDbGet<ChatInfo[]>("chats")) || [];
   }
 
   async getCurrentChatID(): Promise<string> {
-    return indexDbGet<string>("currentChatID") || "";
+    return (await indexDbGet<string>("currentChatID")) || "";
   }
 
   async setCurrentChatID(chatID: string): Promise<void> {
@@ -16,7 +16,7 @@ export class IndexDBChatPersistenceService implements ChatPersistenceService {
   }
 
   async getChat(chatID: string): Promise<Chat | null> {
-    return indexDbGet<Chat>(chatID);
+    return await indexDbGet<Chat>(chatID);
   }
 
   async addChat(chat: Chat): Promise<void> {
