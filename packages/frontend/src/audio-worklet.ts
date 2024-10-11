@@ -35,6 +35,7 @@ class AudioStreamProcessor extends AudioWorkletProcessor {
   private write: WriteBuffer;
   private writeOffset = 0;
   private trackSampleOffsets: Record<string, number> = {};
+  private currentTrackId: string | null = null;
 
   constructor() {
     super();
@@ -85,25 +86,45 @@ class AudioStreamProcessor extends AudioWorkletProcessor {
     return true;
   }
 
+  private sendTrackFinished(trackId: string | null) {
+    if (trackId !== null) {
+      this.port.postMessage({
+        event: "track-finished",
+        trackId: trackId,
+      });
+    }
+  }
+
   process(_inputs: Float32Array[][], outputs: Float32Array[][]): boolean {
     const output = outputs[0];
     const outputChannelData = output[0];
     const outputBuffers = this.outputBuffers;
+
     if (this.hasInterrupted) {
+      this.sendTrackFinished(this.currentTrackId);
       this.port.postMessage({ event: "stop" });
       return false;
     } else if (outputBuffers.length) {
       this.hasStarted = true;
       const { buffer, trackId } = outputBuffers.shift()!;
+
+      // Check if the track has changed
+      if (trackId !== this.currentTrackId) {
+        this.sendTrackFinished(this.currentTrackId);
+        this.currentTrackId = trackId;
+      }
+
+      if (trackId) {
+        this.trackSampleOffsets[trackId] = (this.trackSampleOffsets[trackId] || 0) + buffer.length;
+      }
+
       for (let i = 0; i < outputChannelData.length; i++) {
         outputChannelData[i] = buffer[i] || 0;
       }
-      if (trackId) {
-        this.trackSampleOffsets[trackId] = this.trackSampleOffsets[trackId] || 0;
-        this.trackSampleOffsets[trackId] += buffer.length;
-      }
       return true;
     } else if (this.hasStarted) {
+      this.sendTrackFinished(this.currentTrackId);
+      this.currentTrackId = null;
       this.port.postMessage({ event: "stop" });
       return false;
     } else {
