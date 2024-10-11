@@ -10,25 +10,33 @@ import PauseRounded from "@mui/icons-material/PauseRounded";
 //import VolumeUpRounded from '@mui/icons-material/VolumeUpRounded';
 //import VolumeDownRounded from '@mui/icons-material/VolumeDownRounded';
 
-const CoverImage = styled("div")({
-  width: 100,
-  height: 100,
+interface CoverImageProps {
+  scale?: number;
+}
+
+const CoverImage = styled("div")(({ scale = 1 }: CoverImageProps) => ({
+  width: 100 * scale,
+  height: 100 * scale,
   objectFit: "cover",
   overflow: "hidden",
   flexShrink: 0,
-  borderRadius: 3,
+  borderRadius: 3 * scale,
   backgroundColor: "rgba(0,0,0,0.08)",
   "& > img": {
     width: "100%",
   },
-});
+}));
 
 const TinyText = styled(Typography)({
-  fontSize: "0.65rem",
+  fontSize: "0.65em",
   opacity: 0.38,
   fontWeight: 500,
   letterSpacing: 0.2,
 });
+
+interface TextWithTooltipProps extends TypographyProps {
+  text: string;
+}
 
 const TextWithTooltip = ({ text, ...props }: TextWithTooltipProps) => {
   const textRef = useRef<HTMLSpanElement>(null);
@@ -67,26 +75,44 @@ const TextWithTooltip = ({ text, ...props }: TextWithTooltipProps) => {
   );
 };
 
-interface TextWithTooltipProps extends TypographyProps {
-  text: string;
+interface CurrentSongProps {
+  title: string;
+  artist: string;
+  albumTitle: string;
+  albumCoverUrl: string;
+  scale?: number;
 }
 
-export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl }: CurrentSongProps) => {
+export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl, scale }: CurrentSongProps) => {
   return (
     <Box sx={{ display: "flex", alignItems: "center" }}>
-      <CoverImage>
+      <CoverImage scale={scale}>
         <img alt="can't win - Chilling Sunday" src={albumCoverUrl} />
       </CoverImage>
-      <Box sx={{ ml: 1.5, minWidth: 0 }}>
-        <TextWithTooltip text={artist} variant="subtitle2" color="text.secondary" fontWeight={500} fontSize="12px" />
-        <TextWithTooltip text={title} fontWeight={700} />
-        <TextWithTooltip text={albumTitle} noWrap variant="subtitle2" color="text.secondary" letterSpacing={-0.25} />
+      <Box sx={{ ml: 1.5 * scale, minWidth: 0 }}>
+        <TextWithTooltip text={artist} variant="subtitle2" color="text.secondary" fontWeight={500} fontSize="0.8em" />
+        <TextWithTooltip text={title} fontWeight={700} fontSize="1.2em" />
+        <TextWithTooltip
+          text={albumTitle}
+          noWrap
+          variant="subtitle2"
+          color="text.secondary"
+          letterSpacing={-0.25}
+          fontSize="0.75em"
+        />
       </Box>
     </Box>
   );
 });
 
-export function PositionControls({ position, duration, setPosition }: PositionProps) {
+interface PositionProps {
+  position: number;
+  duration: number;
+  setPosition: (value: number) => void;
+  scale?: number;
+}
+
+export function PositionControls({ position, duration, setPosition, scale = 1 }: PositionProps) {
   const theme = useTheme();
 
   function formatDuration(value: number) {
@@ -105,11 +131,12 @@ export function PositionControls({ position, duration, setPosition }: PositionPr
         max={duration}
         onChange={(_, value) => setPosition(value as number)}
         sx={{
-          color: theme.palette.mode === "dark" ? "#fff" : "#888",
-          height: 4,
+          color: theme.palette.mode === "dark" ? "#bbb" : "#888",
+          height: 4 * scale,
+          paddingY: 1.8 * scale,
           "& .MuiSlider-thumb": {
-            width: 8,
-            height: 8,
+            width: 8 * scale,
+            height: 8 * scale,
             transition: "0.2s ease-in-out",
             // '&::before': {
             //   boxShadow: '0 2px 12px 0 rgba(0,0,0,0.4)',
@@ -120,8 +147,8 @@ export function PositionControls({ position, duration, setPosition }: PositionPr
               }`,
             },
             "&.Mui-active": {
-              width: 20,
-              height: 20,
+              width: 20 * scale,
+              height: 20 * scale,
             },
           },
           "& .MuiSlider-rail": {
@@ -145,6 +172,17 @@ export function PositionControls({ position, duration, setPosition }: PositionPr
   );
 }
 
+interface PlaybackProps {
+  skipPrevious: () => void;
+  canSkipPrevious: boolean;
+  skipNext: () => void;
+  canSkipNext: boolean;
+  togglePlay: () => void;
+  playing: boolean;
+  fontSize?: number | string;
+  fontSizeLarge?: number | string;
+}
+
 export const PlaybackControls = React.memo(
   ({
     playing,
@@ -153,8 +191,8 @@ export const PlaybackControls = React.memo(
     canSkipNext,
     skipNext,
     skipPrevious,
-    fontSize = 28,
-    fontSizeLarge = 32,
+    fontSize = "1.9em",
+    fontSizeLarge = "2.2em",
   }: PlaybackProps) => {
     return (
       <Box
@@ -190,6 +228,11 @@ export const PlaybackControls = React.memo(
   },
 );
 
+interface MusicControlsProps extends PositionProps, PlaybackProps, CurrentSongProps {
+  markFavorite: () => void;
+  fontSize?: number | string;
+}
+
 export function MusicControls({
   title,
   artist,
@@ -204,9 +247,10 @@ export function MusicControls({
   duration,
   position,
   setPosition,
-}: Props) {
+  fontSize = "1em",
+}: MusicControlsProps) {
   return (
-    <Box sx={{ padding: 2 }}>
+    <Box sx={{ padding: 2, fontSize }}>
       <CurrentSong title={title} artist={artist} albumTitle={albumTitle} albumCoverUrl={albumCoverUrl} />
       <PositionControls position={position} duration={duration} setPosition={setPosition} />
       {/*<Stack spacing={2} direction="row" sx={{mb: 1, px: 1}} alignItems="center">*/}
@@ -244,32 +288,4 @@ export function MusicControls({
       />
     </Box>
   );
-}
-
-interface CurrentSongProps {
-  title: string;
-  artist: string;
-  albumTitle: string;
-  albumCoverUrl: string;
-}
-
-interface PlaybackProps {
-  skipPrevious: () => void;
-  canSkipPrevious: boolean;
-  skipNext: () => void;
-  canSkipNext: boolean;
-  togglePlay: () => void;
-  playing: boolean;
-  fontSize?: number;
-  fontSizeLarge?: number;
-}
-
-interface PositionProps {
-  position: number;
-  duration: number;
-  setPosition: (value: number) => void;
-}
-
-interface Props extends PositionProps, PlaybackProps, CurrentSongProps {
-  markFavorite: () => void;
 }
