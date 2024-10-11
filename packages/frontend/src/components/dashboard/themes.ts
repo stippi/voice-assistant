@@ -11,7 +11,7 @@ export const regularTheme = createTheme({
       defaultProps: {
         primaryTypographyProps: {
           style: {
-            fontSize: 15,
+            fontSize: 20,
             fontWeight: "medium",
             lineHeight: "20px",
           },
@@ -75,6 +75,7 @@ export const idleTheme = createTheme({
           backgroundColor: "rgba(0, 0, 0, 0.6)",
           backdropFilter: "blur(1px)",
           WebkitBackdropFilter: "blur(1px)",
+          borderRadius: 6,
         },
       },
     },
