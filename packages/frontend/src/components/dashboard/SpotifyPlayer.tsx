@@ -14,16 +14,25 @@ export function SpotifyPlayer({ idle }: Props) {
   if (idle && !playerState.trackId) {
     return <> </>;
   }
+  const padding = idle ? 2.5 : 2;
   return (
     <CollapsibleList
       header={
         playerState.trackId && (
-          <Box sx={{ paddingLeft: 2, paddingRight: 2, paddingTop: 2 }}>
+          <Box
+            sx={{
+              paddingLeft: padding,
+              paddingRight: padding,
+              paddingTop: padding,
+              fontSize: idle ? "1.4rem" : "1rem",
+            }}
+          >
             <CurrentSong
               title={playerState.name}
               artist={playerState.artists.join(", ")}
               albumTitle={playerState.albumName}
               albumCoverUrl={playerState.coverImageUrl}
+              scale={idle ? 1.6 : 1}
             />
             <PositionControls
               position={playerState.position}
@@ -31,6 +40,7 @@ export function SpotifyPlayer({ idle }: Props) {
               setPosition={async (value: number) => {
                 await seek(value * 1000);
               }}
+              scale={idle ? 1.6 : 1}
             />
           </Box>
         )

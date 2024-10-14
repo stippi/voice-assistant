@@ -29,7 +29,7 @@ export function Dashboard() {
   return (
     <ThemeProvider theme={idle ? idleTheme : regularTheme}>
       <div
-        className="dashboard side-column"
+        className={`dashboard side-column ${idle ? "idle" : ""}`}
         style={{
           display: timers.length > 0 || hasEvents || settings.enableSpotify || hasPhotos ? "flex" : "none",
         }}
