@@ -6,7 +6,7 @@ import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import { RiRobot2Fill } from "react-icons/ri";
 import { RealtimeClient } from "@openai/realtime-api-beta";
 import { ItemType, ToolDefinitionType } from "@openai/realtime-api-beta/dist/lib/client.js";
-import { completionsApiKey } from "../config";
+import { completionsApiKey, PicoVoiceAccessKey } from "../config";
 import { AudioStreamingService } from "../services/AudioStreamingService";
 import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
 import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
@@ -14,11 +14,10 @@ import { createSystemMessageService } from "../services/SystemMessageService";
 import { Message } from "@shared/types";
 import { Conversation } from "./chat/Conversation";
 import { getTools, callFunction } from "../integrations/tools";
-import { useAppContext, useSettings, useTimers } from "../hooks";
+import { useAppContext, useSettings, useTimers, useVoiceDetection, useWindowFocus } from "../hooks";
 import { Settings } from "../contexts/SettingsContext";
-// import { Conversation } from "./chat/Conversation";
+import { playSound } from "../utils/audio";
 // import { MessageBar } from "./MessageBar";
-// import { useVoiceAssistant } from "../hooks";
 
 type RealtimeEvent = {
   item: ItemType;
@@ -51,20 +50,70 @@ export default function RealtimeAssistant() {
   const appContextRef = useRef(appContext);
   const { settings } = useSettings();
   const { timers } = useTimers();
+  const { documentVisible } = useWindowFocus();
   const [assistantResponding, setAssistantResponding] = useState(false);
   const autoEndConversationRef = useRef(false);
   const assistantRespondingRef = useRef(false);
+  const audioBuffersRef = useRef<Int16Array[]>([]);
 
   useEffect(() => {
     appContextRef.current = appContext;
   }, [appContext]);
 
+  const {
+    isLoaded: isVoiceDetectionLoaded,
+    init: initVoiceDetection,
+    release: releaseVoiceDetection,
+    isListeningForWakeWord,
+    wakeWordDetection,
+  } = useVoiceDetection(settings.openMic && documentVisible);
+
+  const voiceDetectionInitTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (PicoVoiceAccessKey.length === 0) {
+      return;
+    }
+
+    if (!isVoiceDetectionLoaded && !voiceDetectionInitTriggeredRef.current) {
+      console.log("Initializing voice detection");
+      voiceDetectionInitTriggeredRef.current = true;
+      initVoiceDetection(settings.triggerWord, [])
+        .then(() => {
+          console.log("Voice detection initialized");
+        })
+        .catch((error) => {
+          console.error("Failed to initialize voice detection", error);
+        });
+    }
+
+    return () => {
+      if (isVoiceDetectionLoaded) {
+        console.log("Releasing voice detection");
+        voiceDetectionInitTriggeredRef.current = false;
+        releaseVoiceDetection()
+          .then(() => {
+            console.log("Voice detection released");
+          })
+          .catch((error) => {
+            console.error("Failed to release voice detection", error);
+          });
+      }
+    };
+  }, [initVoiceDetection, releaseVoiceDetection, settings.triggerWord, isVoiceDetectionLoaded]);
+
   /**
    * Connect to conversation!
    */
   const connectConversation = useCallback(async () => {
+    console.log("connecting conversion");
     const client = clientRef.current;
     const wavStreamPlayer = wavStreamPlayerRef.current;
+
+    // Send the "reduce-volume" custom event
+    document.dispatchEvent(new CustomEvent("reduce-volume"));
+    playSound("activation");
+    setIsConnected(true);
 
     // Set state variables
     setItems(client.conversation.getItems());
@@ -80,7 +129,6 @@ export default function RealtimeAssistant() {
 
     // Connect to realtime API
     await client.connect();
-    setIsConnected(true);
     // client.sendUserMessageContent([
     //   {
     //     type: `input_text`,
@@ -93,24 +141,55 @@ export default function RealtimeAssistant() {
    * Disconnect and reset conversation state
    */
   const disconnectConversation = useCallback(async () => {
-    setIsConnected(false);
-
+    console.log("disconnecting conversion");
     const client = clientRef.current;
     client.disconnect();
+
+    setIsConnected(false);
+    document.dispatchEvent(new CustomEvent("restore-volume"));
 
     // const wavRecorder = wavRecorderRef.current;
     // await wavRecorder.end();
 
-    const wavStreamPlayer = wavStreamPlayerRef.current;
-    await wavStreamPlayer.interrupt();
+    // const wavStreamPlayer = wavStreamPlayerRef.current;
+    // await wavStreamPlayer.interrupt();
   }, []);
+
+  useEffect(() => {
+    const client = clientRef.current;
+    const wavStreamPlayer = wavStreamPlayerRef.current;
+    if (wakeWordDetection) {
+      console.log("wake word detected");
+      if (client.isConnected()) {
+        // Interrupt assistant
+        wavStreamPlayer.interrupt();
+        client.cancelResponse("");
+      } else {
+        connectConversation();
+      }
+    }
+  }, [wakeWordDetection, connectConversation]);
 
   const audioRecorder = useRef<PvEngine>({
     onmessage: async (event: MessageEvent) => {
       const client = clientRef.current;
       switch (event.data.command) {
         case "process":
+          if (!client.isConnected()) {
+            // Buffer the audio input until the client is actually conntected
+            while (audioBuffersRef.current.length > 100) {
+              // Drop audio buffers from the beginning, since we don't want to buffer indefinitely
+              audioBuffersRef.current.shift();
+              console.log("dropped user audio buffer");
+            }
+            audioBuffersRef.current.push(event.data.inputFrame);
+            break;
+          }
           if (client.getTurnDetectionType() === "server_vad" && !assistantRespondingRef.current) {
+            while (audioBuffersRef.current.length > 0) {
+              // First send the buffered audio chunks
+              client.appendInputAudio(audioBuffersRef.current.shift()!);
+            }
             client.appendInputAudio(event.data.inputFrame);
           }
           break;
@@ -253,12 +332,10 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
       const { type } = event.event;
       switch (type) {
         case "response.created":
-          console.log("response.created", JSON.stringify(event.event, null, 2));
           setAssistantResponding(true);
           assistantRespondingRef.current = true;
           break;
         case "response.done":
-          console.log("response.done", JSON.stringify(event.event, null, 2));
           break;
       }
     });
@@ -316,7 +393,11 @@ Make sure to use the 'end_conversation' tool after you have completed your task 
         <div className="textContainer">
           <div className="buttonContainer">
             {!isConnected && (
-              <IconButton area-label="start conversation" color={"error"} onClick={connectConversation}>
+              <IconButton
+                area-label="start conversation"
+                color={isListeningForWakeWord ? "error" : "default"}
+                onClick={connectConversation}
+              >
                 <MicIcon />
               </IconButton>
             )}
