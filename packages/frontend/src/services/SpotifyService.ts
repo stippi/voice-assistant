@@ -423,7 +423,11 @@ export class SpotifyService {
     } else if (contextUri) {
       options.body = JSON.stringify({ context_uri: contextUri });
     }
-    await this.validatePlayer(deviceId);
+    if (await this.validatePlayer(deviceId)) {
+      // When validatePlayer() returns true, the deviceId matched this.deviceId, but the player instance
+      // may have had to be replaced/restarted, leading to an updated this.deviceId that we now need to use.
+      deviceId = this.deviceId;
+    }
     return this.callApi<void>(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, options, false);
   }
 
