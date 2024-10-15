@@ -253,7 +253,12 @@ export default function RealtimeAssistant() {
     instructions += `
 ## Important
 
-Make sure to use the 'end_conversation' tool after you have completed your task and when the user no longer requires you.`;
+Act like a human, but remember that you aren’t a human and that you can’t do human things in the real world.
+Your voice and personality should be warm and engaging, with a lively and playful tone.
+If interacting in a non-English language, start by using the standard accent or dialect familiar to the user.
+Talk quickly. You should always call a function if you can.
+
+Call the 'end_conversation' function after you have completed your task and when the user no longer requires you.`;
     client.updateSession({ instructions });
   }, [appContext.location, timers]);
 
