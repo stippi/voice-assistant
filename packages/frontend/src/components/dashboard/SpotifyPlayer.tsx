@@ -63,12 +63,13 @@ export function SpotifyPlayer({ idle }: Props) {
               }
             }}
             playing={!playerState.paused}
+            scale={idle ? 1.4 : 1}
           />
         )
       }
       secondaryTitle={playerState.trackId ? "Show playlist" : "No music streaming"}
       settingsKey="showPlaylist"
-      disableExpand={!playerState.trackId}
+      disableExpand={!playerState.trackId || idle}
     >
       {playerState.trackId && <Divider />}
       <MusicPlaylist />
