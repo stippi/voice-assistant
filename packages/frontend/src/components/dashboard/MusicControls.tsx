@@ -83,15 +83,15 @@ interface CurrentSongProps {
   scale?: number;
 }
 
-export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl, scale }: CurrentSongProps) => {
+export const CurrentSong = React.memo(({ artist, title, albumTitle, albumCoverUrl, scale = 1 }: CurrentSongProps) => {
   return (
     <Box sx={{ display: "flex", alignItems: "center" }}>
-      <CoverImage scale={scale}>
+      <CoverImage scale={(scale - 1) * 0.75 + 1}>
         <img alt="can't win - Chilling Sunday" src={albumCoverUrl} />
       </CoverImage>
       <Box sx={{ ml: 1.5 * scale, minWidth: 0 }}>
-        <TextWithTooltip text={artist} variant="subtitle2" color="text.secondary" fontWeight={500} fontSize="0.8em" />
-        <TextWithTooltip text={title} fontWeight={700} fontSize="1.2em" />
+        <TextWithTooltip text={artist} variant="subtitle2" color="text.secondary" fontWeight={500} fontSize="0.9em" />
+        <TextWithTooltip text={title} fontWeight={700} fontSize="1.1em" />
         <TextWithTooltip
           text={albumTitle}
           noWrap
@@ -181,6 +181,7 @@ interface PlaybackProps {
   playing: boolean;
   fontSize?: number | string;
   fontSizeLarge?: number | string;
+  scale?: number;
 }
 
 export const PlaybackControls = React.memo(
@@ -193,6 +194,7 @@ export const PlaybackControls = React.memo(
     skipPrevious,
     fontSize = "1.9em",
     fontSizeLarge = "2.2em",
+    scale = 1,
   }: PlaybackProps) => {
     return (
       <Box
@@ -200,6 +202,7 @@ export const PlaybackControls = React.memo(
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          fontSize: `${scale}rem`,
           mt: -1,
         }}
       >
