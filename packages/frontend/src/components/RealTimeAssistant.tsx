@@ -17,6 +17,7 @@ import { getTools, callFunction } from "../integrations/tools";
 import { useAppContext, useSettings, useTimers, useVoiceDetection, useWindowFocus } from "../hooks";
 import { Settings } from "../contexts/SettingsContext";
 import { playSound } from "../utils/audio";
+import { AudioVisualizer } from "./chat/AudioVisualizer";
 // import { MessageBar } from "./MessageBar";
 
 type RealtimeEvent = {
@@ -33,12 +34,12 @@ type ClientEvent = {
 };
 
 export default function RealtimeAssistant() {
-  const wavStreamPlayerRef = useRef(new AudioStreamingService({ sampleRate: 24000 }));
+  const audioStreamingServiceRef = useRef(new AudioStreamingService({ sampleRate: 24000 }));
   const clientRef = useRef(
     new RealtimeClient({
       apiKey: completionsApiKey,
       dangerouslyAllowAPIKeyInBrowser: true,
-      //p      debug: true,
+      //      debug: true,
     }),
   );
   const systemMessageServiceRef = useRef(createSystemMessageService());
@@ -55,6 +56,7 @@ export default function RealtimeAssistant() {
   const autoEndConversationRef = useRef(false);
   const assistantRespondingRef = useRef(false);
   const audioBuffersRef = useRef<Int16Array[]>([]);
+  const serverCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     appContextRef.current = appContext;
@@ -108,7 +110,7 @@ export default function RealtimeAssistant() {
   const connectConversation = useCallback(async () => {
     console.log("connecting conversion");
     const client = clientRef.current;
-    const wavStreamPlayer = wavStreamPlayerRef.current;
+    const audioStreamingService = audioStreamingServiceRef.current;
 
     // Send the "reduce-volume" custom event
     document.dispatchEvent(new CustomEvent("reduce-volume"));
@@ -122,7 +124,7 @@ export default function RealtimeAssistant() {
     //    await wavRecorder.begin();
 
     // Connect to audio output
-    await wavStreamPlayer.connect();
+    await audioStreamingService.connect();
 
     autoEndConversationRef.current = false;
     assistantRespondingRef.current = false;
@@ -151,18 +153,18 @@ export default function RealtimeAssistant() {
     // const wavRecorder = wavRecorderRef.current;
     // await wavRecorder.end();
 
-    // const wavStreamPlayer = wavStreamPlayerRef.current;
-    // await wavStreamPlayer.interrupt();
+    // const audioStreamingService = audioStreamingServiceRef.current;
+    // await audioStreamingService.interrupt();
   }, []);
 
   useEffect(() => {
     const client = clientRef.current;
-    const wavStreamPlayer = wavStreamPlayerRef.current;
+    const audioStreamingService = audioStreamingServiceRef.current;
     if (wakeWordDetection) {
       console.log("wake word detected");
       if (client.isConnected()) {
         // Interrupt assistant
-        wavStreamPlayer.interrupt();
+        audioStreamingService.interrupt();
         client.cancelResponse("");
       } else {
         connectConversation();
@@ -214,7 +216,7 @@ export default function RealtimeAssistant() {
   const [currentlyPlayingTrackId, setCurrentlyPlayingTrackId] = useState<string | null>(null);
 
   useEffect(() => {
-    const wavStreamPlayer = wavStreamPlayerRef.current;
+    const audioStreamingService = audioStreamingServiceRef.current;
 
     const handleTrackFinished = (trackId: string) => {
       if (trackId === currentlyPlayingTrackId) {
@@ -228,10 +230,10 @@ export default function RealtimeAssistant() {
       }
     };
 
-    wavStreamPlayer.on("trackFinished", handleTrackFinished);
+    audioStreamingService.on("trackFinished", handleTrackFinished);
 
     return () => {
-      wavStreamPlayer.off("trackFinished", handleTrackFinished);
+      audioStreamingService.off("trackFinished", handleTrackFinished);
     };
   }, [currentlyPlayingTrackId, disconnectConversation]);
 
@@ -268,7 +270,7 @@ Call the 'end_conversation' function after you have completed your task and when
    */
   const setupClient = useCallback(async (client: RealtimeClient, settings: Settings) => {
     // Get refs
-    const wavStreamPlayer = wavStreamPlayerRef.current;
+    const audioStreamingService = audioStreamingServiceRef.current;
 
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({
@@ -311,7 +313,7 @@ Call the 'end_conversation' function after you have completed your task and when
 
     client.on("error", (event: never) => console.error(event));
     client.on("conversation.interrupted", async () => {
-      const trackSampleOffset = await wavStreamPlayer.interrupt();
+      const trackSampleOffset = await audioStreamingService.interrupt();
       if (trackSampleOffset?.trackId) {
         const { trackId, offset } = trackSampleOffset;
         client.cancelResponse(trackId, offset);
@@ -320,7 +322,7 @@ Call the 'end_conversation' function after you have completed your task and when
     client.on("conversation.updated", async ({ item, delta }: RealtimeEvent) => {
       const items = client.conversation.getItems();
       if (delta?.audio) {
-        wavStreamPlayer.add16BitPCM(delta.audio, item.id);
+        audioStreamingService.add16BitPCM(delta.audio, item.id);
         setCurrentlyPlayingTrackId(item.id);
       }
       // if (item.status === "completed" && item.formatted.audio?.length) {
@@ -391,6 +393,38 @@ Call the 'end_conversation' function after you have completed your task and when
     setMessages(convertedItems);
   }, [items]);
 
+  useEffect(() => {
+    let isLoaded = true;
+
+    const audioStreamingService = audioStreamingServiceRef.current;
+    const serverCanvas = serverCanvasRef.current;
+    let serverCtx: CanvasRenderingContext2D | null = null;
+    const render = () => {
+      if (isLoaded) {
+        if (serverCanvas) {
+          if (!serverCanvas.width || !serverCanvas.height) {
+            serverCanvas.width = serverCanvas.offsetWidth;
+            serverCanvas.height = serverCanvas.offsetHeight;
+          }
+          serverCtx = serverCtx || serverCanvas.getContext("2d");
+          if (serverCtx) {
+            serverCtx.clearRect(0, 0, serverCanvas.width, serverCanvas.height);
+            const result = audioStreamingService.isConnected()
+              ? audioStreamingService.getFrequencies("voice")
+              : { values: new Float32Array([0]) };
+            AudioVisualizer.drawBars(serverCanvas, serverCtx, result.values, "#999999", 5, 0, 8);
+          }
+        }
+        window.requestAnimationFrame(render);
+      }
+    };
+    render();
+
+    return () => {
+      isLoaded = false;
+    };
+  }, []);
+
   return (
     <>
       <Conversation chat={messages} deleteMessage={() => {}} />
@@ -418,6 +452,7 @@ Call the 'end_conversation' function after you have completed your task and when
             )}
           </div>
         </div>
+        <canvas ref={serverCanvasRef} />
       </div>
     </>
   );
