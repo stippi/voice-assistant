@@ -75,6 +75,10 @@ export class AudioStreamingService {
     this.analyser.smoothingTimeConstant = 0.1;
   }
 
+  isConnected(): boolean {
+    return this.analyser != null;
+  }
+
   /**
    * Gets the current frequency domain data from the playing track
    */
