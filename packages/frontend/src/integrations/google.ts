@@ -213,6 +213,15 @@ export async function getDirections(
   return result;
 }
 
+function assertCalendarApiReady() {
+  if (!gapi) {
+    throw new Error("Google integration is not enabled in the settings, or Google API failed to load");
+  }
+  if (!gapi.client.getToken()) {
+    throw new Error("User is not signed into Google account, or has not given Calendar access permissions");
+  }
+}
+
 function toISOStringNoTimezone(date: Date): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   const yyyy = date.getFullYear();
@@ -239,16 +248,7 @@ export async function createCalendarEvent(
   recurrence?: string[],
   reminders?: { minutes: number; method: string }[],
 ) {
-  if (!gapi) {
-    return {
-      error: "Google integration is not enabled in the settings, or Google API failed to load",
-    };
-  }
-  if (!gapi.client.getToken()) {
-    return {
-      error: "User is not signed into Google account, or has not given Calendar access permissions",
-    };
-  }
+  assertCalendarApiReady();
   const start = new Date(startTime);
   const event: gapi.client.calendar.EventInput = {
     summary,
@@ -293,16 +293,7 @@ export async function createCalendarEvent(
 }
 
 export async function deleteCalendarEvent(calendarId: string = "primary", eventId: string) {
-  if (!gapi) {
-    return {
-      error: "Google integration is not enabled in the settings, or Google API failed to load",
-    };
-  }
-  if (!gapi.client.getToken()) {
-    return {
-      error: "User is not signed into Google account, or has not given Calendar access permissions",
-    };
-  }
+  assertCalendarApiReady();
   const request = await gapi.client.calendar.events.delete({
     calendarId: calendarId,
     eventId: eventId,
@@ -316,23 +307,14 @@ export async function deleteCalendarEvent(calendarId: string = "primary", eventI
 export async function listCalendarEvents(
   calendarId: string = "primary",
   query: string,
-  timeMin: string = new Date().toISOString(),
+  timeMin: string,
   timeMax: string,
   maxResults: number,
   singleEvents: boolean,
   orderBy: gapi.client.calendar.EventsOrder,
   showDeleted: boolean,
 ) {
-  if (!gapi) {
-    return {
-      error: "Google integration is not enabled in the settings, or Google API failed to load",
-    };
-  }
-  if (!gapi.client.getToken()) {
-    return {
-      error: "User is not signed into Google account, or has not given Calendar access permissions",
-    };
-  }
+  assertCalendarApiReady();
   const parameters: gapi.client.calendar.EventsListParameters = {
     calendarId: calendarId,
   };
@@ -364,16 +346,7 @@ export async function listCalendarEvents(
 }
 
 export async function listContacts(query: string) {
-  if (!gapi) {
-    return {
-      error: "Google integration is not enabled in the settings, or Google API failed to load",
-    };
-  }
-  if (!gapi.client.getToken()) {
-    return {
-      error: "User is not signed into Google account, or has not given Contacts access permissions",
-    };
-  }
+  assertCalendarApiReady();
   type Contact = {
     id: string;
     displayName?: string;
