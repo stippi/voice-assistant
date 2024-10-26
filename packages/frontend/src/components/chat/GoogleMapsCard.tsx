@@ -14,7 +14,29 @@ const defaultDirections = {
   travelMode: "DRIVING" as google.maps.TravelMode,
 };
 
-function MapComponent({ latitude, longitude, zoom = 10, directions = defaultDirections }: Props) {
+interface TransitOptions {
+  arrivalTime?: Date;
+  departureTime?: Date;
+  modes?: google.maps.TransitMode[];
+  routingPreference?: google.maps.TransitRoutePreference;
+}
+
+interface Directions {
+  origin: string;
+  destination: string;
+  travelMode: google.maps.TravelMode;
+  transitOptions?: TransitOptions;
+}
+
+interface MapComponentProps {
+  latitude?: number;
+  longitude?: number;
+  zoom?: number;
+  directions?: Directions;
+  transitOptions?: TransitOptions;
+}
+
+function MapComponent({ latitude, longitude, zoom = 10, directions = defaultDirections }: MapComponentProps) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: GoogleApiKey,
@@ -95,25 +117,3 @@ function MapComponent({ latitude, longitude, zoom = 10, directions = defaultDire
 }
 
 export const GoogleMapsCard = React.memo(MapComponent);
-
-interface TransitOptions {
-  arrivalTime?: Date;
-  departureTime?: Date;
-  modes?: google.maps.TransitMode[];
-  routingPreference?: google.maps.TransitRoutePreference;
-}
-
-interface Directions {
-  origin: string;
-  destination: string;
-  travelMode: google.maps.TravelMode;
-  transitOptions?: TransitOptions;
-}
-
-interface Props {
-  latitude?: number;
-  longitude?: number;
-  zoom?: number;
-  directions?: Directions;
-  transitOptions?: TransitOptions;
-}
