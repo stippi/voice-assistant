@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 import { AudioAnalysisService, AnalysisType } from "./AudioAnalysisService";
+import { EventEmitter, EventMap } from "./EventEmitter";
 
 type TrackSampleOffset = {
   trackId: string | null;
@@ -30,30 +31,26 @@ type TrackSampleOffset = {
   currentTime: number;
 };
 
-type EventMap = {
-  trackFinished: string;
-};
+interface AudioStreamingServiceEvents extends EventMap {
+  trackFinished: [string];
+}
 
-type EventKey = keyof EventMap;
-type EventCallback<T extends EventKey> = (arg: EventMap[T]) => void;
-
-export class AudioStreamingService {
+export class AudioStreamingService extends EventEmitter<AudioStreamingServiceEvents> {
   private sampleRate: number;
   private context: AudioContext | null;
   private stream: AudioWorkletNode | null;
   private analyser: AnalyserNode | null;
   private trackSampleOffsets: Record<string, TrackSampleOffset>;
   private interruptedTrackIds: Record<string, boolean>;
-  private eventListeners: { [K in EventKey]?: EventCallback<K>[] };
 
   constructor({ sampleRate = 44100 } = {}) {
+    super();
     this.sampleRate = sampleRate;
     this.context = null;
     this.stream = null;
     this.analyser = null;
     this.trackSampleOffsets = {};
     this.interruptedTrackIds = {};
-    this.eventListeners = {};
   }
 
   /**
@@ -183,27 +180,5 @@ export class AudioStreamingService {
 
   getAudioContext(): AudioContext | null {
     return this.context;
-  }
-
-  on<T extends EventKey>(eventName: T, callback: EventCallback<T>): void {
-    if (!this.eventListeners[eventName]) {
-      this.eventListeners[eventName] = [];
-    }
-    (this.eventListeners[eventName] as EventCallback<T>[]).push(callback);
-  }
-
-  off<T extends EventKey>(eventName: T, callback: EventCallback<T>): void {
-    const listeners = this.eventListeners[eventName];
-    if (!listeners) return;
-    const index = listeners.indexOf(callback as EventCallback<EventKey>);
-    if (index !== -1) {
-      listeners.splice(index, 1);
-    }
-  }
-
-  private emit<T extends EventKey>(eventName: T, arg: EventMap[T]): void {
-    const listeners = this.eventListeners[eventName];
-    if (!listeners) return;
-    listeners.forEach((callback) => (callback as EventCallback<T>)(arg));
   }
 }

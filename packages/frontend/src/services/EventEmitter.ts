@@ -1,9 +1,9 @@
 /** Base type for the event map */
-type EventMap = {
-  [key: string]: unknown[];
+export type EventMap = {
+  [K: string]: unknown[];
 };
 
-type EventKey<T extends EventMap> = string & keyof T;
+type EventKey<T extends EventMap> = keyof T;
 type EventCallback<T extends EventMap, K extends EventKey<T>> = (...args: T[K]) => void;
 
 export class EventEmitter<T extends EventMap> {
