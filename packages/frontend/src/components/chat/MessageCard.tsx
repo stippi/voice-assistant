@@ -2,7 +2,7 @@ import React from "react";
 import "./MessageCard.css";
 
 import { Discuss } from "react-loader-spinner";
-import Markdown from "./Markdown";
+import Markdown from "../common/Markdown";
 import { Message } from "@shared/types";
 import { BsFillPersonFill } from "react-icons/bs";
 import { RiRobot2Fill } from "react-icons/ri";
