@@ -27,6 +27,7 @@ import {
 } from "./google";
 import { timerService } from "../services/TimerService";
 import { spotifyService } from "../services/SpotifyService";
+import { overlayService } from "../services/OverlayService";
 
 const math = create(all, {});
 
@@ -87,6 +88,23 @@ export async function getTools(settings: Settings) {
             },
           },
           required: ["id"],
+        },
+      },
+    },
+    {
+      type: "function",
+      function: {
+        name: "show_information_card",
+        description: "Show a card with information for the user. Use for recipes, transit directions, etc..",
+        parameters: {
+          type: "object",
+          properties: {
+            contents: {
+              type: "string",
+              description: "A markdown formatted text with information that should stay visible on top of the chat.",
+            },
+          },
+          required: ["contents"],
         },
       },
     },
@@ -615,6 +633,8 @@ export async function callFunction(functionCall: ChatCompletionMessage.FunctionC
         );
       case "delete_timer":
         return await removeTimer(args.id);
+      case "show_information_card":
+        return await showInformationCard(args.contents);
       case "calculate_time":
         return await calculateTime(args.baseTime, args.operation, args.value, args.unit);
       case "evaluate_expression":
@@ -749,6 +769,13 @@ async function removeTimer(id: string) {
   console.log(`Removing timer: ${id}`);
   timerService.removeTimer(id);
   return { result: "timer deleted" };
+}
+
+async function showInformationCard(contents: string) {
+  overlayService.openOverlay({
+    contents: contents,
+  });
+  return { result: "information showing" };
 }
 
 async function calculateTime(
