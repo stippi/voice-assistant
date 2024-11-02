@@ -1,3 +1,4 @@
+import { ChatOverlay } from "./overlay/ChatOverlay";
 import { Conversation } from "./chat/Conversation";
 import { MessageBar } from "./MessageBar";
 import { useVoiceAssistant } from "../hooks";
@@ -11,6 +12,7 @@ export default function VoiceAssistant({ idle }: Props) {
 
   return (
     <>
+      <ChatOverlay />
       {!idle && <Conversation chat={messages} deleteMessage={deleteMessage} />}
       <MessageBar
         sendMessage={sendMessage}
