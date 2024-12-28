@@ -120,9 +120,6 @@ export default function RealtimeAssistant() {
     // Set state variables
     setItems(client.conversation.getItems());
 
-    // Connect to microphone
-    //    await wavRecorder.begin();
-
     // Connect to audio output
     await audioStreamingService.connect();
 
@@ -131,12 +128,6 @@ export default function RealtimeAssistant() {
 
     // Connect to realtime API
     await client.connect();
-    // client.sendUserMessageContent([
-    //   {
-    //     type: `input_text`,
-    //     text: `Hello!`,
-    //   },
-    // ]);
   }, []);
 
   /**
@@ -149,14 +140,9 @@ export default function RealtimeAssistant() {
 
     setIsConnected(false);
     document.dispatchEvent(new CustomEvent("restore-volume"));
-
-    // const wavRecorder = wavRecorderRef.current;
-    // await wavRecorder.end();
-
-    // const audioStreamingService = audioStreamingServiceRef.current;
-    // await audioStreamingService.interrupt();
   }, []);
 
+  // Effect that is called everytime the wake-word is detected
   useEffect(() => {
     const client = clientRef.current;
     const audioStreamingService = audioStreamingServiceRef.current;
@@ -325,10 +311,6 @@ Call the 'end_conversation' function after you have completed your task and when
         audioStreamingService.add16BitPCM(delta.audio, item.id);
         setCurrentlyPlayingTrackId(item.id);
       }
-      // if (item.status === "completed" && item.formatted.audio?.length) {
-      //   const wavFile = await WavRecorder.decode(item.formatted.audio, 24000, 24000);
-      //   item.formatted.file = wavFile;
-      // }
       setItems(items);
     });
     client.on("conversation.item.completed", async () => {
@@ -427,7 +409,7 @@ Call the 'end_conversation' function after you have completed your task and when
 
   return (
     <>
-      <Conversation chat={messages} deleteMessage={() => {}} />
+      <Conversation chat={messages} deleteMessage={() => { }} />
       <div className={"fixedBottom idle"}>
         <div className="textContainer">
           <div className="buttonContainer">
