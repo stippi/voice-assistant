@@ -15,19 +15,19 @@ import { LLMConfig } from "@shared/types";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
 import EditableListItem from "../common/EditableListItem";
-import { DraggableList, OnDragEndResponder } from "../common/DraggableList";
+import { DraggableList } from "../common/DraggableList";
 
 export const LLMConfigs: React.FC = () => {
   const { llmConfigs, setLLMConfigs, activeLLMConfig, setActiveLLMConfig } = useConfigs();
   const [selectedConfig, setSelectedConfig] = useState("");
 
-  const handleDragEnd: OnDragEndResponder = (result) => {
-    if (!result.destination) return;
+  const handleReorder = (oldIndex: number, newIndex: number) => {
     const items = Array.from(llmConfigs);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    const [reorderedItem] = items.splice(oldIndex, 1);
+    items.splice(newIndex, 0, reorderedItem);
     setLLMConfigs(items);
   };
+
 
   const handleAddConfig = () => {
     const newConfig: LLMConfig = {
@@ -40,7 +40,6 @@ export const LLMConfigs: React.FC = () => {
       apiCompatibility: "OpenAI",
       modelID: "",
       useTools: true,
-      useStreaming: true,
     };
     setLLMConfigs([...llmConfigs, newConfig]);
     setSelectedConfig(newConfig.id);
@@ -97,12 +96,9 @@ export const LLMConfigs: React.FC = () => {
         >
           <DraggableList
             items={llmConfigs.map((config, index) => ({ ...config, index }))}
-            onDragEnd={handleDragEnd}
-            renderItem={(provided, _snapshot, item) => (
+            onReorder={handleReorder}
+            renderItem={(item) => (
               <EditableListItem
-                {...provided.draggableProps}
-                {...provided.dragHandleProps}
-                ref={provided.innerRef}
                 item={item}
                 fallbackName="<unnamed>"
                 isSelected={selectedConfig === item.id}

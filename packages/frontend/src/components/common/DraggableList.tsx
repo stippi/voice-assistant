@@ -1,37 +1,69 @@
 import { ReactElement } from "react";
-import DraggableListItem, { DraggableItemProps } from "./DraggableListItem";
 import {
-  DraggableProvided,
-  DraggableStateSnapshot,
-  DragDropContext,
-  Droppable,
-  OnDragEndResponder,
-} from "react-beautiful-dnd";
-import { List } from "@mui/material";
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import DraggableListItem from "./DraggableListItem";
 
-export type { OnDragEndResponder } from "react-beautiful-dnd";
+export type DraggableItemProps = {
+  id: string;
+  index: number;
+};
 
 type DraggableListProps<T extends DraggableItemProps> = {
   items: T[];
-  onDragEnd: OnDragEndResponder;
-  renderItem: (provided: DraggableProvided, snapshot: DraggableStateSnapshot, item: T) => ReactElement;
+  onReorder: (oldIndex: number, newIndex: number) => void;
+  renderItem: (item: T) => ReactElement;
 };
 
-export function DraggableList<T extends DraggableItemProps>({ items, onDragEnd, renderItem }: DraggableListProps<T>) {
+export function DraggableList<T extends DraggableItemProps>({
+  items,
+  onReorder,
+  renderItem,
+}: DraggableListProps<T>) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
+      onReorder(oldIndex, newIndex);
+    }
+  };
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="droppable-list">
-        {(provided) => (
-          <List ref={provided.innerRef} {...provided.droppableProps}>
-            {items.map((item, index) => (
-              <DraggableListItem key={item.id} item={{ ...item, index }}>
-                {renderItem}
-              </DraggableListItem>
-            ))}
-            {provided.placeholder}
-          </List>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={items.map(item => item.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {items.map((item) => (
+          <DraggableListItem key={item.id} id={item.id}>
+            {renderItem(item)}
+          </DraggableListItem>
+        ))}
+      </SortableContext>
+    </DndContext>
   );
 }
