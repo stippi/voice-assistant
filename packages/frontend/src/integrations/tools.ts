@@ -10,9 +10,6 @@ import { create, all } from "mathjs";
 import { Timer } from "@shared/types";
 import { addIsoDurationToDate } from "../utils/timeFormat";
 import OpenAI from "openai";
-import ChatCompletionMessage = OpenAI.ChatCompletionMessage;
-import ChatCompletionMessageToolCall = OpenAI.ChatCompletionMessageToolCall;
-import ChatCompletionTool = OpenAI.ChatCompletionTool;
 import { getNews, getTopNews, newsApiCategoryParam, newsApiCountryParam, newsApiLanguageParam } from "./newsApi";
 import { Settings } from "../contexts/SettingsContext";
 import { getCurrentWeather, getWeatherForecast } from "./openWeatherMap";
@@ -32,7 +29,7 @@ import { overlayService } from "../services/OverlayService";
 const math = create(all, {});
 
 export async function getTools(settings: Settings) {
-  const tools: ChatCompletionTool[] = [
+  const tools: OpenAI.ChatCompletionTool[] = [
     {
       type: "function",
       function: {
@@ -614,11 +611,11 @@ export async function getTools(settings: Settings) {
   return tools;
 }
 
-export function showToolCallInChat(toolCall: ChatCompletionMessageToolCall): boolean {
+export function showToolCallInChat(toolCall: OpenAI.ChatCompletionMessageToolCall): boolean {
   return ["show_image", "show_map", "show_directions", "show_transit_directions"].includes(toolCall.function.name);
 }
 
-export async function callFunction(functionCall: ChatCompletionMessage.FunctionCall): Promise<object> {
+export async function callFunction(functionCall: OpenAI.ChatCompletionMessage.FunctionCall): Promise<object> {
   try {
     const args = JSON.parse(functionCall.arguments || "{}");
     console.log("calling function:", functionCall.name, args);
