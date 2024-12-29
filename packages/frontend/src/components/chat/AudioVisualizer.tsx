@@ -81,7 +81,70 @@ const normalizeArray = (data: Float32Array, m: number, downsamplePeaks: boolean 
   return result;
 };
 
+const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
+  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+  return {
+    x: centerX + (radius * Math.cos(angleInRadians)),
+    y: centerY + (radius * Math.sin(angleInRadians))
+  };
+};
 export const AudioVisualizer = {
+  /**
+   * Renders circular bars around a center point
+   * @param canvas Canvas element
+   * @param ctx Canvas context
+   * @param data Frequency data
+   * @param color Bar color (including alpha)
+   * @param centerX Center X coordinate
+   * @param centerY Center Y coordinate
+   * @param innerRadius Starting radius for bars
+   * @param outerRadius Maximum radius for bars
+   * @param barCount Number of bars to draw
+   */
+  drawCircularBars: (
+    ctx: CanvasRenderingContext2D,
+    data: Float32Array,
+    color: string,
+    centerX: number,
+    centerY: number,
+    innerRadius: number,
+    outerRadius: number,
+    barCount: number = 60
+  ) => {
+    const points = normalizeArray(data, barCount, true);
+    const angleStep = 360 / barCount;
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+
+    for (let i = 0; i < barCount; i++) {
+      const amplitude = Math.abs(points[i]);
+      const startAngle = i * angleStep;
+      const endAngle = startAngle + (angleStep * 0.8); // Leave small gap between bars
+
+      const barLength = amplitude * (outerRadius - innerRadius);
+      const radius = innerRadius + barLength;
+
+      const start = polarToCartesian(0, 0, innerRadius, startAngle);
+      const end = polarToCartesian(0, 0, radius, startAngle);
+
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.arc(0, 0, radius, (startAngle - 90) * Math.PI / 180, (endAngle - 90) * Math.PI / 180);
+      ctx.lineTo(
+        innerRadius * Math.cos((endAngle - 90) * Math.PI / 180),
+        innerRadius * Math.sin((endAngle - 90) * Math.PI / 180)
+      );
+      ctx.arc(0, 0, innerRadius, (endAngle - 90) * Math.PI / 180, (startAngle - 90) * Math.PI / 180, true);
+      ctx.closePath();
+
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  },
   /**
    * Renders a point-in-time snapshot of an audio sample, usually frequency values
    * @param canvas
