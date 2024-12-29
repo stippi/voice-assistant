@@ -1,22 +1,13 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import "./MessageBar.css";
 import IconButton from "@mui/material/IconButton";
 import MicIcon from "@mui/icons-material/Mic";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import { RiRobot2Fill } from "react-icons/ri";
+import Box from '@mui/material/Box';
 import { PicoVoiceAccessKey } from "../config";
 import { Conversation } from "./chat/Conversation";
 import { useSettings, useVoiceDetection, useWindowFocus } from "../hooks";
-import { AudioVisualizer } from "./chat/AudioVisualizer";
-const VisualizerCanvas = {
-  position: "absolute",
-  left: "50%",
-  top: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "120px",
-  height: "120px",
-  pointerEvents: "none",
-} as const;
 import { useRealtimeAssistant } from "../hooks/useRealtimeAssistant";
 
 export default function RealtimeAssistant() {
@@ -32,7 +23,7 @@ export default function RealtimeAssistant() {
 
   const { settings } = useSettings();
   const { documentVisible } = useWindowFocus();
-  const serverCanvasRef = useRef<HTMLCanvasElement>(null);
+
 
   // Initialize voice detection
   const {
@@ -77,47 +68,35 @@ export default function RealtimeAssistant() {
     }
   }, [wakeWordDetection, handleWakeWord]);
 
+  const [frequencies, setFrequencies] = useState<number[]>([0, 0, 0, 0, 0]);
+
   // Audio visualization
   useEffect(() => {
-    let isLoaded = true;
-    const serverCanvas = serverCanvasRef.current;
-    let serverCtx: CanvasRenderingContext2D | null = null;
+    let isActive = true;
 
-    const render = () => {
-      if (isLoaded && serverCanvas) {
-        if (!serverCanvas.width || !serverCanvas.height) {
-          serverCanvas.width = serverCanvas.offsetWidth;
-          serverCanvas.height = serverCanvas.offsetHeight;
-        }
+    const updateFrequencies = () => {
+      if (!isActive) return;
 
-        serverCtx = serverCtx || serverCanvas.getContext("2d");
-        if (serverCtx) {
-          const centerX = serverCanvas.width / 2;
-          const centerY = serverCanvas.height / 2;
-          serverCtx.clearRect(0, 0, serverCanvas.width, serverCanvas.height);
+      const result = audioStreamingService.isConnected()
+        ? audioStreamingService.getFrequencies("voice")
+        : { values: new Float32Array([0]) };
 
-          const result = audioStreamingService.isConnected()
-            ? audioStreamingService.getFrequencies("voice")
-            : { values: new Float32Array([0]) };
+      // Divide the frequency spectrum into 5 bands
+      const bandSize = Math.floor(result.values.length / 5);
+      const newFreqs = Array(5).fill(0).map((_, i) => {
+        const start = i * bandSize;
+        const end = start + bandSize;
+        const bandValues = result.values.slice(start, end);
+        return Math.max(...bandValues);
+      });
 
-          AudioVisualizer.drawCircularBars(
-            serverCtx,
-            result.values,
-            "rgba(153, 153, 153, 0.5)", // Translucent gray
-            centerX,
-            centerY,
-            20, // Inner radius around the mic icon
-            Math.min(centerX, centerY) - 5, // Outer radius
-            32 // Number of bars
-          );
-        }
-        window.requestAnimationFrame(render);
-      }
+      setFrequencies(newFreqs);
+      requestAnimationFrame(updateFrequencies);
     };
-    render();
 
+    updateFrequencies();
     return () => {
-      isLoaded = false;
+      isActive = false;
     };
   }, [audioStreamingService]);
 
@@ -127,28 +106,42 @@ export default function RealtimeAssistant() {
       <div className={"fixedBottom idle"}>
         <div className="textContainer">
           <div className="buttonContainer">
-            {!isConnected && (
-              <IconButton
-                area-label="start conversation"
-                color={isListeningForWakeWord ? "error" : "default"}
-                onClick={connectConversation}
-              >
-                <MicIcon />
-              </IconButton>
-            )}
-            {isConnected && !assistantResponding && (
-              <IconButton area-label="stop conversation" color={"error"} onClick={disconnectConversation}>
-                <RecordVoiceOverIcon />
-              </IconButton>
-            )}
-            {isConnected && assistantResponding && (
-              <IconButton area-label="stop conversation" onClick={disconnectConversation}>
-                <RiRobot2Fill />
-              </IconButton>
-            )}
+            <Box sx={{ position: 'relative', display: 'inline-flex', justifyContent: 'center', alignItems: 'center' }}>
+              {frequencies.map((intensity, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    position: 'absolute',
+                    borderRadius: '50%',
+                    transition: 'opacity 0.1s ease-out',
+                    pointerEvents: 'none',
+                    inset: `${-8 - (i * 8)}px`,
+                    border: `6px solid rgba(255, 255, 255, ${intensity * (0.8 - (i * 0.1))})`,
+                  }}
+                />
+              ))}
+              {!isConnected && (
+                <IconButton
+                  area-label="start conversation"
+                  color={isListeningForWakeWord ? "error" : "default"}
+                  onClick={connectConversation}
+                >
+                  <MicIcon />
+                </IconButton>
+              )}
+              {isConnected && !assistantResponding && (
+                <IconButton area-label="stop conversation" color={"error"} onClick={disconnectConversation}>
+                  <RecordVoiceOverIcon />
+                </IconButton>
+              )}
+              {isConnected && assistantResponding && (
+                <IconButton area-label="stop conversation" onClick={disconnectConversation}>
+                  <RiRobot2Fill />
+                </IconButton>
+              )}
+            </Box>
           </div>
         </div>
-        <canvas ref={serverCanvasRef} style={VisualizerCanvas} />
       </div>
     </>
   );
