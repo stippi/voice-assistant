@@ -8,6 +8,15 @@ import { PicoVoiceAccessKey } from "../config";
 import { Conversation } from "./chat/Conversation";
 import { useSettings, useVoiceDetection, useWindowFocus } from "../hooks";
 import { AudioVisualizer } from "./chat/AudioVisualizer";
+const VisualizerCanvas = {
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "120px",
+  height: "120px",
+  pointerEvents: "none",
+} as const;
 import { useRealtimeAssistant } from "../hooks/useRealtimeAssistant";
 
 export default function RealtimeAssistant() {
@@ -83,11 +92,24 @@ export default function RealtimeAssistant() {
 
         serverCtx = serverCtx || serverCanvas.getContext("2d");
         if (serverCtx) {
+          const centerX = serverCanvas.width / 2;
+          const centerY = serverCanvas.height / 2;
           serverCtx.clearRect(0, 0, serverCanvas.width, serverCanvas.height);
+
           const result = audioStreamingService.isConnected()
             ? audioStreamingService.getFrequencies("voice")
             : { values: new Float32Array([0]) };
-          AudioVisualizer.drawBars(serverCanvas, serverCtx, result.values, "#999999", 5, 0, 8);
+
+          AudioVisualizer.drawCircularBars(
+            serverCtx,
+            result.values,
+            "rgba(153, 153, 153, 0.5)", // Translucent gray
+            centerX,
+            centerY,
+            20, // Inner radius around the mic icon
+            Math.min(centerX, centerY) - 5, // Outer radius
+            32 // Number of bars
+          );
         }
         window.requestAnimationFrame(render);
       }
@@ -126,7 +148,7 @@ export default function RealtimeAssistant() {
             )}
           </div>
         </div>
-        <canvas ref={serverCanvasRef} />
+        <canvas ref={serverCanvasRef} style={VisualizerCanvas} />
       </div>
     </>
   );
