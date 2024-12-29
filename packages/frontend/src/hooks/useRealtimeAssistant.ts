@@ -250,7 +250,11 @@ Call the 'end_conversation' function after you have completed your task and when
     autoEndConversationRef.current = false;
     assistantRespondingRef.current = false;
 
-    await client.connect();
+    // Connect to realtime API
+    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
+    client.updateSession({
+      voice: "shimmer" //alloy, ash, ballad, coral, *echo*, sage, *shimmer* and verse
+    });
   }, []);
 
   const disconnectConversation = useCallback(async () => {
