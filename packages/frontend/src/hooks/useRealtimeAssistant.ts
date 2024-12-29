@@ -10,6 +10,7 @@ import { getTools, callFunction } from "../integrations/tools";
 import { useAppContext, useSettings, useTimers } from "../hooks";
 import { Settings } from "../contexts/SettingsContext";
 import { playSound } from "../utils/audio";
+import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
 
 type RealtimeEvent = {
   item: ItemType;
@@ -25,6 +26,7 @@ type ClientEvent = {
 };
 
 export function useRealtimeAssistant() {
+  // Core services
   const audioStreamingServiceRef = useRef(new AudioStreamingService({ sampleRate: 24000 }));
   const clientRef = useRef(
     new RealtimeClient({
@@ -34,6 +36,7 @@ export function useRealtimeAssistant() {
   );
   const systemMessageServiceRef = useRef(createSystemMessageService());
 
+  // State
   const [items, setItems] = useState<ItemType[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -41,11 +44,11 @@ export function useRealtimeAssistant() {
   const [assistantResponding, setAssistantResponding] = useState(false);
   const [currentlyPlayingTrackId, setCurrentlyPlayingTrackId] = useState<string | null>(null);
 
+  // Refs for state tracking
   const appContext = useAppContext();
   const appContextRef = useRef(appContext);
   const { settings } = useSettings();
   const { timers } = useTimers();
-
   const autoEndConversationRef = useRef(false);
   const assistantRespondingRef = useRef(false);
   const audioBuffersRef = useRef<Int16Array[]>([]);
@@ -54,7 +57,8 @@ export function useRealtimeAssistant() {
     appContextRef.current = appContext;
   }, [appContext]);
 
-  const audioRecorder = useRef<{ onmessage: (event: MessageEvent) => Promise<void> }>({
+  // Audio recorder setup
+  const audioRecorder = useRef<PvEngine>({
     onmessage: async (event: MessageEvent) => {
       const client = clientRef.current;
       switch (event.data.command) {
@@ -78,7 +82,40 @@ export function useRealtimeAssistant() {
     },
   });
 
-  // Subscribe to audio when connected
+  // Connect to conversation
+  const connectConversation = useCallback(async () => {
+    console.log("connecting conversation");
+    const client = clientRef.current;
+    const audioStreamingService = audioStreamingServiceRef.current;
+
+    document.dispatchEvent(new CustomEvent("reduce-volume"));
+    playSound("activation");
+    setIsConnected(true);
+
+    setItems(client.conversation.getItems());
+
+    await audioStreamingService.connect();
+
+    autoEndConversationRef.current = false;
+    assistantRespondingRef.current = false;
+
+    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
+    client.updateSession({
+      voice: "shimmer"
+    });
+  }, []);
+
+  // Disconnect conversation
+  const disconnectConversation = useCallback(async () => {
+    console.log("disconnecting conversation");
+    const client = clientRef.current;
+    client.disconnect();
+
+    setIsConnected(false);
+    document.dispatchEvent(new CustomEvent("restore-volume"));
+  }, []);
+
+  // Audio recorder subscription
   useEffect(() => {
     if (isConnected && !subscribed) {
       console.log("subscribing to web voice engine");
@@ -92,7 +129,29 @@ export function useRealtimeAssistant() {
     }
   }, [isConnected, subscribed]);
 
-  // Set instructions and system message
+  // Handle track completion
+  useEffect(() => {
+    const audioStreamingService = audioStreamingServiceRef.current;
+
+    const handleTrackFinished = (trackId: string) => {
+      if (trackId === currentlyPlayingTrackId) {
+        setCurrentlyPlayingTrackId(null);
+        setAssistantResponding(false);
+        assistantRespondingRef.current = false;
+      }
+      if (autoEndConversationRef.current) {
+        autoEndConversationRef.current = false;
+        disconnectConversation();
+      }
+    };
+
+    audioStreamingService.on("trackFinished", handleTrackFinished);
+    return () => {
+      audioStreamingService.off("trackFinished", handleTrackFinished);
+    };
+  }, [currentlyPlayingTrackId, disconnectConversation]);
+
+  // Set system instructions
   useEffect(() => {
     const client = clientRef.current;
     let instructions = systemMessageServiceRef.current.generateSystemMessage(
@@ -114,7 +173,7 @@ Call the 'end_conversation' function after you have completed your task and when
     client.updateSession({ instructions });
   }, [appContext.location, timers]);
 
-  // Setup client configuration
+  // Setup client
   const setupClient = useCallback(async (client: RealtimeClient, settings: Settings) => {
     const audioStreamingService = audioStreamingServiceRef.current;
 
@@ -169,6 +228,11 @@ Call the 'end_conversation' function after you have completed your task and when
         audioStreamingService.add16BitPCM(delta.audio, item.id);
         setCurrentlyPlayingTrackId(item.id);
       }
+      setItems(items);
+    });
+
+    client.on("conversation.item.completed", async () => {
+      const items = client.conversation.getItems();
       setItems(items);
     });
 
@@ -234,64 +298,26 @@ Call the 'end_conversation' function after you have completed your task and when
     setMessages(convertedItems);
   }, [items]);
 
-  const connectConversation = useCallback(async () => {
-    console.log("connecting conversation");
+  // Handle wake word detection
+  const handleWakeWord = useCallback(() => {
     const client = clientRef.current;
     const audioStreamingService = audioStreamingServiceRef.current;
 
-    document.dispatchEvent(new CustomEvent("reduce-volume"));
-    playSound("activation");
-    setIsConnected(true);
-
-    setItems(client.conversation.getItems());
-
-    await audioStreamingService.connect();
-
-    autoEndConversationRef.current = false;
-    assistantRespondingRef.current = false;
-
-    // Connect to realtime API
-    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
-    client.updateSession({
-      voice: "shimmer" //alloy, ash, ballad, coral, *echo*, sage, *shimmer* and verse
-    });
-  }, []);
-
-  const disconnectConversation = useCallback(async () => {
-    console.log("disconnecting conversation");
-    const client = clientRef.current;
-    client.disconnect();
-
-    setIsConnected(false);
-    document.dispatchEvent(new CustomEvent("restore-volume"));
-  }, []);
-
-  // Handle track completion
-  useEffect(() => {
-    const audioStreamingService = audioStreamingServiceRef.current;
-
-    const handleTrackFinished = (trackId: string) => {
-      if (trackId === currentlyPlayingTrackId) {
-        setCurrentlyPlayingTrackId(null);
-        setAssistantResponding(false);
-        assistantRespondingRef.current = false;
-      }
-      if (autoEndConversationRef.current) {
-        autoEndConversationRef.current = false;
-        disconnectConversation();
-      }
-    };
-
-    audioStreamingService.on("trackFinished", handleTrackFinished);
-    return () => {
-      audioStreamingService.off("trackFinished", handleTrackFinished);
-    };
-  }, [currentlyPlayingTrackId, disconnectConversation]);
+    console.log("wake word detected");
+    if (client.isConnected()) {
+      // Interrupt assistant
+      audioStreamingService.interrupt();
+      client.cancelResponse("");
+    } else {
+      connectConversation();
+    }
+  }, [connectConversation]);
 
   return {
     messages,
     isConnected,
     assistantResponding,
+    handleWakeWord,
     connectConversation,
     disconnectConversation,
     audioStreamingService: audioStreamingServiceRef.current
