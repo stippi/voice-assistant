@@ -127,7 +127,10 @@ export default function RealtimeAssistant() {
     assistantRespondingRef.current = false;
 
     // Connect to realtime API
-    await client.connect();
+    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
+    client.updateSession({
+      voice: "shimmer" //alloy, ash, ballad, coral, *echo*, sage, *shimmer* and verse
+    });
   }, []);
 
   /**
