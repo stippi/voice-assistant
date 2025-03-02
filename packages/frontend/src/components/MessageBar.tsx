@@ -1,12 +1,13 @@
-import React, { KeyboardEvent, MouseEvent } from "react";
-import "./MessageBar.css";
 import { TextareaAutosize } from "@mui/base";
-import { createTheme, IconButton, ThemeProvider } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
 import CancelIcon from "@mui/icons-material/Cancel";
-import SpeechRecorder from "./SpeechRecorder";
+import SendIcon from "@mui/icons-material/Send";
+import { createTheme, IconButton, ThemeProvider } from "@mui/material";
+import { PorcupineDetection } from "@picovoice/porcupine-web";
+import React, { KeyboardEvent, MouseEvent } from "react";
+import { useChats, VoiceDetection } from "../hooks";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
-import { useChats } from "../hooks";
+import "./MessageBar.css";
+import SpeechRecorder from "./SpeechRecorder";
 
 const theme = createTheme({
   components: {},
@@ -26,10 +27,26 @@ interface Props {
   responding: boolean;
   awaitSpokenResponse: boolean;
   idle: boolean;
+  listening: boolean;
+  wakeWordDetection: PorcupineDetection | null;
+  voiceDetection: VoiceDetection | null;
+  startVoiceDetection: () => Promise<void>;
+  stopVoiceDetection: () => Promise<void>;
 }
 
 export const MessageBar = React.memo(
-  ({ sendMessage, stopResponding, responding, awaitSpokenResponse, idle }: Props) => {
+  ({
+    sendMessage,
+    stopResponding,
+    responding,
+    awaitSpokenResponse,
+    idle,
+    listening,
+    wakeWordDetection,
+    voiceDetection,
+    startVoiceDetection,
+    stopVoiceDetection,
+  }: Props) => {
     //const [message, setMessage] = React.useState("");
     const { currentlyTypedMessage, setCurrentlyTypedMessage } = useChats();
     const defaultPlaceHolder = "Type to chat";
@@ -150,6 +167,11 @@ export const MessageBar = React.memo(
                 defaultMessage={defaultPlaceHolder}
                 responding={responding}
                 awaitSpokenResponse={awaitSpokenResponse}
+                listening={listening}
+                wakeWordDetection={wakeWordDetection}
+                voiceDetection={voiceDetection}
+                startVoiceDetection={startVoiceDetection}
+                stopVoiceDetection={stopVoiceDetection}
               />
             </div>
           </div>

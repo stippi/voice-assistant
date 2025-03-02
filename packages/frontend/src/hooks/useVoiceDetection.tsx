@@ -1,14 +1,14 @@
-import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
-import React, { useCallback, useEffect, useRef, useState } from "react";
 import { EagleProfile } from "@picovoice/eagle-web";
-import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
-import { RollingAudioCapture } from "../utils/rollingAudioCapture.ts";
-import { useCobraWorker, useEagleWorker } from ".";
-import { PicoVoiceAccessKey } from "../config.ts";
 import { usePorcupine } from "@picovoice/porcupine-react";
 import { BuiltInKeyword, PorcupineDetection } from "@picovoice/porcupine-web";
+import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
+import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCobraWorker, useEagleWorker } from ".";
+import { PicoVoiceAccessKey } from "../config.ts";
+import { RollingAudioCapture } from "../utils/rollingAudioCapture.ts";
 
-type VoiceDetection = {
+export type VoiceDetection = {
   voiceDetected: boolean;
   silenceDetected: boolean;
   userDetected: number;

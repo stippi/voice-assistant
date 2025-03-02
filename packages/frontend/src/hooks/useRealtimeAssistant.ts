@@ -101,15 +101,17 @@ export function useRealtimeAssistant() {
 
     await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
     client.updateSession({
-      voice: "shimmer"
+      voice: settings.voice // Use the voice setting from user preferences
     });
-  }, []);
+  }, [settings.voice]);
 
   // Disconnect conversation
   const disconnectConversation = useCallback(async () => {
     console.log("disconnecting conversation");
     const client = clientRef.current;
-    client.disconnect();
+    if (client.isConnected()) {
+      client.disconnect();
+    }
 
     setIsConnected(false);
     document.dispatchEvent(new CustomEvent("restore-volume"));
@@ -156,7 +158,7 @@ export function useRealtimeAssistant() {
     const client = clientRef.current;
     let instructions = systemMessageServiceRef.current.generateSystemMessage(
       false,
-      "snarky",
+      settings.personality, // Use the personality setting from user preferences
       timers,
       appContext.location,
       null
@@ -171,7 +173,7 @@ Talk quickly. You should always call a function if you can.
 
 Call the 'end_conversation' function after you have completed your task and when the user no longer requires you.`;
     client.updateSession({ instructions });
-  }, [appContext.location, timers]);
+  }, [appContext.location, timers, settings.personality]);
 
   // Setup client
   const setupClient = useCallback(async (client: RealtimeClient, settings: Settings) => {
@@ -236,11 +238,6 @@ Call the 'end_conversation' function after you have completed your task and when
       setItems(items);
     });
 
-    client.on("conversation.item.completed", async () => {
-      const items = client.conversation.getItems();
-      setItems(items);
-    });
-
     client.on("realtime.event", async (event: ClientEvent) => {
       const { type } = event.event;
       switch (type) {
@@ -262,6 +259,9 @@ Call the 'end_conversation' function after you have completed your task and when
     });
 
     return () => {
+      if (client.isConnected()) {
+        client.disconnect();
+      }
       client.reset();
     };
   }, [settings, setupClient]);
