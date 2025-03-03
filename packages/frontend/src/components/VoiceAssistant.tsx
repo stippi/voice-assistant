@@ -1,28 +1,21 @@
-import { PorcupineDetection } from "@picovoice/porcupine-web";
-import { useRealtimeAssistant, useVoiceAssistant, VoiceDetection } from "../hooks";
+import { EagleProfile } from "@picovoice/eagle-web";
+import { useEffect, useRef, useState } from "react";
+import { useAppContext, useSettings, useRealtimeAssistant, useVoiceAssistant, useVoiceDetection, useWindowFocus } from "../hooks";
 import { Conversation } from "./chat/Conversation";
 import { MessageBar } from "./MessageBar";
 import { ChatOverlay } from "./overlay/ChatOverlay";
+import { PicoVoiceAccessKey } from "../config";
+import { indexDbGet } from "../utils/indexDB";
 
 interface Props {
   idle: boolean;
-  listening: boolean;
-  wakeWordDetection: PorcupineDetection | null;
-  voiceDetection: VoiceDetection | null;
-  startVoiceDetection: () => Promise<void>;
-  stopVoiceDetection: () => Promise<void>;
 }
 
-export default function VoiceAssistant({
-  idle,
-  listening,
-  wakeWordDetection,
-  voiceDetection,
-  startVoiceDetection,
-  stopVoiceDetection,
-}: Props) {
+export default function VoiceAssistant({ idle }: Props) {
+  const { settings } = useSettings();
+  const { documentVisible } = useWindowFocus();
   const { responding, awaitSpokenResponse, sendMessage, stopResponding, deleteMessage, messages } = useVoiceAssistant();
-  const { isConnected, connectConversation, disconnectConversation } = useRealtimeAssistant();
+  const { isConnected, connectConversation, assistantResponding, disconnectConversation } = useRealtimeAssistant();
 
   // Realtime controls for the idle mode
   const realtimeControls = {
@@ -31,6 +24,64 @@ export default function VoiceAssistant({
     disconnectConversation,
   };
 
+  // Load user speech profiles
+  const [speakerProfiles, setSpeakerProfiles] = useState<EagleProfile[] | null>(null);
+  const { users } = useAppContext();
+  const loadProfiles = async (profileIds: string[]) => {
+    console.log("Loading profiles", profileIds);
+    const profiles: EagleProfile[] = [];
+    for (const id of profileIds) {
+      const profileData = await indexDbGet<Uint8Array>(id);
+      profiles.push({ bytes: profileData });
+    }
+    setSpeakerProfiles(profiles);
+  };
+  useEffect(() => {
+    loadProfiles(users.filter((user) => user.voiceProfileId != "").map((user) => user.voiceProfileId))
+      .then(() => console.log("User voice profiles loaded"))
+      .catch((e) => console.error("Failed to load user profiles", e));
+  }, [users]);
+
+  // Initialize voice detection for both normal and idle mode
+  const {
+    isLoaded: isVoiceDetectionLoaded,
+    init: initVoiceDetection,
+    release: releaseVoiceDetection,
+    isListeningForWakeWord,
+    wakeWordDetection,
+    voiceDetection,
+    start: startVoiceDetection,
+    stop: stopVoiceDetection,
+  } = useVoiceDetection(settings.openMic && documentVisible);
+
+  const voiceDetectionInitTriggeredRef = useRef(false);
+
+  // Setup voice detection
+  useEffect(() => {
+    if (PicoVoiceAccessKey.length === 0) {
+      return;
+    }
+
+    if (!isVoiceDetectionLoaded && speakerProfiles != null && !voiceDetectionInitTriggeredRef.current) {
+      console.log("Initializing voice detection");
+      voiceDetectionInitTriggeredRef.current = true;
+      initVoiceDetection(settings.triggerWord, speakerProfiles)
+        .then(() => console.log("Voice detection initialized"))
+        .catch((error) => console.error("Failed to initialize voice detection", error));
+    }
+
+    return () => {
+      if (isVoiceDetectionLoaded) {
+        console.log("Releasing voice detection");
+        voiceDetectionInitTriggeredRef.current = false;
+        releaseVoiceDetection()
+          .then(() => console.log("Voice detection released"))
+          .catch((error) => console.error("Failed to release voice detection", error));
+      }
+    };
+  }, [initVoiceDetection, releaseVoiceDetection, speakerProfiles, settings.triggerWord, isVoiceDetectionLoaded]);
+
+
   return (
     <>
       <ChatOverlay />
@@ -38,10 +89,10 @@ export default function VoiceAssistant({
       <MessageBar
         sendMessage={sendMessage}
         stopResponding={stopResponding}
-        responding={responding}
+        responding={responding || assistantResponding}
         awaitSpokenResponse={awaitSpokenResponse}
         idle={idle}
-        listening={listening}
+        listening={isListeningForWakeWord}
         wakeWordDetection={wakeWordDetection}
         voiceDetection={voiceDetection}
         startVoiceDetection={startVoiceDetection}
