@@ -1,5 +1,5 @@
 import { PorcupineDetection } from "@picovoice/porcupine-web";
-import { useVoiceAssistant, VoiceDetection } from "../hooks";
+import { useRealtimeAssistant, useVoiceAssistant, VoiceDetection } from "../hooks";
 import { Conversation } from "./chat/Conversation";
 import { MessageBar } from "./MessageBar";
 import { ChatOverlay } from "./overlay/ChatOverlay";
@@ -22,6 +22,14 @@ export default function VoiceAssistant({
   stopVoiceDetection,
 }: Props) {
   const { responding, awaitSpokenResponse, sendMessage, stopResponding, deleteMessage, messages } = useVoiceAssistant();
+  const { isConnected, connectConversation, disconnectConversation } = useRealtimeAssistant();
+
+  // Realtime controls for the idle mode
+  const realtimeControls = {
+    isRecording: isConnected,
+    connectConversation,
+    disconnectConversation,
+  };
 
   return (
     <>
@@ -38,6 +46,7 @@ export default function VoiceAssistant({
         voiceDetection={voiceDetection}
         startVoiceDetection={startVoiceDetection}
         stopVoiceDetection={stopVoiceDetection}
+        useRealtimeAssistant={realtimeControls}
       />
     </>
   );

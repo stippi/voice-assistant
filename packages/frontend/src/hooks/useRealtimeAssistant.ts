@@ -1,16 +1,16 @@
-import { useEffect, useRef, useCallback, useState } from "react";
 import { RealtimeClient } from "@openai/realtime-api-beta";
 import { ItemType, ToolDefinitionType } from "@openai/realtime-api-beta/dist/lib/client.js";
-import { completionsApiKey } from "../config";
-import { AudioStreamingService } from "../services/AudioStreamingService";
 import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
-import { createSystemMessageService } from "../services/SystemMessageService";
-import { Message } from "@shared/types";
-import { getTools, callFunction } from "../integrations/tools";
-import { useAppContext, useSettings, useTimers } from "../hooks";
-import { Settings } from "../contexts/SettingsContext";
-import { playSound } from "../utils/audio";
 import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
+import { Message } from "@shared/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { completionsApiKey } from "../config";
+import { Settings } from "../contexts/SettingsContext";
+import { useAppContext, useSettings, useTimers } from "../hooks";
+import { callFunction, getTools } from "../integrations/tools";
+import { AudioStreamingService } from "../services/AudioStreamingService";
+import { createSystemMessageService } from "../services/SystemMessageService";
+import { playSound } from "../utils/audio";
 
 type RealtimeEvent = {
   item: ItemType;
@@ -32,7 +32,7 @@ export function useRealtimeAssistant() {
     new RealtimeClient({
       apiKey: completionsApiKey,
       dangerouslyAllowAPIKeyInBrowser: true,
-    })
+    }),
   );
   const systemMessageServiceRef = useRef(createSystemMessageService());
 
@@ -101,9 +101,9 @@ export function useRealtimeAssistant() {
 
     await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
     client.updateSession({
-      voice: settings.voice // Use the voice setting from user preferences
+      voice: "shimmer", //settings.voice // Use the voice setting from user preferences
     });
-  }, [settings.voice]);
+  }, []); // [settings.voice]);
 
   // Disconnect conversation
   const disconnectConversation = useCallback(async () => {
@@ -161,7 +161,7 @@ export function useRealtimeAssistant() {
       settings.personality, // Use the personality setting from user preferences
       timers,
       appContext.location,
-      null
+      null,
     );
     instructions += `
 ## Important
@@ -204,14 +204,15 @@ Call the 'end_conversation' function after you have completed your task and when
     client.addTool(
       {
         name: "end_conversation",
-        description: "Ends the current conversation with the user. Use when the task is done or the user indicates the assistant is no longer needed.",
+        description:
+          "Ends the current conversation with the user. Use when the task is done or the user indicates the assistant is no longer needed.",
         parameters: {},
       },
       async () => {
         console.log("calling function: end_conversation");
         autoEndConversationRef.current = true;
         return { ok: true };
-      }
+      },
     );
 
     client.on("error", (event: never) => console.error(event));
@@ -320,6 +321,6 @@ Call the 'end_conversation' function after you have completed your task and when
     handleWakeWord,
     connectConversation,
     disconnectConversation,
-    audioStreamingService: audioStreamingServiceRef.current
+    audioStreamingService: audioStreamingServiceRef.current,
   };
 }
