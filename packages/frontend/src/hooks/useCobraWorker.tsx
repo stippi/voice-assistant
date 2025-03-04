@@ -1,6 +1,6 @@
-import {useCallback, useEffect, useRef, useState} from "react";
-import {WebVoiceProcessor} from "@picovoice/web-voice-processor";
-import {CobraWorker} from "@picovoice/cobra-web";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
+import { CobraWorker } from "@picovoice/cobra-web";
 
 export function useCobraWorker(): {
   isLoaded: boolean,
@@ -14,7 +14,7 @@ export function useCobraWorker(): {
 } {
   const cobraRef = useRef<CobraWorker | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   const init = useCallback(async (
     accessKey: string,
     voiceProbabilityCallback: (probability: number) => void
@@ -24,6 +24,7 @@ export function useCobraWorker(): {
       return;
     }
     try {
+      setIsLoaded(false);
       cobraRef.current = await CobraWorker.create(
         accessKey,
         voiceProbabilityCallback
@@ -33,20 +34,20 @@ export function useCobraWorker(): {
       console.error(e);
     }
   }, []);
-  
+
   const start = useCallback(async (): Promise<void> => {
     try {
       if (!cobraRef.current) {
         console.error("Cobra has not been initialized or has been released");
         return;
       }
-      
+
       await WebVoiceProcessor.subscribe(cobraRef.current);
     } catch (e) {
       console.error("Error starting Cobra worker", e);
     }
   }, []);
-  
+
   const stop = useCallback(async (): Promise<void> => {
     try {
       if (!cobraRef.current) {
@@ -58,17 +59,17 @@ export function useCobraWorker(): {
       console.error("Error stopping Eagle worker", e)
     }
   }, []);
-  
+
   const release = useCallback(async (): Promise<void> => {
     if (cobraRef.current) {
       await stop();
       cobraRef.current.terminate();
       cobraRef.current = null;
-      
+
       setIsLoaded(false);
     }
   }, [stop]);
-  
+
   useEffect(() => () => {
     if (cobraRef.current) {
       WebVoiceProcessor.unsubscribe(cobraRef.current).catch(e => console.log(e));
@@ -76,7 +77,7 @@ export function useCobraWorker(): {
       cobraRef.current = null;
     }
   }, []);
-  
+
   return {
     isLoaded,
     init,

@@ -10,6 +10,7 @@ export * from "./useLocation";
 export * from "./useMicrosoftContext";
 export * from "./useRealtimeAssistant";
 export * from "./useSettings";
+export * from "./useSilenceDetector";
 export * from "./useSpotifyContext";
 export * from "./useTimers";
 export * from "./useVoiceAssistant";

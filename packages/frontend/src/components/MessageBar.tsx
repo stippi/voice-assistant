@@ -4,7 +4,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { createTheme, IconButton, ThemeProvider } from "@mui/material";
 import { PorcupineDetection } from "@picovoice/porcupine-web";
 import React, { KeyboardEvent, MouseEvent } from "react";
-import { useChats, useWhisperTranscription, VoiceDetection } from "../hooks";
+import { useChats, VoiceDetection } from "../hooks";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 import "./MessageBar.css";
 import SpeechRecorder from "./SpeechRecorder";
@@ -38,7 +38,7 @@ interface Props {
   voiceDetection: VoiceDetection | null;
   startVoiceDetection: () => Promise<void>;
   stopVoiceDetection: () => Promise<void>;
-  useRealtimeAssistant: ConversationControls;
+  conversationControls: ConversationControls;
 }
 
 export const MessageBar = React.memo(
@@ -53,7 +53,7 @@ export const MessageBar = React.memo(
     voiceDetection,
     startVoiceDetection,
     stopVoiceDetection,
-    useRealtimeAssistant,
+    conversationControls,
   }: Props) => {
     //const [message, setMessage] = React.useState("");
     const { currentlyTypedMessage, setCurrentlyTypedMessage } = useChats();
@@ -104,15 +104,6 @@ export const MessageBar = React.memo(
         textAreaRef.current.focus();
       }
     };
-
-    // Whisper Transcription Hook for the non-idle mode
-    const whisperTranscription = useWhisperTranscription(
-      // onTranscriptionStart
-      (messageId) => sendMessage(messageId, "", true),
-      // onTranscriptionComplete
-      (messageId, text) => sendMessage(messageId, text, true),
-    );
-    const conversationControls = idle ? useRealtimeAssistant : whisperTranscription;
 
     const sendTextMessage = (message: string) => {
       const userMessageId = crypto.randomUUID();

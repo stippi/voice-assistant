@@ -1,6 +1,6 @@
 import { EagleProfile } from "@picovoice/eagle-web";
 import { useEffect, useRef, useState } from "react";
-import { useAppContext, useSettings, useRealtimeAssistant, useVoiceAssistant, useVoiceDetection, useWindowFocus } from "../hooks";
+import { useAppContext, useSettings, useRealtimeAssistant, useVoiceAssistant, useVoiceDetection, useWhisperTranscription, useWindowFocus } from "../hooks";
 import { Conversation } from "./chat/Conversation";
 import { MessageBar } from "./MessageBar";
 import { ChatOverlay } from "./overlay/ChatOverlay";
@@ -23,6 +23,15 @@ export default function VoiceAssistant({ idle }: Props) {
     connectConversation,
     disconnectConversation,
   };
+
+  // Whisper Transcription Hook for the non-idle mode
+  const whisperTranscription = useWhisperTranscription(
+    // onTranscriptionStart
+    (messageId) => sendMessage(messageId, "", true),
+    // onTranscriptionComplete
+    (messageId, text) => sendMessage(messageId, text, true),
+  );
+  const conversationControls = idle ? realtimeControls : whisperTranscription;
 
   // Load user speech profiles
   const [speakerProfiles, setSpeakerProfiles] = useState<EagleProfile[] | null>(null);
@@ -97,7 +106,7 @@ export default function VoiceAssistant({ idle }: Props) {
         voiceDetection={voiceDetection}
         startVoiceDetection={startVoiceDetection}
         stopVoiceDetection={stopVoiceDetection}
-        useRealtimeAssistant={realtimeControls}
+        conversationControls={conversationControls}
       />
     </>
   );

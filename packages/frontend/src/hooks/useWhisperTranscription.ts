@@ -1,4 +1,3 @@
-// packages/frontend/src/hooks/useWhisperTranscription.ts
 import OpenAI, { toFile } from "openai";
 import { useCallback, useRef, useState } from "react";
 import { transcriptionApiKey, transcriptionApiUrl, transcriptionModel } from "../config";
