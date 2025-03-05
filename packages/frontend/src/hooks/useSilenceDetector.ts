@@ -71,7 +71,7 @@ export function useSilenceDetector(options: SilenceDetectorOptions = {}) {
             audioFrameCount.current = 0;
 
             // If enough silent frames detected, set status to "silent"
-            if (silenceFrameCount.current >= silenceFrames && !isSilent) {
+            if (silenceFrameCount.current >= silenceFrames && !isSilentRef.current) {
               setIsSilent(true);
               options.onStateChange?.(true);
             }
@@ -81,7 +81,7 @@ export function useSilenceDetector(options: SilenceDetectorOptions = {}) {
             silenceFrameCount.current = 0;
 
             // If enough audio frames detected, set status to "not silent"
-            if (audioFrameCount.current >= audioFrames && isSilent) {
+            if (audioFrameCount.current >= audioFrames && isSilentRef.current) {
               setIsSilent(false);
               options.onStateChange?.(false);
             }
@@ -92,12 +92,22 @@ export function useSilenceDetector(options: SilenceDetectorOptions = {}) {
 
     // Cleanup on unmount
     return () => {
-      if (isActive && engineRef.current) {
+      if (engineRef.current) {
         WebVoiceProcessor.unsubscribe(engineRef.current).catch(e => console.error(e));
       }
       engineRef.current = null;
     };
-  }, [threshold, silenceFrames, audioFrames, isSilent, isActive, options]);
+  }, [threshold, silenceFrames, audioFrames, options]);
+
+  // Reference to isActive
+  const isActiveRef = useRef(isActive);
+  const isSilentRef = useRef(isSilent);
+  useEffect(() => {
+    console.log(`updating isActiveRef: ${isActive}`);
+    isActiveRef.current = isActive;
+    console.log(`updating isSilentRef: ${isSilent}`);
+    isSilentRef.current = isSilent;
+  }, [isActive, isSilent]);
 
   // Function to start detection
   const start = useCallback(async () => {
@@ -121,7 +131,9 @@ export function useSilenceDetector(options: SilenceDetectorOptions = {}) {
 
   // Function to stop detection
   const stop = useCallback(async () => {
-    if (!engineRef.current || !isActive) {
+    console.log("stopping silence detection");
+    if (!engineRef.current || !isActiveRef.current) {
+      console.error(`Silence detector engine is not ready or not active (engine: ${engineRef.current}, active: ${isActiveRef.current})`);
       return;
     }
 
@@ -131,7 +143,7 @@ export function useSilenceDetector(options: SilenceDetectorOptions = {}) {
     } catch (e) {
       console.error("Error stopping silence detector:", e);
     }
-  }, [isActive]);
+  }, []);
 
   return {
     isActive,

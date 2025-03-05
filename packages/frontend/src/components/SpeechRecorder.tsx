@@ -72,7 +72,7 @@ const SpeechRecorder = ({
     stopRespondingRef.current = stopResponding;
   }, [isRecording, startConversation, stopResponding]);
 
-  // React to external wakeWordDetection
+  // React to external wake word detection
   useEffect(() => {
     if (wakeWordDetection) {
       console.log("wake word detected in SpeechRecorder");
@@ -87,14 +87,11 @@ const SpeechRecorder = ({
 
   // React to silence detection from voice detection hook
   useEffect(() => {
-    if (isRecording && voiceDetection?.silenceDetected) {
-      console.log("silence detected in SpeechRecorder, stopping conversation");
-      if (voiceDetection.voiceDetected) {
-        // Only stop if voice was first detected (avoid stopping right after starting)
-        stopConversation();
-      }
+    if (!voiceDetection) return;
+    if (voiceDetection.silenceDetected && isRecordingRef.current) {
+      stopConversation();
     }
-  }, [voiceDetection, isRecording, stopConversation]);
+  }, [voiceDetection, stopConversation]);
 
   // Auto-start conversation after assistant has finished speaking
   useEffect(() => {
