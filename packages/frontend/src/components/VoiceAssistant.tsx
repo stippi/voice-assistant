@@ -76,20 +76,32 @@ export default function VoiceAssistant({ idle }: Props) {
       voiceDetectionInitTriggeredRef.current = true;
       initVoiceDetection(settings.triggerWord, speakerProfiles)
         .then(() => console.log("Voice detection initialized"))
-        .catch((error) => console.error("Failed to initialize voice detection", error));
+        .catch((error) => {
+          console.error("Failed to initialize voice detection", error);
+          voiceDetectionInitTriggeredRef.current = false;
+        });
     }
 
     return () => {
-      if (isVoiceDetectionLoaded) {
+      if (voiceDetectionInitTriggeredRef.current) {
         console.log("Releasing voice detection");
-        voiceDetectionInitTriggeredRef.current = false;
         releaseVoiceDetection()
-          .then(() => console.log("Voice detection released"))
+          .then(() => {
+            console.log("Voice detection released");
+            voiceDetectionInitTriggeredRef.current = false;
+          })
           .catch((error) => console.error("Failed to release voice detection", error));
       }
     };
   }, [initVoiceDetection, releaseVoiceDetection, speakerProfiles, settings.triggerWord, isVoiceDetectionLoaded]);
 
+  useEffect(() => {
+    if (!voiceDetection || idle) return;
+
+    if (voiceDetection.voiceDetected) {
+      whisperTranscription.setVoiceDetected(true);
+    }
+  }, [voiceDetection, whisperTranscription, idle]);
 
   return (
     <>
