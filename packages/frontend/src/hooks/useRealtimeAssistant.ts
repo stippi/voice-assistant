@@ -5,7 +5,7 @@ import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
 import { Message } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { completionsApiKey } from "../config";
-import { Settings } from "../contexts/SettingsContext";
+import OpenAI from "openai";
 import { useAppContext, useSettings, useTimers } from "../hooks";
 import { callFunction, getTools } from "../integrations/tools";
 import { AudioStreamingService } from "../services/AudioStreamingService";
@@ -176,7 +176,7 @@ Call the 'end_conversation' function after you have completed your task and when
   }, [appContext.location, timers, settings.personality]);
 
   // Setup client
-  const setupClient = useCallback(async (client: RealtimeClient, settings: Settings) => {
+  const setupClient = useCallback(async (client: RealtimeClient, tools: OpenAI.ChatCompletionTool[]) => {
     const audioStreamingService = audioStreamingServiceRef.current;
 
     client.updateSession({
@@ -192,7 +192,6 @@ Call the 'end_conversation' function after you have completed your task and when
       },
     });
 
-    const tools = await getTools(settings);
     for (const tool of tools) {
       console.log(`adding tool "${tool.function.name}"`);
       client.addTool(tool.function as ToolDefinitionType, async (args: never) => {
@@ -252,10 +251,18 @@ Call the 'end_conversation' function after you have completed your task and when
     });
   }, []);
 
+  // Cache tools. The available tools depend on the settings, but we cache them as JSON string to avoid re-renders when unrelated settings change.
+  const [tools, setTools] = useState("[]");
+  useEffect(() => {
+    getTools(settings).then(tools => {
+      setTools(JSON.stringify(tools));
+    });
+  }, [settings]);
+
   // Initialize client
   useEffect(() => {
     const client = clientRef.current;
-    setupClient(client, settings).then(() => {
+    setupClient(client, JSON.parse(tools) as OpenAI.ChatCompletionTool[]).then(() => {
       setItems(client.conversation.getItems());
     });
 
@@ -265,7 +272,7 @@ Call the 'end_conversation' function after you have completed your task and when
       }
       client.reset();
     };
-  }, [settings, setupClient]);
+  }, [tools, setupClient]);
 
   // Convert items to messages
   useEffect(() => {
