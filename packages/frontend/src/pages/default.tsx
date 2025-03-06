@@ -13,10 +13,8 @@ export default function DefaultPage() {
   return (
     <OptionalIntegrations>
       <Sidebar />
-      <VoiceAssistant
-        idle={idleMode}
-      />
-      <Dashboard />
+      <VoiceAssistant idle={idleMode} />
+      <Dashboard idle={idleMode} />
     </OptionalIntegrations>
   );
 }
