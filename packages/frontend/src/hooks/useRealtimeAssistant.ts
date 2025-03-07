@@ -100,10 +100,12 @@ export function useRealtimeAssistant() {
     assistantRespondingRef.current = false;
 
     await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview" });
+    //await client.realtime.connect({ model: "gpt-4o-realtime-preview" });
     client.updateSession({
-      voice: "shimmer", //settings.voice // Use the voice setting from user preferences
+      //@ts-expect-error The voices in the OpenAI Realtime API client code have not been updated.
+      voice: settings.voice || "shimmer"
     });
-  }, []); // [settings.voice]);
+  }, [settings.voice]);
 
   // Disconnect conversation
   const disconnectConversation = useCallback(async () => {
@@ -158,7 +160,7 @@ export function useRealtimeAssistant() {
     const client = clientRef.current;
     let instructions = systemMessageServiceRef.current.generateSystemMessage(
       false,
-      settings.personality, // Use the personality setting from user preferences
+      settings.personality,
       timers,
       appContext.location,
       null,
