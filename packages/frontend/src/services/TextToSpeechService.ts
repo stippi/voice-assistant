@@ -24,6 +24,7 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
   protected onCompleteCallback: (() => void) | null = null;
   protected sentenceQueue: string[] = [];
   protected isExpectingMoreText: boolean = true;
+  protected queuedAudio: number = 0;
 
   protected audioEndedPromise: Promise<unknown> | null = null;
   protected currentAudio: HTMLAudioElement | null = null;
@@ -95,7 +96,6 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
       }
     }
     if (this.currentAudio === null && !this.isExpectingMoreText) {
-      console.log("playSentencesFromQueue(): playback complete");
       this.onComplete();
     }
     this.isAudioPlaying = false;
@@ -106,12 +106,14 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
       return;
     }
 
+    this.queuedAudio++;
     const audio = await this.createAudioElement(sentence);
 
     if (this.audioEndedPromise) {
       // Wait for the previous audio to finish playing before starting the next one
       await this.audioEndedPromise;
       if (this.cancelled) {
+        this.queuedAudio--;
         return;
       }
     }
@@ -128,7 +130,8 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
       audio.onended = () => {
         URL.revokeObjectURL(audio.src);
         this.currentAudio = null;
-        if (this.sentenceQueue.length === 0 && !this.isExpectingMoreText) {
+        this.queuedAudio--;
+        if (this.sentenceQueue.length === 0 && !this.isExpectingMoreText && this.queuedAudio == 0) {
           this.onComplete();
         }
         resolve();
@@ -137,6 +140,7 @@ abstract class BaseTextToSpeechService implements TextToSpeechService {
 
     audio.play().catch((error) => {
       this.currentAudio = null;
+      this.queuedAudio--;
       console.error("Failed to play audio", error);
     });
   }

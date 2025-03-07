@@ -1,12 +1,12 @@
-import React, { KeyboardEvent, MouseEvent } from "react";
-import "./MessageBar.css";
 import { TextareaAutosize } from "@mui/base";
-import { createTheme, IconButton, ThemeProvider } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
 import CancelIcon from "@mui/icons-material/Cancel";
-import SpeechRecorder from "./SpeechRecorder";
-import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
+import SendIcon from "@mui/icons-material/Send";
+import { createTheme, IconButton, ThemeProvider } from "@mui/material";
+import React, { KeyboardEvent, MouseEvent } from "react";
 import { useChats } from "../hooks";
+import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
+import "./MessageBar.css";
+import SpeechRecorder from "./SpeechRecorder";
 
 const theme = createTheme({
   components: {},
@@ -24,16 +24,26 @@ interface Props {
   sendMessage: (id: string, message: string, audible: boolean) => void;
   stopResponding: (audible: boolean) => void;
   responding: boolean;
-  awaitSpokenResponse: boolean;
   idle: boolean;
+  listening: boolean;
+  isRecording: boolean;
+  startConversation: () => void;
+  stopConversation: () => void;
 }
 
 export const MessageBar = React.memo(
-  ({ sendMessage, stopResponding, responding, awaitSpokenResponse, idle }: Props) => {
+  ({
+    sendMessage,
+    stopResponding,
+    responding,
+    idle,
+    listening,
+    isRecording,
+    startConversation,
+    stopConversation,
+  }: Props) => {
     //const [message, setMessage] = React.useState("");
     const { currentlyTypedMessage, setCurrentlyTypedMessage } = useChats();
-    const defaultPlaceHolder = "Type to chat";
-    const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
     const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
     const performanceTrackingServiceRef = React.useRef(createPerformanceTrackingService());
 
@@ -105,7 +115,7 @@ export const MessageBar = React.memo(
                 name="Message input"
                 className={showInnerContent ? "visible textArea" : "textArea"}
                 ref={textAreaRef}
-                placeholder={placeHolder}
+                placeholder="Type to chat"
                 value={currentlyTypedMessage}
                 onChange={(e) => setCurrentlyTypedMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -144,12 +154,10 @@ export const MessageBar = React.memo(
                 </>
               )}
               <SpeechRecorder
-                sendMessage={sendMessage}
-                stopResponding={stopResponding}
-                setTranscript={setPlaceHolder}
-                defaultMessage={defaultPlaceHolder}
-                responding={responding}
-                awaitSpokenResponse={awaitSpokenResponse}
+                listening={listening}
+                isRecording={isRecording}
+                startConversation={startConversation}
+                stopConversation={stopConversation}
               />
             </div>
           </div>

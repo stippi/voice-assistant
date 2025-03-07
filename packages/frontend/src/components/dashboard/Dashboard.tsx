@@ -9,10 +9,13 @@ import { Timers } from "./timers/Timers";
 import { Events } from "./Events";
 import { Photos } from "./Photos";
 import { SpotifyPlayer } from "./SpotifyPlayer";
-import { useAppContext, useGoogleContext, useEvents, useSettings, useTimers } from "../../hooks";
+import { useGoogleContext, useEvents, useSettings, useTimers } from "../../hooks";
 
-export function Dashboard() {
-  const { idle } = useAppContext();
+interface Props {
+  idle: boolean;
+}
+
+export function Dashboard({ idle }: Props) {
   const { timers } = useTimers();
   const { favoritePhotos } = useGoogleContext();
   const { settings } = useSettings();

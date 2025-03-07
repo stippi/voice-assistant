@@ -1,14 +1,14 @@
-import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
-import React, { useCallback, useEffect, useRef, useState } from "react";
 import { EagleProfile } from "@picovoice/eagle-web";
-import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
-import { RollingAudioCapture } from "../utils/rollingAudioCapture.ts";
-import { useCobraWorker, useEagleWorker } from ".";
-import { PicoVoiceAccessKey } from "../config.ts";
 import { usePorcupine } from "@picovoice/porcupine-react";
 import { BuiltInKeyword, PorcupineDetection } from "@picovoice/porcupine-web";
+import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
+import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCobraWorker, useEagleWorker, useSilenceDetector } from ".";
+import { PicoVoiceAccessKey } from "../config.ts";
+import { RollingAudioCapture } from "../utils/rollingAudioCapture.ts";
 
-type VoiceDetection = {
+export type VoiceDetection = {
   voiceDetected: boolean;
   silenceDetected: boolean;
   userDetected: number;
@@ -40,8 +40,41 @@ export function useVoiceDetection(enableWakeWord: boolean): {
     release: releasePorcupine,
   } = usePorcupine();
 
+  const voiceProbabilityCallback = React.useCallback((probability: number) => {
+    const now = new Date().getTime();
+    if (probability > 0.7) {
+      if (!voiceDetectedRef.current) {
+        voiceDetectedRef.current = true;
+        console.log("voice detected");
+        setVoiceDetection((current) => ({
+          voiceDetected: true,
+          silenceDetected: false,
+          userDetected: current ? current.userDetected : -1,
+        }));
+      }
+      lastSilenceCheckRef.current = now;
+    } else {
+      // Shorten the silence timeout when voice was detected after starting the recording
+      const timeout = voiceDetectedRef.current ? 1750 : 2500;
+      if (now - lastSilenceCheckRef.current > timeout) {
+        console.log("silence detected");
+        setVoiceDetection((current) => ({
+          voiceDetected: current ? current.voiceDetected : false,
+          silenceDetected: true,
+          userDetected: current ? current.userDetected : -1,
+        }));
+      }
+    }
+  }, []);
+
+  const speakerScoresCallback = React.useCallback((scores: number[]) => {
+    // TODO: Do something with it
+    console.log("speaker scores", scores);
+  }, []);
+
   // Start Porcupine wake word detection depending on settings and whether it is loaded
   useEffect(() => {
+    console.log(`isPorcupineLoaded: ${isPorcupineLoaded}, enableWakeWord: ${enableWakeWord}, isListening: ${isListening}`);
     if (isPorcupineLoaded && enableWakeWord && !isListening) {
       console.log("starting wake-word detection");
       startPorcupine().catch((error) => {
@@ -98,11 +131,21 @@ export function useVoiceDetection(enableWakeWord: boolean): {
     release: releaseCobra,
   } = useCobraWorker();
 
+  const {
+    start: startSilenceDetection,
+    stop: stopSilenceDetection,
+  } = useSilenceDetector({ onLevelChange: voiceProbabilityCallback });
+
   const start = useCallback(async () => {
     if (isEagleLoaded) {
       await startEagle();
     }
-    await startCobra();
+    if (isCobraLoaded) {
+      await startCobra();
+    } else {
+      console.log("Cobra not available, falling back to silence detection");
+      await startSilenceDetection();
+    }
     voiceDetectedRef.current = false;
     lastSilenceCheckRef.current = new Date().getTime();
     setVoiceDetection({
@@ -110,65 +153,44 @@ export function useVoiceDetection(enableWakeWord: boolean): {
       silenceDetected: false,
       userDetected: -1,
     });
-  }, [isEagleLoaded, startCobra, startEagle]);
+  }, [isEagleLoaded, isCobraLoaded, startCobra, startEagle, startSilenceDetection]);
 
   const stop = useCallback(async () => {
-    await stopCobra();
+    if (isCobraLoaded) {
+      await stopCobra();
+    } else {
+      await stopSilenceDetection();
+    }
     if (isEagleLoaded) {
       await stopEagle();
     }
     setVoiceDetection(null);
-  }, [isEagleLoaded, stopCobra, stopEagle]);
-
-  const voiceProbabilityCallback = React.useCallback((probability: number) => {
-    const now = new Date().getTime();
-    if (probability > 0.7) {
-      if (!voiceDetectedRef.current) {
-        voiceDetectedRef.current = true;
-        console.log("voice detected");
-        setVoiceDetection((current) => ({
-          voiceDetected: true,
-          silenceDetected: false,
-          userDetected: current ? current.userDetected : -1,
-        }));
-      }
-      lastSilenceCheckRef.current = now;
-    } else {
-      // Shorten the silence timeout when voice was detected after starting the recording
-      const timeout = voiceDetectedRef.current ? 1750 : 2500;
-      if (now - lastSilenceCheckRef.current > timeout) {
-        console.log("silence detected");
-        setVoiceDetection((current) => ({
-          voiceDetected: current ? current.voiceDetected : false,
-          silenceDetected: true,
-          userDetected: current ? current.userDetected : -1,
-        }));
-      }
-    }
-  }, []);
-
-  const speakerScoresCallback = React.useCallback((scores: number[]) => {
-    // TODO: Do something with it
-    console.log("speaker scores", scores);
-  }, []);
+  }, [isEagleLoaded, isCobraLoaded, stopCobra, stopEagle, stopSilenceDetection]);
 
   const init = useCallback(
     async (wakeWord: BuiltInKeyword, speakerProfiles: EagleProfile[]) => {
-      await initPorcupine(PicoVoiceAccessKey, wakeWord, {
-        publicPath: "/models/porcupine_params.pv",
-        customWritePath: "3.0.0_porcupine_params.pv",
-      });
-      if (speakerProfiles.length > 0) {
-        await initEagle(
-          PicoVoiceAccessKey,
-          {
-            publicPath: "/models/eagle_params.pv",
-          },
-          speakerProfiles,
-          speakerScoresCallback,
-        );
+      try {
+        console.log("initializing Porcupine");
+        await initPorcupine(PicoVoiceAccessKey, wakeWord, {
+          publicPath: "/models/porcupine_params.pv",
+          customWritePath: "3.0.0_porcupine_params.pv",
+        });
+        console.log("initializing Eagle");
+        if (speakerProfiles.length > 0) {
+          await initEagle(
+            PicoVoiceAccessKey,
+            {
+              publicPath: "/models/eagle_params.pv",
+            },
+            speakerProfiles,
+            speakerScoresCallback,
+          );
+        }
+        console.log("initializing Cobra");
+        await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
+      } catch (e) {
+        console.log("Error initializing voice detection", e);
       }
-      await initCobra(PicoVoiceAccessKey, voiceProbabilityCallback);
     },
     [initPorcupine, initEagle, initCobra, voiceProbabilityCallback, speakerScoresCallback],
   );
@@ -196,7 +218,7 @@ export function useVoiceDetection(enableWakeWord: boolean): {
   ]);
 
   return {
-    isLoaded: isPorcupineLoaded && isCobraLoaded,
+    isLoaded: isPorcupineLoaded,
     init,
     start,
     stop,
