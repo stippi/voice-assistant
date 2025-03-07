@@ -146,6 +146,8 @@ export default function VoiceAssistant({ idle }: Props) {
   }, [voiceDetection, stopConversation]);
 
   // Handle wake word detection
+  // This hook must only depend on `wakeWordDetection` so that it is called only when that changes,
+  // which is the event when the wakeword is detected. Everything else must be refs.
   useEffect(() => {
     if (wakeWordDetection) {
       if (isIdleRef.current) {
