@@ -2,9 +2,8 @@ import { TextareaAutosize } from "@mui/base";
 import CancelIcon from "@mui/icons-material/Cancel";
 import SendIcon from "@mui/icons-material/Send";
 import { createTheme, IconButton, ThemeProvider } from "@mui/material";
-import { PorcupineDetection } from "@picovoice/porcupine-web";
 import React, { KeyboardEvent, MouseEvent } from "react";
-import { useChats, VoiceDetection } from "../hooks";
+import { useChats } from "../hooks";
 import { createPerformanceTrackingService } from "../services/PerformanceTrackingService";
 import "./MessageBar.css";
 import SpeechRecorder from "./SpeechRecorder";
@@ -21,24 +20,15 @@ const theme = createTheme({
   },
 });
 
-interface ConversationControls {
-  isRecording: boolean;
-  connectConversation: () => void;
-  disconnectConversation: () => void;
-}
-
 interface Props {
   sendMessage: (id: string, message: string, audible: boolean) => void;
   stopResponding: (audible: boolean) => void;
   responding: boolean;
-  awaitSpokenResponse: boolean;
   idle: boolean;
   listening: boolean;
-  wakeWordDetection: PorcupineDetection | null;
-  voiceDetection: VoiceDetection | null;
-  startVoiceDetection: () => Promise<void>;
-  stopVoiceDetection: () => Promise<void>;
-  conversationControls: ConversationControls;
+  isRecording: boolean;
+  startConversation: () => void;
+  stopConversation: () => void;
 }
 
 export const MessageBar = React.memo(
@@ -46,19 +36,14 @@ export const MessageBar = React.memo(
     sendMessage,
     stopResponding,
     responding,
-    awaitSpokenResponse,
     idle,
     listening,
-    wakeWordDetection,
-    voiceDetection,
-    startVoiceDetection,
-    stopVoiceDetection,
-    conversationControls,
+    isRecording,
+    startConversation,
+    stopConversation,
   }: Props) => {
     //const [message, setMessage] = React.useState("");
     const { currentlyTypedMessage, setCurrentlyTypedMessage } = useChats();
-    const defaultPlaceHolder = "Type to chat";
-    const [placeHolder, setPlaceHolder] = React.useState(defaultPlaceHolder);
     const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
     const performanceTrackingServiceRef = React.useRef(createPerformanceTrackingService());
 
@@ -130,7 +115,7 @@ export const MessageBar = React.memo(
                 name="Message input"
                 className={showInnerContent ? "visible textArea" : "textArea"}
                 ref={textAreaRef}
-                placeholder={placeHolder}
+                placeholder="Type to chat"
                 value={currentlyTypedMessage}
                 onChange={(e) => setCurrentlyTypedMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -169,17 +154,10 @@ export const MessageBar = React.memo(
                 </>
               )}
               <SpeechRecorder
-                stopResponding={stopResponding}
-                setTranscript={setPlaceHolder}
-                defaultMessage={defaultPlaceHolder}
-                responding={responding}
-                awaitSpokenResponse={awaitSpokenResponse}
                 listening={listening}
-                wakeWordDetection={wakeWordDetection}
-                voiceDetection={voiceDetection}
-                conversationControls={conversationControls}
-                startVoiceDetection={startVoiceDetection}
-                stopVoiceDetection={stopVoiceDetection}
+                isRecording={isRecording}
+                startConversation={startConversation}
+                stopConversation={stopConversation}
               />
             </div>
           </div>

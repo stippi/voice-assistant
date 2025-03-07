@@ -99,7 +99,7 @@ export function useRealtimeAssistant() {
     autoEndConversationRef.current = false;
     assistantRespondingRef.current = false;
 
-    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
+    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview" });
     client.updateSession({
       voice: "shimmer", //settings.voice // Use the voice setting from user preferences
     });
@@ -169,9 +169,9 @@ export function useRealtimeAssistant() {
 Act like a human, but remember that you aren't a human and that you can't do human things in the real world.
 Your voice and personality should be warm and engaging, with a lively and playful tone.
 If interacting in a non-English language, start by using the standard accent or dialect familiar to the user.
-Talk quickly. You should always call a function if you can.
+Talk quickly. You should always call a tool/function if you can.
 
-Call the 'end_conversation' function after you have completed your task and when the user no longer requires you.`;
+IMPORTANT: Use the 'end_conversation' tool/function when the user indicated that you are no longer required (e.g. 'Bye', 'Thank you', 'That's all', ...).`;
     client.updateSession({ instructions });
   }, [appContext.location, timers, settings.personality]);
 

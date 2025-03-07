@@ -1,105 +1,20 @@
-// packages/frontend/src/components/SpeechRecorder.tsx
 import MicIcon from "@mui/icons-material/Mic";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import IconButton from "@mui/material/IconButton";
-import { PorcupineDetection } from "@picovoice/porcupine-web";
-import { useCallback, useEffect, useRef } from "react";
-import { VoiceDetection } from "../hooks";
-
-interface ConversationControls {
-  isRecording: boolean;
-  connectConversation: () => void;
-  disconnectConversation: () => void;
-}
 
 interface Props {
-  stopResponding: (audible: boolean) => void;
-  setTranscript: (transcript: string) => void;
-  defaultMessage: string;
-  responding: boolean;
-  awaitSpokenResponse: boolean;
   listening: boolean;
-  wakeWordDetection: PorcupineDetection | null;
-  voiceDetection: VoiceDetection | null;
-  // Conversation controls - passed in from parent
-  conversationControls: ConversationControls;
-  // Voice detection controls
-  startVoiceDetection: () => Promise<void>;
-  stopVoiceDetection: () => Promise<void>;
+  isRecording: boolean;
+  startConversation: () => void;
+  stopConversation: () => void;
 }
 
 const SpeechRecorder = ({
-  stopResponding,
-  setTranscript,
-  defaultMessage,
-  responding,
-  awaitSpokenResponse,
   listening,
-  wakeWordDetection,
-  voiceDetection,
-  conversationControls,
-  startVoiceDetection,
-  stopVoiceDetection,
+  isRecording,
+  startConversation,
+  stopConversation,
 }: Props) => {
-  const { isRecording, connectConversation, disconnectConversation } = conversationControls;
-  const respondingRef = useRef(responding);
-
-  useEffect(() => {
-    respondingRef.current = responding;
-  }, [responding]);
-
-  const startConversation = useCallback(() => {
-    // Start voice detection to monitor for silence
-    startVoiceDetection().catch((error) => console.error("Failed to start voice detection", error));
-    connectConversation();
-  }, [connectConversation, startVoiceDetection]);
-
-  const stopConversation = useCallback(() => {
-    disconnectConversation();
-    // Stop voice detection when recording stops
-    stopVoiceDetection().catch((error) => console.error("Failed to stop voice detection", error));
-    // Reset transcript
-    setTranscript(defaultMessage);
-  }, [disconnectConversation, stopVoiceDetection, setTranscript, defaultMessage]);
-
-  const isRecordingRef = useRef(isRecording);
-  const startConversationRef = useRef(startConversation);
-  const stopRespondingRef = useRef(stopResponding);
-
-  useEffect(() => {
-    isRecordingRef.current = isRecording;
-    startConversationRef.current = startConversation;
-    stopRespondingRef.current = stopResponding;
-  }, [isRecording, startConversation, stopResponding]);
-
-  // React to external wake word detection
-  useEffect(() => {
-    if (wakeWordDetection) {
-      console.log("wake word detected in SpeechRecorder");
-      if (!isRecordingRef.current) {
-        if (respondingRef.current) {
-          stopRespondingRef.current(true);
-        }
-        startConversationRef.current();
-      }
-    }
-  }, [wakeWordDetection]);
-
-  // React to silence detection from voice detection hook
-  useEffect(() => {
-    if (!voiceDetection) return;
-    if (voiceDetection.silenceDetected && isRecordingRef.current) {
-      stopConversation();
-    }
-  }, [voiceDetection, stopConversation]);
-
-  // Auto-start conversation after assistant has finished speaking
-  useEffect(() => {
-    if (awaitSpokenResponse && !isRecording) {
-      startConversation();
-    }
-  }, [awaitSpokenResponse, isRecording, startConversation]);
-
   return (
     <div>
       {isRecording && (
