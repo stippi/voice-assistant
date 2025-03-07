@@ -1,16 +1,16 @@
-import { useEffect, useRef, useCallback, useState } from "react";
 import { RealtimeClient } from "@openai/realtime-api-beta";
 import { ItemType, ToolDefinitionType } from "@openai/realtime-api-beta/dist/lib/client.js";
-import { completionsApiKey } from "../config";
-import { AudioStreamingService } from "../services/AudioStreamingService";
 import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
-import { createSystemMessageService } from "../services/SystemMessageService";
-import { Message } from "@shared/types";
-import { getTools, callFunction } from "../integrations/tools";
-import { useAppContext, useSettings, useTimers } from "../hooks";
-import { Settings } from "../contexts/SettingsContext";
-import { playSound } from "../utils/audio";
 import { PvEngine } from "@picovoice/web-voice-processor/dist/types/types";
+import { Message } from "@shared/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { completionsApiKey } from "../config";
+import OpenAI from "openai";
+import { useAppContext, useSettings, useTimers } from "../hooks";
+import { callFunction, getTools } from "../integrations/tools";
+import { AudioStreamingService } from "../services/AudioStreamingService";
+import { createSystemMessageService } from "../services/SystemMessageService";
+import { playSound } from "../utils/audio";
 
 type RealtimeEvent = {
   item: ItemType;
@@ -32,7 +32,7 @@ export function useRealtimeAssistant() {
     new RealtimeClient({
       apiKey: completionsApiKey,
       dangerouslyAllowAPIKeyInBrowser: true,
-    })
+    }),
   );
   const systemMessageServiceRef = useRef(createSystemMessageService());
 
@@ -99,17 +99,21 @@ export function useRealtimeAssistant() {
     autoEndConversationRef.current = false;
     assistantRespondingRef.current = false;
 
-    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview-2024-12-17" });
+    await client.realtime.connect({ model: "gpt-4o-mini-realtime-preview" });
+    //await client.realtime.connect({ model: "gpt-4o-realtime-preview" });
     client.updateSession({
-      voice: "shimmer"
+      //@ts-expect-error The voices in the OpenAI Realtime API client code have not been updated.
+      voice: settings.voice || "shimmer"
     });
-  }, []);
+  }, [settings.voice]);
 
   // Disconnect conversation
   const disconnectConversation = useCallback(async () => {
     console.log("disconnecting conversation");
     const client = clientRef.current;
-    client.disconnect();
+    if (client.isConnected()) {
+      client.disconnect();
+    }
 
     setIsConnected(false);
     document.dispatchEvent(new CustomEvent("restore-volume"));
@@ -156,10 +160,10 @@ export function useRealtimeAssistant() {
     const client = clientRef.current;
     let instructions = systemMessageServiceRef.current.generateSystemMessage(
       false,
-      "snarky",
+      settings.personality,
       timers,
       appContext.location,
-      null
+      null,
     );
     instructions += `
 ## Important
@@ -167,14 +171,14 @@ export function useRealtimeAssistant() {
 Act like a human, but remember that you aren't a human and that you can't do human things in the real world.
 Your voice and personality should be warm and engaging, with a lively and playful tone.
 If interacting in a non-English language, start by using the standard accent or dialect familiar to the user.
-Talk quickly. You should always call a function if you can.
+Talk quickly. You should always call a tool/function if you can.
 
-Call the 'end_conversation' function after you have completed your task and when the user no longer requires you.`;
+IMPORTANT: Use the 'end_conversation' tool/function when the user indicated that you are no longer required (e.g. 'Bye', 'Thank you', 'That's all', ...).`;
     client.updateSession({ instructions });
-  }, [appContext.location, timers]);
+  }, [appContext.location, timers, settings.personality]);
 
   // Setup client
-  const setupClient = useCallback(async (client: RealtimeClient, settings: Settings) => {
+  const setupClient = useCallback(async (client: RealtimeClient, tools: OpenAI.ChatCompletionTool[]) => {
     const audioStreamingService = audioStreamingServiceRef.current;
 
     client.updateSession({
@@ -190,7 +194,6 @@ Call the 'end_conversation' function after you have completed your task and when
       },
     });
 
-    const tools = await getTools(settings);
     for (const tool of tools) {
       console.log(`adding tool "${tool.function.name}"`);
       client.addTool(tool.function as ToolDefinitionType, async (args: never) => {
@@ -202,14 +205,15 @@ Call the 'end_conversation' function after you have completed your task and when
     client.addTool(
       {
         name: "end_conversation",
-        description: "Ends the current conversation with the user. Use when the task is done or the user indicates the assistant is no longer needed.",
+        description:
+          "Ends the current conversation with the user. Use when the task is done or the user indicates the assistant is no longer needed.",
         parameters: {},
       },
       async () => {
         console.log("calling function: end_conversation");
         autoEndConversationRef.current = true;
         return { ok: true };
-      }
+      },
     );
 
     client.on("error", (event: never) => console.error(event));
@@ -236,11 +240,6 @@ Call the 'end_conversation' function after you have completed your task and when
       setItems(items);
     });
 
-    client.on("conversation.item.completed", async () => {
-      const items = client.conversation.getItems();
-      setItems(items);
-    });
-
     client.on("realtime.event", async (event: ClientEvent) => {
       const { type } = event.event;
       switch (type) {
@@ -254,17 +253,28 @@ Call the 'end_conversation' function after you have completed your task and when
     });
   }, []);
 
+  // Cache tools. The available tools depend on the settings, but we cache them as JSON string to avoid re-renders when unrelated settings change.
+  const [tools, setTools] = useState("[]");
+  useEffect(() => {
+    getTools(settings).then(tools => {
+      setTools(JSON.stringify(tools));
+    });
+  }, [settings]);
+
   // Initialize client
   useEffect(() => {
     const client = clientRef.current;
-    setupClient(client, settings).then(() => {
+    setupClient(client, JSON.parse(tools) as OpenAI.ChatCompletionTool[]).then(() => {
       setItems(client.conversation.getItems());
     });
 
     return () => {
+      if (client.isConnected()) {
+        client.disconnect();
+      }
       client.reset();
     };
-  }, [settings, setupClient]);
+  }, [tools, setupClient]);
 
   // Convert items to messages
   useEffect(() => {
@@ -320,6 +330,6 @@ Call the 'end_conversation' function after you have completed your task and when
     handleWakeWord,
     connectConversation,
     disconnectConversation,
-    audioStreamingService: audioStreamingServiceRef.current
+    audioStreamingService: audioStreamingServiceRef.current,
   };
 }

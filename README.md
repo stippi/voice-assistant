@@ -152,11 +152,16 @@ yarn workspace voice-assistant-frontend dev
 
 :warning: **Do not build this project and host it somewhere publicly, since it would expose all keys from `config.ts`!**
 
-## Ideas for Next Features
+## Features
 
-- [ ] Add an "idle" mode:
-  - [ ] Dashboard fills the screen, conversation is minimized
-  - [ ] Activation starts temporary chat at first, which may could become persisted chat based on some condition.
+### Idle Mode with Realtime Interaction
+When idle for 15 seconds with Google Photos integration enabled, the assistant enters a special mode:
+- Dashboard fills the screen, showing photos in fullscreen
+- Saying the wake word (e.g., "Computer") activates a temporary conversation using OpenAI's Realtime API
+- This provides much faster response times with direct speech-to-speech communication
+- These conversations are isolated and don't affect the main chat history
+
+## Ideas for Next Features
 - [ ] Optimize context window size for the LLM.
 - [ ] Integrate more Microsoft Graph APIs.
 - [ ] Add a temporary chat mode, where the chat is auto-cleared after some time of inactivity.
