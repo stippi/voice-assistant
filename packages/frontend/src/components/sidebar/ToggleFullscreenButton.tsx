@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { IconButton, Tooltip } from "@mui/material";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import SidebarButton from "./SidebarButton";
 
 const ToggleFullscreenButton: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
@@ -28,15 +28,11 @@ const ToggleFullscreenButton: React.FC = () => {
   };
 
   return (
-    <Tooltip title={isFullscreen ? "Leave fullscreen" : "Enter fullscreen"}>
-      <IconButton onClick={toggleFullscreen} sx={{ fontSize: "1rem" }}>
-        {isFullscreen ? (
-          <FullscreenExitIcon sx={{ fontSize: "inherit" }} />
-        ) : (
-          <FullscreenIcon sx={{ fontSize: "inherit" }} />
-        )}
-      </IconButton>
-    </Tooltip>
+    <SidebarButton
+      icon={isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+      tooltip={isFullscreen ? "Leave fullscreen" : "Enter fullscreen"}
+      onClick={toggleFullscreen}
+    />
   );
 };
 

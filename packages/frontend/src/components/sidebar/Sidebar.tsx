@@ -23,6 +23,7 @@ import { AssistantSettings } from "../settings/AssistantSettings";
 import { ChatSelection } from "./ChatSelection";
 import DownloadChatsButton from "./DownloadChatsButton";
 import ToggleFullscreenButton from "./ToggleFullscreenButton";
+import ToggleIdleModeButton from "./ToggleIdleModeButton";
 
 const SidebarList = styled(List)<{ component?: React.ElementType }>({
   "& .MuiListItemButton-root": {
@@ -228,6 +229,7 @@ export function Sidebar() {
               <Stack flexDirection="row">
                 <ToggleFullscreenButton />
                 <DownloadChatsButton />
+                <ToggleIdleModeButton />
               </Stack>
             </Box>
           </Box>
