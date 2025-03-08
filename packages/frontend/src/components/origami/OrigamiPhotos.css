@@ -1,0 +1,23 @@
+.origami-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.origami-photo {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Simplified transitions for debugging */
+.entering-slide_left, .entering-slide_right, .entering-slide_up, .entering-slide_down, 
+.entering-fold_horizontal, .entering-fold_vertical, .entering-fade {
+  opacity: 0;
+}
+
+.exiting-slide_left, .exiting-slide_right, .exiting-slide_up, .exiting-slide_down, 
+.exiting-fold_horizontal, .exiting-fold_vertical, .exiting-fade {
+  opacity: 0;
+}
