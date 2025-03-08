@@ -2,6 +2,7 @@ import { OptionalIntegrations } from "../components/OptionalIntegrations";
 import VoiceAssistant from "../components/VoiceAssistant";
 import { Dashboard } from "../components/dashboard/Dashboard";
 import { Sidebar } from "../components/sidebar/Sidebar";
+import IdleModeControls from "../components/IdleModeControls";
 import { useAppContext, useSettings } from "../hooks";
 
 export default function DefaultPage() {
@@ -15,6 +16,7 @@ export default function DefaultPage() {
       <Sidebar />
       <VoiceAssistant idle={idleMode} />
       <Dashboard idle={idleMode} />
+      <IdleModeControls />
     </OptionalIntegrations>
   );
 }

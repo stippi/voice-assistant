@@ -1,16 +1,17 @@
 import React from "react";
-import { IconButton, Tooltip } from "@mui/material";
 import { useChats } from "../../hooks";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
+import SidebarButton from "./SidebarButton";
 
 const DownloadChatsButton: React.FC = () => {
   const { downloadChats } = useChats();
+  
   return (
-    <Tooltip title="Download all chats">
-      <IconButton onClick={downloadChats} sx={{ fontSize: "1rem" }}>
-        <SaveAltIcon sx={{ fontSize: "inherit" }} />
-      </IconButton>
-    </Tooltip>
+    <SidebarButton
+      icon={<SaveAltIcon />}
+      tooltip="Download all chats"
+      onClick={downloadChats}
+    />
   );
 };
 

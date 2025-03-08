@@ -12,10 +12,10 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType>({
   users: [],
-  setUsers: () => {},
+  setUsers: () => { },
   location: undefined,
   idle: false,
-  setIdle: () => {},
+  setIdle: () => { },
 });
 
 function getStorageItem<T>(key: string, fallback: T): T {
@@ -36,31 +36,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const { location } = useLocation();
 
+  // Idle mode is now explicitly controlled via setIdle
   const [idle, setIdle] = useState(false);
-
-  useEffect(() => {
-    let inactivityTimeout: number;
-    function resetInactivityTimeout() {
-      setIdle(false);
-      clearTimeout(inactivityTimeout);
-      inactivityTimeout = window.setTimeout(() => {
-        setIdle(true);
-      }, 15000);
-    }
-
-    document.addEventListener("mousemove", resetInactivityTimeout);
-    document.addEventListener("keydown", resetInactivityTimeout);
-    document.addEventListener("touchstart", resetInactivityTimeout);
-
-    resetInactivityTimeout();
-
-    return () => {
-      document.removeEventListener("mousemove", resetInactivityTimeout);
-      document.removeEventListener("keydown", resetInactivityTimeout);
-      document.removeEventListener("touchstart", resetInactivityTimeout);
-      clearTimeout(inactivityTimeout);
-    };
-  }, []);
 
   return <AppContext.Provider value={{ users, setUsers, location, idle, setIdle }}>{children}</AppContext.Provider>;
 };
