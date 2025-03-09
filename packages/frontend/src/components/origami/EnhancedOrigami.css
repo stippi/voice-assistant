@@ -1,0 +1,14 @@
+.origami-photo {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.origami-photo.entering {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.origami-photo.exiting {
+  opacity: 0;
+  transform: scale(1.05);
+}

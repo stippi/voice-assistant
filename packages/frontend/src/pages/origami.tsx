@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
-import { SimpleOrigami } from "../components/origami/SimpleOrigami";
+import { EnhancedOrigami } from "../components/origami/EnhancedOrigami";
 import { fetchFavoritePhotos } from "../integrations/google";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link } from "react-router-dom";
@@ -97,7 +97,11 @@ export default function OrigamiPage() {
           <Box sx={{ position: 'absolute', top: 60, right: 16, zIndex: 100, color: 'white', backgroundColor: 'rgba(0,0,0,0.5)', padding: 1, borderRadius: 1 }}>
             <Typography variant="body2">Loaded {mediaItemIDs.length} photos</Typography>
           </Box>
-          <SimpleOrigami mediaItemIDs={mediaItemIDs} />
+          <EnhancedOrigami 
+            mediaItemIDs={mediaItemIDs}
+            transitionDuration={1000}
+            displayDuration={5000}
+          />
         </>
       )}
 
