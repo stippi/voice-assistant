@@ -6,7 +6,7 @@ export default function RealTimePage() {
   return (
     <OptionalIntegrations>
       <RealTimeAssistant />
-      <Dashboard />
+      <Dashboard idle={false} />
     </OptionalIntegrations>
   );
 }
